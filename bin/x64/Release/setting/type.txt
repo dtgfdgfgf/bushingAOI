@@ -1,0 +1,4 @@
+type,ID,OD,H,hasgroove,PTFEColor,material,thick,boxorpack
+10214090420T,35.07,37.75,30,無,E,TAL,0,紙箱
+10215112360T,36.04,40.03,25,無,CG,TAL,0,紙箱
+10201120714TP,32,35,12,無,CG,TAL,0,紙箱

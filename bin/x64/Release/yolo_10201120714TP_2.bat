@@ -1,0 +1,1 @@
+call "C:\Users\User\Anaconda3\Scripts\activate.bat" "ct" & python yolo-server.py
