@@ -70,12 +70,11 @@ namespace peilin
             this.瑕疵種類設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.檢測瑕疵設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.檢測參數設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.排料時間設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.檔案留存天數設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.蜂鳴器ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.出料卡料時間設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.圓心校正工具ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.新料號參數設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.出料卡料時間設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.調機設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.蜂鳴器ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.檔案留存天數設定ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.關閉程式ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.button3 = new System.Windows.Forms.Button();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
@@ -84,6 +83,7 @@ namespace peilin
             this.panel3 = new System.Windows.Forms.Panel();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.button49 = new System.Windows.Forms.Button();
             this.button48 = new System.Windows.Forms.Button();
             this.button22 = new System.Windows.Forms.Button();
             this.button47 = new System.Windows.Forms.Button();
@@ -217,7 +217,6 @@ namespace peilin
             this.label44 = new System.Windows.Forms.Label();
             this.label46 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.button49 = new System.Windows.Forms.Button();
             this.panel2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -495,12 +494,11 @@ namespace peilin
             this.瑕疵種類設定ToolStripMenuItem,
             this.檢測瑕疵設定ToolStripMenuItem,
             this.檢測參數設定ToolStripMenuItem,
-            this.排料時間設定ToolStripMenuItem,
-            this.檔案留存天數設定ToolStripMenuItem,
-            this.蜂鳴器ToolStripMenuItem,
-            this.出料卡料時間設定ToolStripMenuItem,
             this.圓心校正工具ToolStripMenuItem,
-            this.新料號參數設定ToolStripMenuItem});
+            this.出料卡料時間設定ToolStripMenuItem,
+            this.調機設定ToolStripMenuItem,
+            this.蜂鳴器ToolStripMenuItem,
+            this.檔案留存天數設定ToolStripMenuItem});
             this.設定ToolStripMenuItem.Name = "設定ToolStripMenuItem";
             this.設定ToolStripMenuItem.Size = new System.Drawing.Size(73, 34);
             this.設定ToolStripMenuItem.Text = "設定";
@@ -541,28 +539,12 @@ namespace peilin
             this.檢測參數設定ToolStripMenuItem.Text = "檢測參數設定";
             this.檢測參數設定ToolStripMenuItem.Click += new System.EventHandler(this.檢測參數設定ToolStripMenuItem_Click);
             // 
-            // 排料時間設定ToolStripMenuItem
+            // 圓心校正工具ToolStripMenuItem
             // 
-            this.排料時間設定ToolStripMenuItem.Name = "排料時間設定ToolStripMenuItem";
-            this.排料時間設定ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
-            this.排料時間設定ToolStripMenuItem.Text = "排料時間設定";
-            this.排料時間設定ToolStripMenuItem.Visible = false;
-            this.排料時間設定ToolStripMenuItem.Click += new System.EventHandler(this.排料時間設定ToolStripMenuItem_Click);
-            // 
-            // 檔案留存天數設定ToolStripMenuItem
-            // 
-            this.檔案留存天數設定ToolStripMenuItem.Name = "檔案留存天數設定ToolStripMenuItem";
-            this.檔案留存天數設定ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
-            this.檔案留存天數設定ToolStripMenuItem.Text = "檔案留存天數設定";
-            this.檔案留存天數設定ToolStripMenuItem.Visible = false;
-            this.檔案留存天數設定ToolStripMenuItem.Click += new System.EventHandler(this.檔案留存天數設定ToolStripMenuItem_Click);
-            // 
-            // 蜂鳴器ToolStripMenuItem
-            // 
-            this.蜂鳴器ToolStripMenuItem.Name = "蜂鳴器ToolStripMenuItem";
-            this.蜂鳴器ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
-            this.蜂鳴器ToolStripMenuItem.Text = "蜂鳴器";
-            this.蜂鳴器ToolStripMenuItem.Click += new System.EventHandler(this.蜂鳴器ToolStripMenuItem_Click);
+            this.圓心校正工具ToolStripMenuItem.Name = "圓心校正工具ToolStripMenuItem";
+            this.圓心校正工具ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
+            this.圓心校正工具ToolStripMenuItem.Text = "圓心校正工具";
+            this.圓心校正工具ToolStripMenuItem.Click += new System.EventHandler(this.圓心校正工具ToolStripMenuItem_Click);
             // 
             // 出料卡料時間設定ToolStripMenuItem
             // 
@@ -571,19 +553,27 @@ namespace peilin
             this.出料卡料時間設定ToolStripMenuItem.Text = "出料/卡料時間設定";
             this.出料卡料時間設定ToolStripMenuItem.Click += new System.EventHandler(this.出料卡料時間設定ToolStripMenuItem_Click);
             // 
-            // 圓心校正工具ToolStripMenuItem
+            // 調機設定ToolStripMenuItem
             // 
-            this.圓心校正工具ToolStripMenuItem.Name = "圓心校正工具ToolStripMenuItem";
-            this.圓心校正工具ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
-            this.圓心校正工具ToolStripMenuItem.Text = "圓心校正工具";
-            this.圓心校正工具ToolStripMenuItem.Click += new System.EventHandler(this.圓心校正工具ToolStripMenuItem_Click);
+            this.調機設定ToolStripMenuItem.Name = "調機設定ToolStripMenuItem";
+            this.調機設定ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
+            this.調機設定ToolStripMenuItem.Text = "調機設定";
+            this.調機設定ToolStripMenuItem.Click += new System.EventHandler(this.調機設定ToolStripMenuItem_Click);
             // 
-            // 新料號參數設定ToolStripMenuItem
+            // 蜂鳴器ToolStripMenuItem
             // 
-            this.新料號參數設定ToolStripMenuItem.Name = "新料號參數設定ToolStripMenuItem";
-            this.新料號參數設定ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
-            this.新料號參數設定ToolStripMenuItem.Text = "新料號參數設定";
-            this.新料號參數設定ToolStripMenuItem.Click += new System.EventHandler(this.新料號參數設定ToolStripMenuItem_Click);
+            this.蜂鳴器ToolStripMenuItem.Name = "蜂鳴器ToolStripMenuItem";
+            this.蜂鳴器ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
+            this.蜂鳴器ToolStripMenuItem.Text = "蜂鳴器";
+            this.蜂鳴器ToolStripMenuItem.Click += new System.EventHandler(this.蜂鳴器ToolStripMenuItem_Click);
+            // 
+            // 檔案留存天數設定ToolStripMenuItem
+            // 
+            this.檔案留存天數設定ToolStripMenuItem.Name = "檔案留存天數設定ToolStripMenuItem";
+            this.檔案留存天數設定ToolStripMenuItem.Size = new System.Drawing.Size(289, 34);
+            this.檔案留存天數設定ToolStripMenuItem.Text = "檔案留存天數設定";
+            this.檔案留存天數設定ToolStripMenuItem.Visible = false;
+            this.檔案留存天數設定ToolStripMenuItem.Click += new System.EventHandler(this.檔案留存天數設定ToolStripMenuItem_Click);
             // 
             // 關閉程式ToolStripMenuItem
             // 
@@ -732,6 +722,17 @@ namespace peilin
             this.tabPage1.Size = new System.Drawing.Size(1942, 1064);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "主畫面";
+            // 
+            // button49
+            // 
+            this.button49.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.button49.Location = new System.Drawing.Point(357, 412);
+            this.button49.Name = "button49";
+            this.button49.Size = new System.Drawing.Size(82, 33);
+            this.button49.TabIndex = 465;
+            this.button49.Text = "全進OK";
+            this.button49.UseVisualStyleBackColor = true;
+            this.button49.Click += new System.EventHandler(this.button49_Click);
             // 
             // button48
             // 
@@ -2220,17 +2221,6 @@ namespace peilin
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
-            // button49
-            // 
-            this.button49.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button49.Location = new System.Drawing.Point(357, 294);
-            this.button49.Name = "button49";
-            this.button49.Size = new System.Drawing.Size(82, 33);
-            this.button49.TabIndex = 465;
-            this.button49.Text = "全進OK";
-            this.button49.UseVisualStyleBackColor = true;
-            this.button49.Click += new System.EventHandler(this.button49_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -2303,7 +2293,7 @@ namespace peilin
         private System.Windows.Forms.ToolStripMenuItem nGToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 報表ToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem 設定ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 檢測參數設定ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 調機設定ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 檔案留存天數設定ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 關閉程式ToolStripMenuItem;
         private System.Windows.Forms.Button button3;
@@ -2385,7 +2375,6 @@ namespace peilin
         private System.Windows.Forms.ToolStripMenuItem 相機參數設定ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 瑕疵種類設定ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 檢測瑕疵設定ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 排料時間設定ToolStripMenuItem;
         private System.Windows.Forms.ComboBox comboBox6;
         private System.Windows.Forms.Label label36;
         private System.Windows.Forms.ComboBox comboBox7;
@@ -2455,7 +2444,7 @@ namespace peilin
         private System.Windows.Forms.ToolStripMenuItem stationsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem visToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 圓心校正工具ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 新料號參數設定ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 檢測參數設定ToolStripMenuItem;
         private System.Windows.Forms.Button button47;
         private System.Windows.Forms.ToolStripMenuItem 時間測量ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 站1ToolStripMenuItem;

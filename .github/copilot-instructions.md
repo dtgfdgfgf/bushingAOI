@@ -71,8 +71,8 @@ Defect Classification → Result Storage → PLC Signal
 
 **PLC_Test.cs**
 - Modbus serial communication with PLC
-- Handles trigger signals, counters (D803, D805, D807), and air blow commands
-- Priority queue system for PLC commands to prevent congestion
+- Handles trigger signals and counters (D803, D805, D807)
+- Priority queue system for PLC commands
 
 **ParameterConfigForm.cs / ParameterSetupManager.cs**
 - Parameter management UI with 3-zone system:
@@ -93,7 +93,6 @@ Located at `.\setting\mydb.sqlite` with the following tables:
 - **DefectChecks**: Part-number-specific defect detection mappings
 - **DefectCounts**: Defect statistics for reporting
 - **Totals**: Production counters
-- **Blows**: Air blow sorting parameters
 - **Users**: User authentication
 
 ## Code Style Requirements
@@ -288,9 +287,6 @@ The `app` static class in Form1.cs contains critical shared state:
 - `app.counter["stop" + camID]` tracks software-side counts
 - `SAMPLE_ID` is derived from `app.counter`
 - Known issue: Emergency stop can cause +1-2 count mismatch between software report and physical count
-
-### Command Priority
-- Air blow commands have highest priority to prevent queue congestion
 - Recent commits improved PLC SerialPort receive handling and removed excessive `GC.Collect()` calls
 
 ## Recent Major Changes
@@ -396,7 +392,7 @@ The system uses:
 - **Image disposal**: Use async disposal queue to prevent UI blocking
 - **AI inference**: Each station can use different TensorRT DLL instance (1-4)
 - **Database writes**: Batch when possible, use transactions for multi-row updates
-- **PLC commands**: Priority queue prevents air blow command delays
+- **PLC commands**: Priority queue system for command management
 - **YOLO warmup**: System auto-warms up YOLO models after periods of inactivity
 - **Mat objects**: Never hold references longer than needed; disposal is critical
 - **Memory pressure**: Monitor queue depths and image object lifecycles under sustained load
@@ -408,12 +404,11 @@ The system uses:
 2. **Using unqualified `Point`/`Size`**: Ambiguous between System.Drawing and OpenCvSharp
 3. **Direct Insert without checking existence**: Causes primary key constraint violations
 4. **Modifying `app` state without synchronization**: Race conditions across stations
-5. **Blocking PLC serial port**: Air blow commands must be highest priority
-6. **Forgetting to load models before inference**: Check model paths exist before CreateModel calls
-7. **Sharing database connections across threads**: Always create new connection per thread
-8. **Calling GC.Collect() excessively**: Degrades performance; removed in recent commits
-9. **Holding locks while calling external code**: Risk of deadlock; minimize lock scope
-10. **Ignoring queue depth monitoring**: Uncontrolled queue growth leads to memory exhaustion
+5. **Forgetting to load models before inference**: Check model paths exist before CreateModel calls
+6. **Sharing database connections across threads**: Always create new connection per thread
+7. **Calling GC.Collect() excessively**: Degrades performance; removed in recent commits
+8. **Holding locks while calling external code**: Risk of deadlock; minimize lock scope
+9. **Ignoring queue depth monitoring**: Uncontrolled queue growth leads to memory exhaustion
 
 ## YOLO Server Management
 
@@ -431,3 +426,226 @@ Example workflow (handled by `YoloDetection.cs`):
 4. Warmup with dummy images
 5. Send detection requests with Base64-encoded images
 6. Parse JSON responses with bounding boxes and class IDs
+
+## When Reviewing Code, Focus On:
+
+### 1. Memory Management Correctness (Critical - Production Stability)
+**This is the #1 cause of production crashes. Review with extreme scrutiny.**
+
+- [ ] **OpenCV Mat disposal**: Every `Mat` object must be disposed via `using` statement or explicit `.Dispose()` call
+  - Verify disposal occurs even on exception paths
+  - Check for Mat objects returned from methods (caller must dispose)
+  - Confirm Mat objects in loops are disposed on each iteration
+  - Example violation: `Mat result = Cv2.ImRead(...); ProcessImage(result); // Missing disposal`
+
+- [ ] **Bitmap disposal**: All `System.Drawing.Bitmap` objects must be disposed
+  - Check for Bitmaps created from streams, files, or Mat conversions
+  - Verify disposal in event handlers and callbacks
+  - Confirm disposal in UI-related image display operations
+
+- [ ] **Queue depth monitoring**: Check for unbounded queue growth
+  - `Queue_Bitmap1-4`, `Queue_Save`, `Queue_Send`, `Queue_Show` must have depth limits or backpressure
+  - Verify producer-consumer balance (images enqueued = images disposed)
+
+- [ ] **Large object lifecycle**: Track objects >85KB (LOH threshold)
+  - High-resolution images should not persist longer than one processing cycle
+  - Avoid unnecessary cloning; clone only when parallel access required
+
+- [ ] **GC.Collect() prohibition**: Reject any code containing explicit `GC.Collect()` calls
+  - Exception: Must be documented with justification and approved by senior engineer
+  - Runtime manages collection more efficiently than manual intervention
+
+### 2. Thread Safety and Synchronization (Critical - Data Integrity)
+**Multi-station concurrent processing requires rigorous synchronization. Violations cause data corruption.**
+
+- [ ] **app static state mutations**: All writes to `app.counter`, `app.param`, `app.models`, `app.metas`, `app.pos` must be locked
+  - Verify lock acquisition before read-modify-write sequences
+  - Check for consistent lock ordering to prevent deadlocks
+  - Example violation: `app.counter["stop1"]++; // No lock - race condition`
+
+- [ ] **Thread-safe collection usage**:
+  - Concurrent queues: Use `TryDequeue`/`TryPeek` patterns, never indexing
+  - Shared dictionaries: Must be `ConcurrentDictionary` or locked
+  - Never iterate concurrent collections without understanding snapshot semantics
+
+- [ ] **Database connection isolation**: Each thread must create its own `DataConnection`
+  - Verify `using` statements around all database operations
+  - Confirm no connection objects shared across threads or stored in static fields
+  - Example violation: `static DataConnection _sharedDb; // Wrong - not thread-safe`
+
+- [ ] **PLC SerialPort serialization**: Verify single-writer pattern with priority queue
+  - No blocking waits while holding SerialPort lock
+  - Confirm proper event handler thread marshaling
+
+- [ ] **UI thread marshaling**: Windows Forms control access must use `Invoke`/`BeginInvoke`
+  - Verify all control updates from worker threads are marshaled
+  - Check for `InvokeRequired` pattern where applicable
+
+- [ ] **Wait handle patterns**: Confirm proper timeout usage
+  - Never indefinite blocking on `WaitOne()` without timeout
+  - Verify signal/wait pairing correctness (`Set()` matches `WaitOne()`)
+  - Check for wait handle disposal on shutdown
+
+- [ ] **Atomic operations**: Use `Interlocked` for simple counter updates, `volatile` for flags
+  - Verify compound operations (read-modify-write) use locks, not just volatile
+
+### 3. Database Operation Patterns (Critical - Data Consistency)
+**SQLite with LinqToDB requires specific patterns to avoid primary key violations.**
+
+- [ ] **Update-first, insert-if-none pattern**: All upsert operations must follow canonical pattern
+  ```csharp
+  int updated = db.table.Where(condition).Set(field, value).Update();
+  if (updated == 0) {
+      db.table.Value(field, value).Insert();
+  }
+  ```
+  - Reject direct `Insert()` calls without existence check
+  - Verify proper WHERE conditions identify unique records
+
+- [ ] **Entity object prohibition**: Use `.Value()` syntax for inserts, not entity objects
+  - Example violation: `db.Insert(new ParamsEntity { ... }); // Wrong pattern`
+
+- [ ] **Transaction usage**: Multi-row updates or inserts must use transactions
+  - Verify `BeginTransaction()` / `CommitTransaction()` pairing
+  - Confirm rollback on exception paths
+
+- [ ] **Connection disposal**: Verify `using` statements around all `DataConnection` instances
+  - Check for proper disposal even on exception paths
+
+### 4. Type Disambiguation and Namespace Conflicts (Critical - Compilation)
+**System.Drawing and OpenCvSharp both define Point, Size, Rect, causing ambiguity.**
+
+- [ ] **Full qualification required**: All `System.Drawing.*` types must be fully qualified
+  - Reject: `Point p = new Point(x, y);` (ambiguous)
+  - Accept: `System.Drawing.Point p = new System.Drawing.Point(x, y);`
+  - Common types requiring qualification: `Point`, `Size`, `Rectangle`, `Color`, `Bitmap`
+
+- [ ] **Using directive check**: Even with `using System.Drawing`, qualify types in regions with OpenCvSharp imports
+
+### 5. Minimal Change Principle Compliance (Important - Production Stability)
+**Surgical changes minimize risk; avoid unnecessary refactoring in production code.**
+
+- [ ] **Change scope justification**: Verify changes are limited to:
+  - Specific lines causing bugs
+  - New functionality integrated into existing patterns
+  - Performance optimizations targeting identified bottlenecks
+
+- [ ] **Architecture preservation**: Confirm changes respect existing design
+  - No gratuitous refactoring of working code
+  - New features follow established patterns
+  - Parameter additions don't restructure data flow
+
+- [ ] **Impact assessment documentation**: Verify clear documentation of:
+  - Precise location (file, class, method, line range)
+  - Rationale (bug, feature, performance, safety)
+  - Components affected (threads, workflows, dependencies)
+
+### 6. Code Change Communication (Important - Reviewability)
+**Changes must be clearly documented for effective review.**
+
+- [ ] **Location precision**: File path, class, method, line numbers provided
+- [ ] **Rationale clarity**: Why the change is necessary (not just what changed)
+- [ ] **Scope definition**: What changes and what remains unchanged
+- [ ] **Impact analysis**: Which components/threads/workflows affected
+
+### 7. Comment Language and Attribution (Required - Team Standards)
+**All comments must be in Traditional Chinese for team consistency.**
+
+- [ ] **Traditional Chinese (繁體中文)**: All comments use correct character set
+  - Reject simplified Chinese (简体中文) or English comments
+  - Exception: Technical terms without standard translation may use English
+
+- [ ] **AI attribution**: AI-generated code sections marked with `// 由 GitHub Copilot 產生`
+
+### 8. PLC Communication Patterns (Critical - Hardware Coordination)
+**Improper PLC interaction causes production line failures and count mismatches.**
+
+- [ ] **Non-blocking writes**: No indefinite waits while writing to SerialPort
+- [ ] **Counter synchronization**: PLC register reads (D803, D805, D807) properly synchronized with software counters
+- [ ] **Command serialization**: Verify proper queuing prevents command interleaving
+
+### 9. Error Handling and Logging (Important - Debuggability)
+**Industrial systems must provide diagnostic information without crashing.**
+
+- [ ] **Exception handling**: Critical paths have try-catch blocks with logging
+  - Camera grabbing errors must not crash application
+  - AI inference failures must be logged and allow retry
+  - PLC communication errors must be recoverable
+
+- [ ] **Serilog usage**: Errors logged with appropriate severity
+  - Use `Log.Error()` for exceptions, `Log.Warning()` for recoverable issues
+  - Include context (station ID, part number, sample ID) in log messages
+
+- [ ] **Resource cleanup on error**: Disposal occurs even on exception paths
+  - Use `try-finally` or `using` statements for guaranteed cleanup
+
+### 10. Performance and Scalability (Important - Throughput)
+**Industrial AOI requires sustained high throughput without degradation.**
+
+- [ ] **Lock contention minimization**: Locks held for minimum duration
+  - No I/O operations while holding locks
+  - No external method calls while holding locks
+  - Lock scope limited to critical section only
+
+- [ ] **Async disposal usage**: Large objects queued to `_disposeQueue` for async cleanup
+  - Verify disposal doesn't block processing threads
+
+- [ ] **Queue backpressure**: Verify mechanisms prevent unbounded queue growth
+  - Check for producer throttling when consumer falls behind
+
+- [ ] **Unnecessary allocations**: Avoid allocations in hot paths
+  - Reuse buffers where safe
+  - Avoid string concatenation in loops (use StringBuilder)
+
+### 11. Configuration and Parameter Management (Important - Flexibility)
+**Parameter system is complex; changes must preserve 3-zone architecture.**
+
+- [ ] **3-zone integrity**: Reference, Added-Unmodified, Added-Modified zones preserved
+  - Verify Reference zone remains read-only
+  - Confirm zone transitions follow established rules
+
+- [ ] **Calibration tool integration**: New parameters integrate with appropriate calibration tools
+  - Circle/Position parameters: CircleCalibrationForm
+  - Contrast/Threshold parameters: ContrastCalibrationForm, PixelCalibrationForm
+  - Verify calibration preserves Reference zone
+
+- [ ] **Parameter persistence**: Changes saved to correct database tables
+  - Camera parameters: `Cameras` table
+  - Algorithm parameters: `params` table
+  - Verify proper part number association
+
+### 12. AI Model Integration (Important - Inference Correctness)
+**TensorRT and YOLO integration requires specific lifecycle management.**
+
+- [ ] **Model loading verification**: Check model file existence before `CreateModel()` calls
+- [ ] **Instance isolation**: Each station uses dedicated TensorRT DLL instance (1-4)
+  - No sharing of inference sessions across threads
+- [ ] **YOLO server availability**: HTTP endpoints checked before sending detection requests
+- [ ] **Model warmup**: Verify warmup mechanism for YOLO models after inactivity
+- [ ] **Result Mat disposal**: AI inference returns Mat objects that must be disposed by caller
+
+### 13. Production Readiness Checks (Important - Deployment Safety)
+**Code must be production-ready before merging.**
+
+- [ ] **No debug artifacts**: Remove debug prints, test code, commented-out blocks
+- [ ] **No hardcoded paths**: Use configurable paths or relative paths from executable
+- [ ] **Graceful degradation**: System handles missing models, cameras, or PLC connection failures
+- [ ] **Rollback capability**: Changes can be reverted without data loss or corruption
+
+### Review Checklist Summary
+**Before approving any code change, verify:**
+1. ✅ Memory management: All Mat/Bitmap objects disposed
+2. ✅ Thread safety: Shared state properly synchronized
+3. ✅ Database patterns: Update-first, insert-if-none used correctly
+4. ✅ Type qualification: System.Drawing types fully qualified
+5. ✅ Minimal changes: Scope justified and limited
+6. ✅ Comments: Traditional Chinese with AI attribution
+7. ✅ Error handling: Exceptions caught, logged, resources cleaned up
+8. ✅ Performance: No lock contention, queue backpressure handled
+9. ✅ Production ready: No debug code, graceful degradation implemented
+
+**Priority for rejection:**
+- **P0 (Immediate rejection)**: Memory leaks, thread safety violations, database conflicts
+- **P1 (Must fix before merge)**: Missing disposal, inadequate error handling, type ambiguity
+- **P2 (Should fix)**: Suboptimal performance, incomplete logging, comment language
+- **P3 (Nice to have)**: Minor style issues, optimization opportunities

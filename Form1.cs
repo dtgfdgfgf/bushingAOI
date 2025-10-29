@@ -56,7 +56,6 @@ namespace peilin
         DelayButton button6 = new DelayButton();
         #region 資料庫簡介
         /*
-         * Blows 排料吹氣參數 （沒在用）
          * Cameras 相機參數          
          * DefectChecks 料號對應檢測瑕疵項目                 
          * DefectCounts 料號對應檢測瑕疵項目計數(page2、3用)
@@ -238,7 +237,7 @@ namespace peilin
 
 
             // 初始化 PLC 佇列監控
-            //StartPLCQueueMonitoring();
+            StartPLCQueueMonitoring();
             // 顯示啟動提示
             lbAdd("程式啟動完成，請先執行異常復歸後再開始檢測", "inf", "");
 
@@ -317,6 +316,8 @@ namespace peilin
 
                         PLC_SetD(805, 0);
                         label58.Text = "0";
+                        PLC_SetD(100, 0); // 第一站先歸0
+
                         updateLabel();
 
                         PLC_SetM(30, true);   // 先開燈                    
@@ -4645,17 +4646,10 @@ namespace peilin
         void setDictionary()    //  資料建置
         {
             #region Counter            
-            var counterType = new[] { "OK1", "OK2", "OK", "NG", "NULL", "stop0", "stop1", "stop2", "stop3", "blowOK1", "blowOK2", "blowNG" };
+            var counterType = new[] { "OK1", "OK2", "OK", "NG", "NULL", "stop0", "stop1", "stop2", "stop3" };
             foreach (var s in counterType)
             {
                 app.counter.TryAdd(s, 0);
-            }
-
-            app.blow = new Dictionary<string, ConcurrentList<ImagePosition>>();
-            var resultType = new[] { "OK1", "OK2", "NG" };
-            foreach (var s in resultType)
-            {
-                app.blow.Add(s, new ConcurrentList<ImagePosition>());
             }
 
             #endregion
@@ -4881,22 +4875,6 @@ namespace peilin
                         }
                     }
                 }
-                
-                using (var db = new MydbDB())
-                {
-                    var q =
-                        from c in db.Blows
-                        where c.Type == app.produce_No
-                        orderby c.Type, c.Stop
-                        select c;
-                    if (q.Count() > 0)
-                    {
-                        foreach (var c in q)
-                        {
-                            param.Add(c.Name + c.Stop.ToString(), c.Time.ToString());
-                        }
-                    }
-                }
                 using (var db = new MydbDB())
                 {
                     var q =
@@ -5038,75 +5016,6 @@ namespace peilin
 
         #endregion
         #region PLC     
-        #region 吹氣
-        void blowOut(string s, int i)
-        {
-            var plcbuffercount = PLC_ModBus.GetQueueCount();
-            if (plcbuffercount > 3) //prevent accumulation
-            {
-                Log.Warning("超過3條命令堆積 暫停查詢OK/NG/NULL顆數");
-                // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 原子遞增
-                app.counter.AddOrUpdate("blow" + s, 1, (key, oldValue) => oldValue + 1);  //  吹氣計數
-                return;
-            }
-            try
-            {
-                var time = 0;
-                if (s == "NG")  //  吹氣出口1
-                    time = int.Parse(app.param["gap1"]);//int.Parse(app.param["Blow1"]);
-                                                        //time = 3260;
-                else if (s == "OK1")//  吹氣出口2
-                    time = int.Parse(app.param["gap2"]);// int.Parse(app.param["Blow2"]);
-                                                        //time = 4020;
-                else if (s == "OK2")
-                    time = int.Parse(app.param["gap3"]);// int.Parse(app.param["Blow2"]);
-
-                if (app.counter["blow" + s] < app.blow[s].Count)   //  計數檢查
-                {
-                    try
-                    {
-                        var ok1 = app.blow["OK1"].Count;
-                        var ok2 = app.blow["OK2"].Count;
-                        var ng = app.blow["NG"].Count;
-                        //var true_null = PLC_CheckD32(1040);
-                        //lbAdd(DateTime.Now.ToString("ss-fff")+" "+(time - (int)((DateTime.Now - app.blow[s][app.counter["blow" + s]].time).TotalMilliseconds)).ToString(),"inf");
-                        var lefttime = time - (int)((DateTime.Now - app.blow[s][app.counter["blow" + s]].time).TotalMilliseconds);
-                        Log.Information($" {ok1 + ok2 + ng} lefttime:{lefttime} ");
-                        //Log.Information($"NULL={true_null}");
-                        if (lefttime < 0)
-                        {
-                            Log.Warning("Left time too short");
-                        }
-                        if (lefttime > 0)
-                        {
-                            PLC_SetD(i + 1, time - (int)((DateTime.Now - app.blow[s][app.counter["blow" + s]].time).TotalMilliseconds), emer: false);
-                            PLC_SetM(10 + i, true, false); //  吹氣
-                            PLC_SetM(10 + i, false, false); //  吹氣
-                        }
-
-                        // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 原子遞增
-                        app.counter.AddOrUpdate("blow" + s, 1, (key, oldValue) => oldValue + 1);  //  吹氣計數
-                    }
-                    catch (Exception e1)
-                    {
-                        lbAdd(s + "在第" + app.counter["blow" + s] + "顆吹氣錯誤", "err", e1.ToString());
-                        // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 原子遞增
-                        app.counter.AddOrUpdate("blow" + s, 1, (key, oldValue) => oldValue + 1);  //  吹氣計數
-                    }
-                }
-                else
-                {
-                    lbAdd(s + "在第" + app.counter["blow" + s] + "顆吹氣錯誤???", "err", "");
-                    // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 原子遞增
-                    app.counter.AddOrUpdate("blow" + s, 1, (key, oldValue) => oldValue + 1);  //  吹氣計數
-                }
-            }
-            catch (Exception e1)
-            {
-                lbAdd("吹氣錯誤", "err", e1.ToString());
-            }
-        }
-        #endregion
 
         public static void PLC_SetY(int num, bool status)
         {
@@ -5575,7 +5484,7 @@ namespace peilin
                             PLC_SetM(1, true);
                             //PLC_SetM(5, true);
                             //PLC_SetM(333, true);
-                            檢測參數設定ToolStripMenuItem_Click(null, null);
+                            調機設定ToolStripMenuItem_Click(null, null);
 
                             //燈具控制
                             PLC_SetM(30, true);
@@ -5956,7 +5865,7 @@ namespace peilin
         #endregion
         #region 設定
 
-        private void 檢測參數設定ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void 調機設定ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             parameter_info parameter_info = new parameter_info(cam);
             parameter_info.ShowDialog();
@@ -6014,13 +5923,6 @@ namespace peilin
         {
             defect_check_info defect_check_info = new defect_check_info();
             defect_check_info.ShowDialog();
-        }
-        private void 排料時間設定ToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            blow_info blow_info = new blow_info();
-            blow_info.ShowDialog();
-
-            TypeSetting();
         }
         private void 檔案留存天數設定ToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -6347,7 +6249,7 @@ namespace peilin
         {
             ShowCircleCalibrationTool();
         }
-        private void 新料號參數設定ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void 檢測參數設定ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // 檢查是否已經有料號設定
             if (string.IsNullOrEmpty(app.produce_No))
@@ -6376,7 +6278,6 @@ namespace peilin
             }
         }
         // 由 GitHub Copilot 產生
-        // filepath: c:\Users\Chernger\Desktop\bushingAOI\Form1.cs
         private void 時間測量ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!時間測量ToolStripMenuItem.Checked)
@@ -6634,14 +6535,7 @@ namespace peilin
             {
                 app.counter.TryAdd(s, 0);
             }
-            /*
-            app.blow.Clear();
-            var resultType = new[] { "OK1", "OK2", "NG" };
-            foreach (var s in resultType)
-            {
-                app.blow.Add(s, new ConcurrentList<ImagePosition>());
-            }
-            */
+
             Invoke(new Action(() => label3.Text = "0"));
             Invoke(new Action(() => label58.Text = "0"));
             Invoke(new Action(() => label59.Text = "0"));
@@ -7420,15 +7314,15 @@ namespace peilin
             app.p2label_name.Add("Lot ID");
             app.p2label_name.Add(comboBox6.Text);
             app.p2label_name.Add("缺陷種類");
-            app.p2label_name.Add("NG數量");
-            app.p2label_name.Add("NG百分比");
+            app.p2label_name.Add("NG/OK數量");
+            app.p2label_name.Add("百分比");
 
             List<DefectCount> dc = new List<DefectCount>();
             using (var db = new MydbDB())
             {
                 var q =
                     from c in db.DefectCounts
-                    where c.LotId == app.LotID && c.Type == app.produce_No && (c.Name != "OK" && c.Name != "NG" && c.Name != "NULL")
+                    where c.LotId == app.LotID && c.Type == app.produce_No && (c.Name != "SAMPLE_ID" && c.Name != "NG" && c.Name != "NULL")
                     orderby c.Name, c.Time
                     select c;
                 if (q.Count() > 0)
@@ -7528,7 +7422,7 @@ namespace peilin
 
             Title Title = new Title
             {
-                Text = "NG數量",
+                Text = "NG/OK數量",
                 Alignment = ContentAlignment.MiddleCenter,
                 Font = new Font("微軟正黑體", 18F, FontStyle.Bold)
             };
@@ -7619,7 +7513,7 @@ namespace peilin
                     from c in db.DefectCounts
                     where c.Time > DateTime.FromOADate(start) && c.Time < DateTime.FromOADate(end) 
                                     && c.Type == comboBox3.Text && c.LotId == comboBox6.Text 
-                                    && (c.Name != "OK" && c.Name != "NG" && c.Name != "NULL")
+                                    && (c.Name != "SAMPLE_ID" && c.Name != "NG" && c.Name != "NULL")
                     orderby c.Name, c.Time
                     select c;
                 if (q.Count() > 0)
@@ -7653,8 +7547,8 @@ namespace peilin
             app.p2label_name.Add("Lot ID");
             app.p2label_name.Add(comboBox6.Text);
             app.p2label_name.Add("缺陷種類");
-            app.p2label_name.Add("NG數量");
-            app.p2label_name.Add("NG百分比");
+            app.p2label_name.Add("NG/OK數量");
+            app.p2label_name.Add("百分比");
 
             if (dc.Count == 0)
             {
@@ -7759,7 +7653,7 @@ namespace peilin
             }
             Title Title = new Title
             {
-                Text = "NG數量",
+                Text = "NG/OK數量",
                 Alignment = ContentAlignment.MiddleCenter,
                 Font = new Font("微軟正黑體", 18F, FontStyle.Bold)
             };
@@ -7843,8 +7737,8 @@ namespace peilin
             app.p2label_name.Add("Lot ID");
             app.p2label_name.Add(comboBox6.Text);
             app.p2label_name.Add("缺陷種類");
-            app.p2label_name.Add("NG數量");
-            app.p2label_name.Add("NG百分比");
+            app.p2label_name.Add("NG/OK數量");
+            app.p2label_name.Add("百分比");
 
             double start = (dateTimePicker1.Value.AddMinutes(0)).ToOADate();
             double end = (dateTimePicker2.Value.AddMinutes(0)).ToOADate();
@@ -7859,7 +7753,7 @@ namespace peilin
             {
                 var q =
                     from c in db.DefectCounts
-                    where c.Time > DateTime.FromOADate(start) && c.Time < DateTime.FromOADate(end) && c.Type == comboBox3.Text && c.LotId == comboBox6.Text && (c.Name != "OK" && c.Name != "NG" && c.Name != "NULL")
+                    where c.Time > DateTime.FromOADate(start) && c.Time < DateTime.FromOADate(end) && c.Type == comboBox3.Text && c.LotId == comboBox6.Text && (c.Name != "SAMPLE_ID" && c.Name != "NG" && c.Name != "NULL")
                     orderby c.Name, c.Time
                     select c;
                 if (q.Count() > 0)
@@ -8039,7 +7933,7 @@ namespace peilin
 
             Title Title = new Title
             {
-                Text = "NG數量",
+                Text = "NG/OK數量",
                 Alignment = ContentAlignment.MiddleCenter,
                 Font = new Font("微軟正黑體", 18F, FontStyle.Bold)
             };
@@ -17607,9 +17501,9 @@ public class ResultManager
                 if (isNull)
                 {
                     IncrementCounter(counter, "NULL");
-                    Form1.PLC_SetM(sigM, true, false); //emer設為false 讓OK/NG優先
+                    Form1.PLC_SetM(sigM, true, true); //emer設為false 讓OK/NG優先
                     Thread.Sleep(50);
-                    Form1.PLC_SetM(sigM, false, false);
+                    Form1.PLC_SetM(sigM, false, true);
                     // 【優化】移除高頻寫入 SAMPLE_ID，改在停止時寫入
                     // WriteSampleToDefectCounts(sampleId, sendTime);
                     result = "NULL";
@@ -17623,7 +17517,7 @@ public class ResultManager
                     IncrementCounter(counter, "NG");
                     Form1.PLC_SetM(sigM, true, true); //emer設為true 
                     Thread.Sleep(50);
-                    Form1.PLC_SetM(sigM, false, false); //看這邊能否讓PLC自動設false
+                    Form1.PLC_SetM(sigM, false, true); //看這邊能否讓PLC自動設false
                     //移除高頻寫入 SAMPLE_ID，改在停止時寫入
                     // WriteSampleToDefectCounts(sampleId, sendTime);
                     result = "NG";
@@ -18819,7 +18713,6 @@ public class app
                                   _AI = new AutoResetEvent(false),
                                   _show = new AutoResetEvent(false);
     public static Task T1, T2, T3, T4, Tsv, Treader, TAI, Tshow;
-    public static Dictionary<string, ConcurrentList<ImagePosition>> blow;
     public static ConcurrentQueue<ImagePosition> Queue_Bitmap1 = new ConcurrentQueue<ImagePosition>();
     public static ConcurrentQueue<ImagePosition> Queue_Bitmap2 = new ConcurrentQueue<ImagePosition>();
     public static ConcurrentQueue<ImagePosition> Queue_Bitmap3 = new ConcurrentQueue<ImagePosition>();
