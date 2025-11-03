@@ -70,6 +70,7 @@ namespace peilin
         }
         private void stop_button_Click(object sender, EventArgs e)
         {
+            Form1.PLC_SetM(401, true);
             Form1.PLC_SetM(25, true);            //解除警報
             timer1.Enabled = false;
             Interlocked.Exchange(ref _isRunning, 0);

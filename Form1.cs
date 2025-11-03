@@ -554,8 +554,16 @@ namespace peilin
             }
             #endregion
         }
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)  // ✅ 改用 FormClosing
         {
+            // 執行關閉確認邏輯
+            if (!PerformCloseSequence())
+            {
+                e.Cancel = true; // ✅ FormClosingEventArgs 有 Cancel 屬性
+                return;
+            }
+
+            // 儲存最後設定
             using (var db = new MydbDB())
             {
                 db.LastSettings.Delete();
@@ -569,6 +577,7 @@ namespace peilin
                     .Value(p => p.LastNULLLimit, textBox5.Text)
                     .Insert();
             }
+
             _plcQueueMonitorTimer?.Dispose();
             lbAdd("關閉檢測程式", "inf", "");
             Log.CloseAndFlush();
@@ -619,16 +628,23 @@ namespace peilin
         #region PLC 訊號數量監控
         private void StartPLCQueueMonitoring()
         {
-            // 每 500 毫秒檢查一次佇列長度
+            // 由 GitHub Copilot 產生
+            // 修正: 計時器週期設定為 500 毫秒，提供足夠的監控頻率
             _plcQueueMonitorTimer = new System.Threading.Timer(
                 MonitorPLCQueueLengths,
                 null,
-                TimeSpan.FromSeconds(1),    // 延遲 1 秒後開始
-                TimeSpan.FromMilliseconds(1000)  // 每 1000ms 執行一次
+                TimeSpan.FromSeconds(1),                // 首次延遲：1秒後啟動
+                TimeSpan.FromMilliseconds(500)          // 週期：每 500 毫秒檢查一次
             );
         }
+
+        private DateTime _lastQueueLogTime = DateTime.MinValue;
+
         private void MonitorPLCQueueLengths(object state)
         {
+            // 由 GitHub Copilot 產生
+            // 修正: 使用時間戳判斷，確保每秒最多寫一次 LOG
+
             // 只在系統運行時監控
             if (!app.status)
                 return;
@@ -637,47 +653,41 @@ namespace peilin
             {
                 lock (_queueMonitorLock)
                 {
-                    int normalQueueCount = PLC_ModBus.SendData.Count;
-                    int emergencyQueueCount = PLC_ModBus.SendData_Emergency.Count;
-                    int totalCount = normalQueueCount + emergencyQueueCount;
-
-                    // 記錄基本資訊（低頻率）
-                    if (totalCount > 0 && DateTime.Now.Second % 10 == 0)
+                    // 檢查距離上次寫 LOG 是否已超過 1 秒
+                    if ((DateTime.Now - _lastQueueLogTime).TotalSeconds >= 1.0)
                     {
-                        Log.Information($"[PLC佇列監控] 正常佇列: {normalQueueCount}, 緊急佇列: {emergencyQueueCount}, 總計: {totalCount}");
-                    }
+                        // 獲取佇列計數
+                        int normalQueueCount = PLC_ModBus.SendData.Count;
+                        int emergencyQueueCount = PLC_ModBus.SendData_Emergency.Count;
+                        int totalCount = normalQueueCount + emergencyQueueCount;
 
-                    // 警告：正常佇列堆積
-                    if (normalQueueCount > 5)
-                    {
-                        Log.Warning($"[PLC佇列警告] 正常佇列堆積: {normalQueueCount} 筆命令");
-                    }
+                        // 寫入 LOG
+                        Log.Information($"[PLC佇列監控] {DateTime.Now:HH:mm:ss.fff} | 普通佇列={normalQueueCount}, 緊急佇列={emergencyQueueCount}, 總計={totalCount}");
 
-                    // 嚴重警告：佇列嚴重堆積
-                    if (totalCount > 10)
-                    {
-                        Log.Error($"[PLC佇列嚴重] 佇列嚴重堆積! 正常: {normalQueueCount}, 緊急: {emergencyQueueCount}, 總計: {totalCount}");
-                        /*
-                        // 可選：觸發 UI 警告
-                        BeginInvoke(new Action(() =>
+                        // 更新時間戳
+                        _lastQueueLogTime = DateTime.Now;
+
+                        // 可選：檢查佇列是否超過設定的閾值
+                        if (normalQueueCount > 5)
                         {
-                            // 更新介面顯示警告
-                            // 例如：label_plcQueueStatus.Text = $"PLC佇列堆積: {totalCount}";
-                            // label_plcQueueStatus.BackColor = Color.Red;
-                        }));
-                        */
-                    }
+                            Log.Warning($"[PLC佇列監控] 普通佇列超過5: {normalQueueCount}");
+                        }
 
-                    // 緊急佇列異常（理論上不應該堆積）
-                    if (emergencyQueueCount > 5)
-                    {
-                        Log.Error($"[PLC佇列異常] 緊急佇列異常堆積: {emergencyQueueCount} 筆");
+                        if (emergencyQueueCount > 5)
+                        {
+                            Log.Warning($"[PLC佇列監控] 緊急佇列超過5: {emergencyQueueCount}");
+                        }
+
+                        if (totalCount > 10)
+                        {
+                            Log.Warning($"[PLC佇列監控] 總佇列超過10: {totalCount}");
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[PLC佇列監控] 監控失敗: {ex.Message}");
+                Log.Error($"MonitorPLCQueueLengths 錯誤: {ex.Message}");
             }
         }
         #endregion
@@ -6417,7 +6427,8 @@ namespace peilin
         }
         #endregion
         #region 關閉程式
-        private void 關閉程式ToolStripMenuItem_Click(object sender, EventArgs e)
+        // 在 Form1 類別中新增共用方法
+        private bool PerformCloseSequence()
         {
             try
             {
@@ -6427,14 +6438,15 @@ namespace peilin
                     "確認關閉",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question,
-                    MessageBoxDefaultButton.Button2); // 預設選擇"否"
+                    MessageBoxDefaultButton.Button2);
 
                 if (closeConfirm != DialogResult.Yes)
                 {
-                    return; // 使用者選擇取消，直接返回
+                    return false; // 使用者取消
                 }
-
-                // 第二步：詢問使用者是否要匯出瑕疵統計
+                #region 匯出瑕疵統計已改到button2做
+                /*
+                // 第二步：匯出瑕疵統計詢問（如果需要）
                 DialogResult exportResult = MessageBox.Show(
                     "是否要匯出瑕疵統計資料？",
                     "匯出統計",
@@ -6443,27 +6455,23 @@ namespace peilin
 
                 if (exportResult == DialogResult.Cancel)
                 {
-                    return; // 使用者選擇取消，直接返回
+                    return false; // 使用者取消
                 }
 
                 if (exportResult == DialogResult.Yes)
                 {
-                    //ExportObjectPositionStatistics(@"C:\Users\User\Desktop\peilin2_TEST0303\bin\x64\Release\image\2025-05\0514\object_positions.csv");
-                    // 建立資料夾路徑
                     string statsFolder = Path.Combine(Environment.CurrentDirectory, "Statistics");
                     if (!Directory.Exists(statsFolder))
                     {
                         Directory.CreateDirectory(statsFolder);
                     }
 
-                    // 生成檔案名稱
                     string fileName = string.Format("瑕疵統計_{0}_{1}_{2:yyyyMMdd_HHmmss}.csv",
                                                    app.produce_No,
                                                    app.LotID,
                                                    DateTime.Now);
                     string filePath = Path.Combine(statsFolder, fileName);
 
-                    // 匯出統計資料
                     bool success = ResultManager.ExportStatsToCsv(filePath);
 
                     if (success)
@@ -6475,24 +6483,27 @@ namespace peilin
                         lbAdd("匯出瑕疵統計失敗", "war", "");
                     }
                 }
+                */
+                #endregion
+                // 第三步：最後確認
+                DialogResult finalConfirm = MessageBox.Show(
+                    "即將關閉程式，此操作無法復原。\n確定要繼續嗎？",
+                    "最後確認",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2);
+
+                return finalConfirm == DialogResult.Yes;
             }
             catch (Exception ex)
             {
-                lbAdd("匯出瑕疵統計時發生錯誤", "err", ex.Message);
+                lbAdd("關閉程式時發生錯誤", "err", ex.Message);
+                return true; // 即使發生錯誤也允許關閉
             }
-
-            DialogResult finalConfirm = MessageBox.Show(
-               "即將關閉程式，此操作無法復原。\n確定要繼續嗎？",
-               "最後確認",
-               MessageBoxButtons.YesNo,
-               MessageBoxIcon.Warning,
-               MessageBoxDefaultButton.Button2);
-
-            if (finalConfirm == DialogResult.Yes)
-            {
-                // 確定關閉程式
-                Close();
-            }
+        }
+        private void 關閉程式ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
         }
         #endregion
         #endregion
@@ -6748,6 +6759,48 @@ namespace peilin
             // **新增：狀態變更為停止後需要更新計數**
             app.currentState = app.SystemState.StoppedNeedUpdate;
             UpdateButtonStates();
+
+            #region 匯出檢測統計
+            DialogResult exportResult = MessageBox.Show(
+                    "是否要匯出瑕疵統計資料？",
+                    "匯出統計",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+
+            if (exportResult == DialogResult.Cancel)
+            {
+                return; // 使用者選擇取消，直接返回
+            }
+
+            if (exportResult == DialogResult.Yes)
+            {
+                // 建立資料夾路徑
+                string statsFolder = Path.Combine(Environment.CurrentDirectory, "Statistics");
+                if (!Directory.Exists(statsFolder))
+                {
+                    Directory.CreateDirectory(statsFolder);
+                }
+
+                // 生成檔案名稱
+                string fileName = string.Format("瑕疵統計_{0}_{1}_{2:yyyyMMdd_HHmmss}.csv",
+                                               app.produce_No,
+                                               app.LotID,
+                                               DateTime.Now);
+                string filePath = Path.Combine(statsFolder, fileName);
+
+                // 匯出統計資料
+                bool success = ResultManager.ExportStatsToCsv(filePath);
+
+                if (success)
+                {
+                    lbAdd($"瑕疵統計已成功匯出至: {filePath}", "inf", "");
+                }
+                else
+                {
+                    lbAdd("匯出瑕疵統計失敗", "war", "");
+                }
+            }
+            #endregion
         }
 
         // **新增：獲取狀態提示訊息的輔助方法**
@@ -12448,6 +12501,7 @@ namespace peilin
         private async void button37_Click(object sender, EventArgs e)
         {
             // 使用資料夾選擇對話框
+            _systemInitialized = true;
             var folderDialog = new FolderBrowserDialog
             {
                 Description = "請選擇包含測試圖片的資料夾",
@@ -17407,7 +17461,6 @@ public class ResultManager
     private void CalculateAndSendPLCSignal(SampleResult sampleResult, bool isNG, bool isNull)
     {
         //Log.Debug($"樣品 {sampleResult.SampleId} 進入CalculateAndSendPLCSignal時間記錄: {DateTime.Now.ToString("HH:mm:ss.fff")} ms");
-        //isNG = false;
         if (app.allOK == true)
         {
             isNG = false;
@@ -17415,14 +17468,83 @@ public class ResultManager
         int sampleId = sampleResult.SampleId;
         try
         {
-            // 若有強制NULL配額，且本來是 OK，則改送 NULL
-            if (!isNG && !isNull && app.postPackNullQuota > 0)
+            // ✅ **核心邏輯：檢查是否在同步模式**
+            if (app.isInSyncMode)
             {
-                isNull = true;
-                app.postPackNullQuota--;
-                Log.Warning($"滿箱後強制NULL生效，樣品 {sampleId} 改送 NULL，剩餘配額：{app.postPackNullQuota}");
-            }
+                TimeSpan elapsed = DateTime.Now - app.syncStartTime;
 
+                if (elapsed.TotalMilliseconds < app.syncWaitTimeMs)
+                {
+                    // ✅ 還在等待期間，**所有樣品（包含 NG）都送 NULL**
+                    isNull = true;
+                    Log.Warning($"[同步] 樣品 {sampleId} 在同步等待期間（已過 {elapsed.TotalMilliseconds:F0}/{app.syncWaitTimeMs} ms），改送 NULL");
+                }
+                else
+                {
+                    // ✅ 等待結束，讀取 PLC 並覆蓋計數
+                    try
+                    {
+                        // 由 GitHub Copilot 產生
+                        // 修正: 讀取 PLC 並覆蓋計數
+                        string lane = ResultManager.activeOkCounter;
+                        int plcCount;
+
+                        if (lane == "OK1")
+                        {
+                            plcCount = Form1.PLC_CheckD(803);
+                        }
+                        else // OK2
+                        {
+                            plcCount = Form1.PLC_CheckD(805);
+                        }
+
+                        // ✅ 檢查讀取是否成功
+                        if (plcCount < 0)
+                        {
+                            Log.Error($"[同步失敗] PLC 讀取失敗，觸發停機");
+                            app.plc_stop = true;
+                            return;
+                        }
+
+                        // 計算實際包數
+
+                        int softwareCount = ResultManager.counter[lane];
+                        // 覆蓋軟體計數
+                        if (softwareCount != plcCount)
+                        {
+                            lock (ResultManager.okLock)
+                            {
+                                ResultManager.counter[lane] = plcCount;
+                            }
+                        }
+                        else // softwareCount == plcCount == app.pack
+                        {
+                            // 重置當前計數器
+                            ResultManager.counter[lane] = 0;
+
+                            // 切換到另一個計數器
+                            ResultManager.activeOkCounter = (lane == "OK1") ? "OK2" : "OK1";
+
+                            Log.Information($"[同步] {lane} 達到 {plcCount} 顆（== {app.pack}），重置為 0 並切換至 {ResultManager.activeOkCounter}");
+
+                        }
+
+                        Log.Information($"[同步完成] {lane}: 軟體計數 {softwareCount} → PLC實際值 {plcCount}");
+
+                        // ✅ 關閉同步模式
+                        app.isInSyncMode = false;
+
+                        // 這個樣品恢復正常處理（NG 送 NG，OK 送 OK）
+                        isNull = false;
+                    }
+                    catch (Exception plcEx)
+                    {
+                        Log.Error($"[同步失敗] PLC 通訊錯誤: {plcEx.Message}");
+                        app.plc_stop = true;
+                        return;
+                    }
+                }
+            }
             // 由 GitHub Copilot 產生
             // 修改: 使用 TryGetValue 避免 Check-Then-Act 反模式
             if (!app.samplePhotoTimes.TryGetValue(sampleId, out DateTime photoTime))
@@ -17633,17 +17755,42 @@ public class ResultManager
             dict.AddOrUpdate(activeOkCounter, increment, (key, oldValue) => oldValue + increment);
 
             // 檢查是否達到包裝數量
-            if (dict[activeOkCounter] >= app.pack) // 已經包裝完一包
+            if (dict[activeOkCounter] % app.pack == 0 && dict[activeOkCounter] > 0) // 已經包裝完一包
             {
-                // 開啟配額：後續5顆 OK 直接改送 NULL（NG不受影響）
-                app.postPackNullQuota = 0;
+                // ✅ 設定同步旗標
+                app.isInSyncMode = true;
 
-                logMessage = $"已達 {app.pack}，啟用強制NULL配額：{app.postPackNullQuota} 顆";
+                // 記錄同步開始時間
+                app.syncStartTime = DateTime.Now;
 
-                // 重置計數器並切換
+                // 計算等待時間（根據當前活躍計數器決定）
+                if (activeOkCounter == "OK1")
+                {
+                    app.syncWaitTimeMs = int.Parse(app.param["fourToOK1_time_ms_4"])
+                                       - int.Parse(app.param["delay4"])
+                                       + 100;
+                }
+                else // OK2
+                {
+                    app.syncWaitTimeMs = int.Parse(app.param["fourToOK2_time_ms_4"])
+                                       - int.Parse(app.param["delay4"])
+                                       + 100;
+                }
+
+                logMessage = $"[同步] {activeOkCounter} 達到 {dict[activeOkCounter]} 顆，" +
+                        $"從 {app.syncStartTime:HH:mm:ss.fff} 開始同步，持續 {app.syncWaitTimeMs} ms";
+            }
+            /*
+            // 4. ✅ 檢查是否達到包裝數量（但**不在同步期間**切換）
+            // ⚠️ 關鍵：只有在「非同步模式」且「確實達到 app.pack」時才切換
+            if (!app.isInSyncMode && dict[activeOkCounter] == app.pack)
+            {
                 dict[activeOkCounter] = 0;
                 activeOkCounter = (activeOkCounter == "OK1") ? "OK2" : "OK1";
+
+                logMessage += $"\n[切換] 計數器切換至 {activeOkCounter}";
             }
+            */
         }
         // 準備資訊日誌訊息(在 lock 外寫入)
         string infoMessage = $"[OKN監控] {DateTime.Now:HH:mm:ss.fff},          active:{activeOkCounter}, count:{dict[activeOkCounter]}";
@@ -17951,71 +18098,24 @@ public class ResultManager
         {
             using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
             {
-                var group12Stats = new List<(bool isNG, float? score, string defectName)>();
-                var group34Stats = new List<(bool isNG, float? score, string defectName)>();
-                #region 監控 1+2/3+4
-                /*
-                // 1+2站、3+4站合併結果統計
+                #region 總體統計
+                // 總體統計摘要（保持原來的實現）
                 writer.WriteLine();
-                writer.WriteLine("==== 1+2站/3+4站合併結果 ====");
-                writer.WriteLine("樣品ID,組別,合併結果,分數,瑕疵名稱");
+                writer.WriteLine("==== 總體統計 ====");
+                int totalSamples = sampleResults.Count;
+                int totalNG = sampleResults.Count(s => s.Value.isNG);
+                int totalOK = totalSamples - totalNG;
+                float ngPercentage = totalSamples > 0 ? ((float)totalNG / totalSamples * 100) : 0;
 
-                var group12Stats = new List<(bool isNG, float? score, string defectName)>();
-                var group34Stats = new List<(bool isNG, float? score, string defectName)>();
-
-                foreach (var samplePair in sampleStationResults.OrderBy(r => r.Key))
-                {
-                    int sampleId = samplePair.Key;
-                    var stationDict = samplePair.Value;
-
-                    // 1+2站
-                    var results12 = stationDict.Where(x => x.Key == 1 || x.Key == 2).Select(x => x.Value).ToList();
-                    if (results12.Count > 0)
-                    {
-                        bool isNG = results12.Any(r => r.IsNG);
-                        var maxScoreResult = results12.OrderByDescending(r => r.DefectScore ?? float.MinValue).FirstOrDefault();
-                        float? score = maxScoreResult?.DefectScore;
-                        string defectName = maxScoreResult?.DefectName ?? "-";
-                        string resultText = isNG ? "NG" : "OK";
-                        group12Stats.Add((isNG, score, defectName));
-                        writer.WriteLine($"{sampleId},1+2,{resultText},{(score.HasValue ? score.Value.ToString("F2") : "-")},{defectName}");
-                    }
-
-                    // 3+4站
-                    var results34 = stationDict.Where(x => x.Key == 3 || x.Key == 4).Select(x => x.Value).ToList();
-                    if (results34.Count > 0)
-                    {
-                        bool isNG = results34.Any(r => r.IsNG);
-                        var maxScoreResult = results34.OrderByDescending(r => r.DefectScore ?? float.MinValue).FirstOrDefault();
-                        float? score = maxScoreResult?.DefectScore;
-                        string defectName = maxScoreResult?.DefectName ?? "-";
-                        string resultText = isNG ? "NG" : "OK";
-                        group34Stats.Add((isNG, score, defectName));
-                        writer.WriteLine($"{sampleId},3+4,{resultText},{(score.HasValue ? score.Value.ToString("F2") : "-")},{defectName}");
-                    }
-                }
-
-                // 樣品級監控（每個樣品在每個站點的詳細結果）
-                writer.WriteLine();
-                writer.WriteLine("==== 樣品級監控 ====");
-                writer.WriteLine("樣品ID,站點,結果,瑕疵名稱,分數");
-
-                foreach (var samplePair in sampleStationResults.OrderBy(r => r.Key))
-                {
-                    int sampleId = samplePair.Key;
-                    var stationDict = samplePair.Value;
-                    foreach (var stationPair in stationDict.OrderBy(s => s.Key))
-                    {
-                        int station = stationPair.Key;
-                        var stationResult = stationPair.Value;
-                        string resultText = stationResult.IsNG ? "NG" : "OK";
-                        string defectName = stationResult.DefectName ?? "-";
-                        string scoreText = stationResult.DefectScore.HasValue ? stationResult.DefectScore.Value.ToString("F2") : "-";
-                        writer.WriteLine($"{sampleId},{station},{resultText},{defectName},{scoreText}");
-                    }
-                }
-                */
+                writer.WriteLine($"總樣品數,{totalSamples}");
+                writer.WriteLine($"OK數量,{totalOK}");
+                writer.WriteLine($"NG數量,{totalNG}");
+                writer.WriteLine($"不良率(%),{ngPercentage:F2}");
                 #endregion
+
+                #region 12/34 合併統計OK/NG
+                var group12Stats = new List<(bool isNG, float? score, string defectName)>();
+                var group34Stats = new List<(bool isNG, float? score, string defectName)>();
                 // 統計OK/NG數量
                 int group12OK = group12Stats.Count(x => !x.isNG);
                 int group12NG = group12Stats.Count(x => x.isNG);
@@ -18027,8 +18127,8 @@ public class ResultManager
                 writer.WriteLine("組別,OK數量,NG數量");
                 writer.WriteLine($"1+2,{group12OK},{group12NG}");
                 writer.WriteLine($"3+4,{group34OK},{group34NG}");
-
-
+                #endregion
+                #region 站點統計
                 writer.WriteLine();
                 writer.WriteLine("==== 站點統計 ====");
                 writer.WriteLine("站點,OK數量,NG數量,瑕疵類型,瑕疵數量");
@@ -18052,74 +18152,9 @@ public class ResultManager
                         }
                     }
                 }
-
-                // 分數分布統計
-                writer.WriteLine();
-                writer.WriteLine("==== 合併組別分數分布統計 ====");
-                writer.WriteLine("組別,樣本數,最小值,最大值,平均值,5%分位數,25%分位數,中位數,75%分位數,95%分位數,推薦閥值");
-
-                // 只統計有分數的樣本
-                var group12Scores = group12Stats.Where(x => x.score.HasValue).Select(x => x.score.Value).OrderBy(x => x).ToList();
-                var group34Scores = group34Stats.Where(x => x.score.HasValue).Select(x => x.score.Value).OrderBy(x => x).ToList();
-
-                void WriteScoreStats(string groupName, List<float> scores)
-                {
-                    int n = scores.Count;
-                    if (n == 0)
-                    {
-                        writer.WriteLine($"{groupName},0,-,-,-,-,-,-,-,-,-");
-                        return;
-                    }
-                    float min = scores.First();
-                    float max = scores.Last();
-                    float avg = scores.Average();
-                    float p5 = scores[(int)(n * 0.05)];
-                    float p25 = scores[(int)(n * 0.25)];
-                    float median = scores[(int)(n * 0.5)];
-                    float p75 = scores[(int)(n * 0.75)];
-                    float p95 = scores[(int)(n * 0.95)];
-                    // 推薦閥值：這裡以95%分位數為例，可依需求調整
-                    float recommend = p95;
-                    writer.WriteLine($"{groupName},{n},{min:F2},{max:F2},{avg:F2},{p5:F2},{p25:F2},{median:F2},{p75:F2},{p95:F2},{recommend:F2}");
-                }
-
-                WriteScoreStats("1+2", group12Scores);
-                WriteScoreStats("3+4", group34Scores);
-
-                #region 樣品級別統計
-                /*
-                // 樣品級別統計 - 添加更多詳細信息
-                writer.WriteLine();
-                writer.WriteLine("==== 樣品統計 ====");
-                writer.WriteLine("樣品ID,結果,瑕疵類型,瑕疵分數,超時");
-
-                // 按樣品ID排序
-                foreach (var sample in sampleResults.OrderBy(s => s.Key))
-                {
-                    string resultText = sample.Value.isNG ? "NG" : "OK";
-                    //string defectName = sample.Value.isNG ? sample.Value.defect   Name ?? "-" : "-";
-                    string defectName = sample.Value.defectName ?? "未分類";
-                    string scoreText = sample.Value.score.HasValue ? sample.Value.score.Value.ToString("F2") : "-";
-                    string timeoutText = sample.Value.timeout.HasValue ? sample.Value.timeout.Value.ToString("F2") : "-";
-
-                    writer.WriteLine($"{sample.Key},{resultText},{defectName},{scoreText},{timeoutText}");
-                }
-                */
                 #endregion
 
-                // 總體統計摘要（保持原來的實現）
-                writer.WriteLine();
-                writer.WriteLine("==== 總體統計 ====");
-                int totalSamples = sampleResults.Count;
-                int totalNG = sampleResults.Count(s => s.Value.isNG);
-                int totalOK = totalSamples - totalNG;
-                float ngPercentage = totalSamples > 0 ? ((float)totalNG / totalSamples * 100) : 0;
-
-                writer.WriteLine($"總樣品數,{totalSamples}");
-                writer.WriteLine($"OK數量,{totalOK}");
-                writer.WriteLine($"NG數量,{totalNG}");
-                writer.WriteLine($"不良率(%),{ngPercentage:F2}");
-
+                #region 瑕疵類型統計
                 // 瑕疵類型統計
                 var defectTypeSummary = new Dictionary<string, int>();
                 foreach (var sample in sampleResults.Where(s => s.Value.isNG))
@@ -18141,7 +18176,8 @@ public class ResultManager
                     writer.WriteLine($"{defect.Key},{defect.Value},{defectPercentage:F2}");
                     //writer.WriteLine($"{defect.Key},{defect.Value}");
                 }
-
+                #endregion
+                #region 分數分布分析
                 // 添加新的分數分布分析部分
                 writer.WriteLine();
                 writer.WriteLine("==== 分數分布分析 ====");
@@ -18168,69 +18204,15 @@ public class ResultManager
                                      $"{stats.p95:F2},{stats.p99:F2}," +
                                      $"{recommendedThreshold:F2}");
                 }
+                #endregion
 
-                // ROC曲線相關數據（針對主要瑕疵類型）
-                writer.WriteLine();
-                writer.WriteLine("==== ROC曲線數據 ====");
-                writer.WriteLine("瑕疵類型,閾值,真陽性率,假陽性率,準確率,F1分數");
-
-                // 為主要瑕疵類型輸出ROC數據點
-                foreach (var kvp in defectScores.Where(d => d.Value.Count >= 20))
-                {
-                    string defectName = kvp.Key;
-                    var scores = kvp.Value;
-
-                    // 選取一些關鍵閾值點
-                    for (float t = 0; t <= 1.0f; t += 0.05f)
-                    {
-                        int tp = scores.Count(s => !s.isOK && s.score >= t);  // 真陽性
-                        int fp = scores.Count(s => s.isOK && s.score >= t);   // 假陽性
-                        int tn = scores.Count(s => s.isOK && s.score < t);    // 真陰性
-                        int fn = scores.Count(s => !s.isOK && s.score < t);   // 假陰性
-
-                        float tpRate = tp / (float)Math.Max(1, tp + fn);
-                        float fpRate = fp / (float)Math.Max(1, fp + tn);
-                        float accuracy = (tp + tn) / (float)Math.Max(1, tp + tn + fp + fn);
-                        float precision = tp / (float)Math.Max(1, tp + fp);
-                        float recall = tpRate;
-                        float f1 = 2 * (precision * recall) / Math.Max(0.001f, precision + recall);
-
-                        writer.WriteLine($"{defectName},{t:F2},{tpRate:F2},{fpRate:F2},{accuracy:F2},{f1:F2}");
-                    }
-                }
-
-                // 混淆矩陣
-                writer.WriteLine();
-                writer.WriteLine("==== 混淆矩陣（使用推薦閾值）====");
-                writer.WriteLine("瑕疵類型,閾值,真陽性(TP),假陽性(FP),真陰性(TN),假陰性(FN),準確率,靈敏度,特異度");
-
-                foreach (var defect in optimalThresholds)
-                {
-                    string defectName = defect.Key;
-                    float threshold = defect.Value;
-
-                    if (!defectScores.ContainsKey(defectName)) continue;
-
-                    var scores = defectScores[defectName];
-
-                    int tp = scores.Count(s => !s.isOK && s.score >= threshold);
-                    int fp = scores.Count(s => s.isOK && s.score >= threshold);
-                    int tn = scores.Count(s => s.isOK && s.score < threshold);
-                    int fn = scores.Count(s => !s.isOK && s.score < threshold);
-
-                    float accuracy = (tp + tn) / (float)Math.Max(1, tp + tn + fp + fn);
-                    float sensitivity = tp / (float)Math.Max(1, tp + fn);  // 靈敏度/召回率
-                    float specificity = tn / (float)Math.Max(1, tn + fp);  // 特異度
-
-                    writer.WriteLine($"{defectName},{threshold:F2},{tp},{fp},{tn},{fn},{accuracy:F2},{sensitivity:F2},{specificity:F2}");
-                }
             }
             return true;
         }
         catch (Exception ex)
         {
             Log.Error($"匯出統計資料時發生錯誤: {ex.Message}");
-            return false;
+            return false;   
         }
     }
 
@@ -18805,6 +18787,11 @@ public class app
     public static bool test = true;
     public static int mode = 0;
     public static bool allOK = false;
+    // 由 GitHub Copilot 產生
+    // 修正: 簡化同步機制，使用簡單旗標
+    public static bool isInSyncMode = false;              // 是否在同步模式
+    public static DateTime syncStartTime = DateTime.MinValue; // 同步開始時間
+    public static int syncWaitTimeMs = 0;                 // 同步等待時間（毫秒）
 
     public static int NGmax = 0, NULLmax = 0;
     public static int pack = 0, order = 0;

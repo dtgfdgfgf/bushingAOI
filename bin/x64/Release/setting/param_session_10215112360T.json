@@ -1,6 +1,6 @@
 {
-  "SessionId": "20251029_10215112360T",
-  "CreatedTime": "2025-10-29T16:33:23.5386626+08:00",
+  "SessionId": "20251103_10215112360T",
+  "CreatedTime": "2025-11-03T09:31:02.2268134+08:00",
   "SourceType": "10215112360T",
   "TargetType": "10215112360T",
   "Parameters": [
@@ -277,7 +277,7 @@
     {
       "Type": "10215112360T",
       "Name": "known_inner_center_x",
-      "Value": "1192",
+      "Value": "1188",
       "Stop": 2,
       "ChineseName": "預設內環X",
       "Zone": 0,
@@ -286,7 +286,7 @@
     {
       "Type": "10215112360T",
       "Name": "known_inner_center_y",
-      "Value": "1036",
+      "Value": "1037",
       "Stop": 2,
       "ChineseName": "預設內環Y",
       "Zone": 0,
@@ -1132,7 +1132,7 @@
     {
       "Type": "10215112360T",
       "Name": "known_inner_center_x",
-      "Value": "1192",
+      "Value": "1188",
       "Stop": 2,
       "ChineseName": "預設內環X",
       "Zone": 1,
@@ -1141,7 +1141,7 @@
     {
       "Type": "10215112360T",
       "Name": "known_inner_center_y",
-      "Value": "1036",
+      "Value": "1037",
       "Stop": 2,
       "ChineseName": "預設內環Y",
       "Zone": 1,

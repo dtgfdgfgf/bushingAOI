@@ -292,3 +292,104 @@ Example workflow (handled by `YoloDetection.cs`):
 4. Warmup with dummy images
 5. Send detection requests with Base64-encoded images
 6. Parse JSON responses with bounding boxes and class IDs
+
+## Documentation Management Rules
+
+### Bilingual Documentation Requirement
+**CRITICAL:** This project maintains documentation in both English and Traditional Chinese.
+
+When generating or updating `CLAUDE.md` (English version), you **MUST** simultaneously generate or update `CLAUDE-zh-tw.md` (Traditional Chinese version):
+- Both files must contain the same information, differing only in language
+- `CLAUDE.md` must be in English
+- `CLAUDE-zh-tw.md` must be in Traditional Chinese (complete translation of CLAUDE.md)
+- Any structural changes, new sections, or content updates must be synchronized across both files
+
+### Git Push Requirements
+After making any documentation or code changes, follow this workflow:
+
+1. **Stage and commit changes:**
+   ```bash
+   git add .
+   git commit -m "..."
+   git push
+   ```
+
+2. **Verify push success:**
+   ```bash
+   git status
+   # or
+   git log --oneline -3
+   ```
+
+### Structured Commit Message Format
+Every file change must be explicitly documented in the commit message using this structure:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+- File1: description of changes and rationale
+- File2: description of changes and rationale
+- File3: description of changes and rationale
+
+<footer>
+```
+
+**Commit Message Requirements:**
+
+- **Type:** feat, fix, docs, refactor, chore, test, style, etc.
+- **Scope:** Affected module or component (e.g., ai, notion, webhook, docs)
+- **Subject:** Brief summary (50 characters or less)
+- **Body:** Detailed explanation for each changed file:
+  - What changed in each file
+  - Why this change was necessary
+  - Impact of the change
+- **Footer:** Co-authors, references, breaking changes
+
+**Examples:**
+
+```
+docs(project): Add bilingual documentation management rules
+
+- CLAUDE.md: Added documentation management section with bilingual requirements, git workflow, and commit message standards
+- CLAUDE-zh-tw.md: Created complete Traditional Chinese translation of CLAUDE.md
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+```
+feat(parameters): Implement 3-zone parameter management system
+
+- ParameterConfigForm.cs: Refactored UI to support Reference/Added-Unmodified/Added-Modified zones
+- ParameterSetupManager.cs: Added zone tracking logic and save validation
+- CLAUDE.md: Updated documentation to reflect new parameter management workflow
+- CLAUDE-zh-tw.md: Synchronized Traditional Chinese documentation
+
+This change improves parameter editing workflow by clearly distinguishing source parameters from edited copies, preventing accidental overwrites.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### Documentation Synchronization
+When making any code changes, you must review and update `CLAUDE.md` if needed.
+
+**Key areas requiring documentation updates:**
+- Architecture changes (new modules, modified flows)
+- New features or commands
+- Database schema modifications
+- API integrations or external service changes
+- Configuration or environment variable changes
+- Workflow or business logic changes
+
+**Synchronization workflow:**
+1. Make code changes
+2. Evaluate if changes impact documentation
+3. If yes, update `CLAUDE.md` (English)
+4. Immediately update `CLAUDE-zh-tw.md` (Traditional Chinese translation)
+5. Commit both documentation files together with code changes
+
+**Documentation must always reflect the current state of the codebase to prevent information drift.**

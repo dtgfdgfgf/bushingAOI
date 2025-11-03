@@ -1321,7 +1321,6 @@ namespace peilin
             this.button37.TabIndex = 427;
             this.button37.Text = "模擬進圖";
             this.button37.UseVisualStyleBackColor = true;
-            this.button37.Visible = false;
             this.button37.Click += new System.EventHandler(this.button37_Click);
             // 
             // testIoU
@@ -2235,15 +2234,15 @@ namespace peilin
             this.Controls.Add(this.button4);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.panel3);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            this.MaximizeBox = true;
+            this.MinimizeBox = true;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "培霖檢測程式";
+            this.Text = "襯套檢測程式";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.panel2.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
