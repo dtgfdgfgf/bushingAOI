@@ -35,6 +35,17 @@ namespace peilin
         {
             this.button1 = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label1 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
@@ -59,21 +70,12 @@ namespace peilin
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.textBox6 = new System.Windows.Forms.TextBox();
             this.comboBox4 = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.comboBox6 = new System.Windows.Forms.ComboBox();
-            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column9 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -85,7 +87,7 @@ namespace peilin
             // button1
             // 
             this.button1.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button1.Location = new System.Drawing.Point(697, 852);
+            this.button1.Location = new System.Drawing.Point(753, 852);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(105, 58);
             this.button1.TabIndex = 0;
@@ -110,22 +112,100 @@ namespace peilin
             this.Column4,
             this.Column5,
             this.Column9,
-            this.Column10});
+            this.Column10,
+            this.Column11});
             this.dataGridView1.Location = new System.Drawing.Point(12, 84);
             this.dataGridView1.MultiSelect = false;
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.ReadOnly = true;
             this.dataGridView1.RowHeadersVisible = false;
             this.dataGridView1.RowTemplate.Height = 24;
-            this.dataGridView1.Size = new System.Drawing.Size(632, 865);
+            this.dataGridView1.Size = new System.Drawing.Size(700, 865);
             this.dataGridView1.TabIndex = 4;
             this.dataGridView1.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellClick);
+            // 
+            // Column1
+            // 
+            this.Column1.HeaderText = "料號";
+            this.Column1.Name = "Column1";
+            this.Column1.ReadOnly = true;
+            this.Column1.Width = 120;
+            // 
+            // Column7
+            // 
+            this.Column7.HeaderText = "背材";
+            this.Column7.Name = "Column7";
+            this.Column7.ReadOnly = true;
+            this.Column7.Width = 55;
+            // 
+            // Column8
+            // 
+            this.Column8.HeaderText = "厚度";
+            this.Column8.Name = "Column8";
+            this.Column8.ReadOnly = true;
+            this.Column8.Width = 55;
+            // 
+            // Column6
+            // 
+            this.Column6.HeaderText = "PTFE";
+            this.Column6.Name = "Column6";
+            this.Column6.ReadOnly = true;
+            this.Column6.Width = 55;
+            // 
+            // Column2
+            // 
+            this.Column2.HeaderText = "ID";
+            this.Column2.Name = "Column2";
+            this.Column2.ReadOnly = true;
+            this.Column2.Width = 55;
+            // 
+            // Column3
+            // 
+            this.Column3.HeaderText = "OD";
+            this.Column3.Name = "Column3";
+            this.Column3.ReadOnly = true;
+            this.Column3.Width = 55;
+            // 
+            // Column4
+            // 
+            this.Column4.HeaderText = "H";
+            this.Column4.Name = "Column4";
+            this.Column4.ReadOnly = true;
+            this.Column4.Width = 55;
+            // 
+            // Column5
+            // 
+            this.Column5.HeaderText = "有無油溝";
+            this.Column5.Name = "Column5";
+            this.Column5.ReadOnly = true;
+            this.Column5.Width = 78;
+            // 
+            // Column9
+            // 
+            this.Column9.HeaderText = "boxorpack";
+            this.Column9.Name = "Column9";
+            this.Column9.ReadOnly = true;
+            this.Column9.Visible = false;
+            // 
+            // Column10
+            // 
+            this.Column10.HeaderText = "有無五彩鋅";
+            this.Column10.Name = "Column10";
+            this.Column10.ReadOnly = true;
+            this.Column10.Width = 90;
+            // 
+            // Column11
+            // 
+            this.Column11.HeaderText = "包裝形式";
+            this.Column11.Name = "Column11";
+            this.Column11.ReadOnly = true;
+            this.Column11.Width = 78;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.label1.Location = new System.Drawing.Point(696, 84);
+            this.label1.Location = new System.Drawing.Point(752, 84);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(62, 31);
             this.label1.TabIndex = 5;
@@ -134,7 +214,7 @@ namespace peilin
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.textBox1.Location = new System.Drawing.Point(694, 128);
+            this.textBox1.Location = new System.Drawing.Point(750, 128);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(382, 39);
             this.textBox1.TabIndex = 6;
@@ -186,7 +266,7 @@ namespace peilin
             // button2
             // 
             this.button2.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button2.Location = new System.Drawing.Point(669, 12);
+            this.button2.Location = new System.Drawing.Point(725, 12);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(194, 58);
             this.button2.TabIndex = 11;
@@ -198,7 +278,7 @@ namespace peilin
             // 
             this.button4.Enabled = false;
             this.button4.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button4.Location = new System.Drawing.Point(816, 852);
+            this.button4.Location = new System.Drawing.Point(872, 852);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(136, 58);
             this.button4.TabIndex = 14;
@@ -219,7 +299,7 @@ namespace peilin
             // button5
             // 
             this.button5.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button5.Location = new System.Drawing.Point(966, 852);
+            this.button5.Location = new System.Drawing.Point(1022, 852);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(105, 58);
             this.button5.TabIndex = 16;
@@ -237,7 +317,7 @@ namespace peilin
             this.comboBox2.Items.AddRange(new object[] {
             "有",
             "無"});
-            this.comboBox2.Location = new System.Drawing.Point(17, 53);
+            this.comboBox2.Location = new System.Drawing.Point(42, 53);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(127, 40);
             this.comboBox2.TabIndex = 21;
@@ -314,7 +394,7 @@ namespace peilin
             this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.label9);
             this.groupBox1.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.groupBox1.Location = new System.Drawing.Point(694, 188);
+            this.groupBox1.Location = new System.Drawing.Point(750, 188);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(382, 162);
             this.groupBox1.TabIndex = 413;
@@ -375,7 +455,7 @@ namespace peilin
             this.groupBox2.Controls.Add(this.label6);
             this.groupBox2.Controls.Add(this.textBox4);
             this.groupBox2.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.groupBox2.Location = new System.Drawing.Point(694, 356);
+            this.groupBox2.Location = new System.Drawing.Point(750, 356);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(382, 162);
             this.groupBox2.TabIndex = 414;
@@ -386,7 +466,7 @@ namespace peilin
             // 
             this.groupBox3.Controls.Add(this.comboBox2);
             this.groupBox3.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.groupBox3.Location = new System.Drawing.Point(694, 528);
+            this.groupBox3.Location = new System.Drawing.Point(750, 528);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(198, 121);
             this.groupBox3.TabIndex = 415;
@@ -395,16 +475,25 @@ namespace peilin
             // 
             // groupBox4
             // 
+            this.groupBox4.Controls.Add(this.textBox6);
             this.groupBox4.Controls.Add(this.comboBox4);
             this.groupBox4.Controls.Add(this.label7);
             this.groupBox4.Controls.Add(this.label5);
             this.groupBox4.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.groupBox4.Location = new System.Drawing.Point(694, 671);
+            this.groupBox4.Location = new System.Drawing.Point(750, 671);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(382, 164);
             this.groupBox4.TabIndex = 416;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "包裝";
+            // 
+            // textBox6
+            // 
+            this.textBox6.Location = new System.Drawing.Point(137, 116);
+            this.textBox6.Name = "textBox6";
+            this.textBox6.Size = new System.Drawing.Size(237, 39);
+            this.textBox6.TabIndex = 3;
+            this.textBox6.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // comboBox4
             // 
@@ -424,11 +513,11 @@ namespace peilin
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(2, 116);
+            this.label7.Location = new System.Drawing.Point(11, 117);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(374, 31);
+            this.label7.Size = new System.Drawing.Size(134, 31);
             this.label7.TabIndex = 1;
-            this.label7.Text = "包裝形式：四袋包裝袋裝一大紙箱";
+            this.label7.Text = "包裝形式：";
             // 
             // label5
             // 
@@ -443,7 +532,7 @@ namespace peilin
             // 
             this.groupBox5.Controls.Add(this.comboBox6);
             this.groupBox5.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.groupBox5.Location = new System.Drawing.Point(898, 528);
+            this.groupBox5.Location = new System.Drawing.Point(954, 528);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(178, 121);
             this.groupBox5.TabIndex = 416;
@@ -460,86 +549,17 @@ namespace peilin
             this.comboBox6.Items.AddRange(new object[] {
             "有",
             "無"});
-            this.comboBox6.Location = new System.Drawing.Point(17, 53);
+            this.comboBox6.Location = new System.Drawing.Point(31, 53);
             this.comboBox6.Name = "comboBox6";
             this.comboBox6.Size = new System.Drawing.Size(127, 40);
             this.comboBox6.TabIndex = 21;
             this.comboBox6.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboBox2_DrawItem);
             // 
-            // Column1
-            // 
-            this.Column1.HeaderText = "料號";
-            this.Column1.Name = "Column1";
-            this.Column1.ReadOnly = true;
-            this.Column1.Width = 120;
-            // 
-            // Column7
-            // 
-            this.Column7.HeaderText = "背材";
-            this.Column7.Name = "Column7";
-            this.Column7.ReadOnly = true;
-            this.Column7.Width = 55;
-            // 
-            // Column8
-            // 
-            this.Column8.HeaderText = "厚度";
-            this.Column8.Name = "Column8";
-            this.Column8.ReadOnly = true;
-            this.Column8.Width = 55;
-            // 
-            // Column6
-            // 
-            this.Column6.HeaderText = "PTFE";
-            this.Column6.Name = "Column6";
-            this.Column6.ReadOnly = true;
-            this.Column6.Width = 55;
-            // 
-            // Column2
-            // 
-            this.Column2.HeaderText = "ID";
-            this.Column2.Name = "Column2";
-            this.Column2.ReadOnly = true;
-            this.Column2.Width = 55;
-            // 
-            // Column3
-            // 
-            this.Column3.HeaderText = "OD";
-            this.Column3.Name = "Column3";
-            this.Column3.ReadOnly = true;
-            this.Column3.Width = 55;
-            // 
-            // Column4
-            // 
-            this.Column4.HeaderText = "H";
-            this.Column4.Name = "Column4";
-            this.Column4.ReadOnly = true;
-            this.Column4.Width = 55;
-            // 
-            // Column5
-            // 
-            this.Column5.HeaderText = "有無油溝";
-            this.Column5.Name = "Column5";
-            this.Column5.ReadOnly = true;
-            this.Column5.Width = 78;
-            // 
-            // Column9
-            // 
-            this.Column9.HeaderText = "boxorpack";
-            this.Column9.Name = "Column9";
-            this.Column9.ReadOnly = true;
-            this.Column9.Visible = false;
-            // 
-            // Column10
-            // 
-            this.Column10.HeaderText = "有無五彩鋅";
-            this.Column10.Name = "Column10";
-            this.Column10.ReadOnly = true;
-            // 
             // type_info
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1127, 961);
+            this.ClientSize = new System.Drawing.Size(1174, 961);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
@@ -607,6 +627,7 @@ namespace peilin
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.GroupBox groupBox5;
         private System.Windows.Forms.ComboBox comboBox6;
+        private System.Windows.Forms.TextBox textBox6;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
@@ -617,5 +638,6 @@ namespace peilin
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column9;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column11;
     }
 }

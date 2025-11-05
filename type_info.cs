@@ -54,7 +54,7 @@ namespace peilin
                         {
                             dataGridView1.Rows.Add(c.TypeColumn, c.material, c.thick, c.PTFEColor, 
                                                     c.ID, c.OD, c.H, 
-                                                    c.hasgroove, c.boxorpack, c.hasYZP);
+                                                    c.hasgroove, c.boxorpack, c.hasYZP, c.package);
                         }                        
                         comboBox5.Items.Add(c.TypeColumn);
                     }
@@ -198,6 +198,7 @@ namespace peilin
             textBox3.Enabled = true;
             textBox4.Enabled = true;
             textBox5.Enabled = true;
+            textBox6.Enabled = true;
             comboBox6.Enabled = true;
             comboBox4.Enabled = true;
             comboBox3.Enabled = true;
@@ -209,6 +210,7 @@ namespace peilin
             textBox3.Text = "";
             textBox4.Text = "";
             textBox5.Text = "";
+            textBox6.Text = "";
             comboBox6.Text = "";
             comboBox4.Text = "";
             comboBox3.Text = "";
@@ -238,7 +240,8 @@ namespace peilin
                 textBox3.Enabled = false;
                 textBox4.Enabled = false;
                 textBox5.Enabled = false;
-                comboBox6.Enabled = false;
+                textBox6.Enabled = false;
+               comboBox6.Enabled = false;
                 comboBox4.Enabled = false;
                 comboBox3.Enabled = false;
                 comboBox2.Enabled = false;
@@ -247,6 +250,7 @@ namespace peilin
                 textBox1.Text = dataGridView1.Rows[e.RowIndex].Cells[0].Value?.ToString() ?? "";
                 comboBox3.Text = dataGridView1.Rows[e.RowIndex].Cells[1].Value?.ToString() ?? "";
                 textBox5.Text = dataGridView1.Rows[e.RowIndex].Cells[2].Value?.ToString() ?? "";
+                textBox6.Text = dataGridView1.Rows[e.RowIndex].Cells[10].Value?.ToString() ?? "";
                 comboBox1.Text = dataGridView1.Rows[e.RowIndex].Cells[3].Value?.ToString() ?? "";
                 textBox2.Text = dataGridView1.Rows[e.RowIndex].Cells[4].Value?.ToString() ?? "";
                 textBox3.Text = dataGridView1.Rows[e.RowIndex].Cells[5].Value?.ToString() ?? "";
@@ -277,6 +281,7 @@ namespace peilin
                         textBox3.Enabled = true;
                         textBox4.Enabled = true;
                         textBox5.Enabled = true;
+                        textBox6.Enabled = true;
                         comboBox6.Enabled = true;
                         comboBox4.Enabled = true;
                         comboBox3.Enabled = true;
@@ -360,6 +365,7 @@ namespace peilin
                       .Set(p => p.thick, valthick)
                       .Set(p => p.boxorpack, comboBox4.Text)
                       .Set(p => p.hasYZP, comboBox6.Text)
+                      .Set(p => p.package, textBox6.Text)
                       .Update();
                 }
 
@@ -369,6 +375,7 @@ namespace peilin
                 textBox3.Enabled = false;
                 textBox4.Enabled = false;
                 textBox5.Enabled = false;
+                textBox6.Enabled = false;
                 comboBox6.Enabled = false;
                 comboBox4.Enabled = false;
                 comboBox3.Enabled = false;
@@ -388,8 +395,9 @@ namespace peilin
                 if (string.IsNullOrWhiteSpace(textBox1.Text) ||
                     string.IsNullOrWhiteSpace(textBox2.Text) ||
                     string.IsNullOrWhiteSpace(textBox3.Text) ||
-                    string.IsNullOrWhiteSpace(textBox4.Text)||
-                    string.IsNullOrWhiteSpace(textBox5.Text))
+                    string.IsNullOrWhiteSpace(textBox4.Text) ||
+                    string.IsNullOrWhiteSpace(textBox5.Text) ||
+                    string.IsNullOrWhiteSpace(textBox6.Text))
                 {
                     MessageBox.Show("請填寫完整資料!");
                     return;
@@ -431,6 +439,7 @@ namespace peilin
                       .Value(p => p.PTFEColor, comboBox1.Text)
                       .Value(p => p.boxorpack, comboBox4.Text)
                       .Value(p => p.hasYZP, comboBox6.Text)
+                      .Value(p => p.package, textBox6.Text)
                       .Insert();
 
                     // 如果還有其他相機參數 / DefectChecks / @params / blows 要一併 Insert
@@ -443,6 +452,7 @@ namespace peilin
                 textBox3.Enabled = false;
                 textBox4.Enabled = false;
                 textBox5.Enabled = false;
+                textBox6.Enabled = false;
                 comboBox6.Enabled = false;
                 comboBox4.Enabled = false;
                 comboBox3.Enabled = false;
@@ -529,6 +539,7 @@ namespace peilin
                         textBox3.Text = "";
                         textBox4.Text = "";
                         textBox5.Text = "";
+                        textBox6.Text = "";
                         button5.Enabled = false;
 
                         db_load();
@@ -621,7 +632,8 @@ namespace peilin
                                                 c.ID, c.OD, c.H,
                                                 c.hasgroove == "groove" ? "有" : "無",
                                                 c.boxorpack,
-                                                c.hasYZP);  // 加上這個缺少的欄位
+                                                c.hasYZP,
+                                                c.package);  // 加上這個缺少的欄位
                     }
                 }
             }
