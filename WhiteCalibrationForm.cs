@@ -16,9 +16,17 @@ namespace peilin
         #region 私有成員變數
         private List<string> selectedImagePaths = new List<string>();
         private List<WhitePixelResult> whitePixelResults = new List<WhitePixelResult>();
+        // 由 GitHub Copilot 產生
+        // 誤觸樣品組相關變數
+        private List<string> selectedFalseImagePaths = new List<string>();
+        private List<WhitePixelResult> falsePixelResults = new List<WhitePixelResult>();
+        private int currentFalseImageIndex = 0;
+        
         private string targetType;
         private int targetStation;
         private float recommendedWhiteValue;
+        private float recommendedWhiteNullValue;
+        private float recommendedTolerance;
         private int currentImageIndex = 0;
         private bool isAnalyzing = false;
         private bool eventsInitialized = false;
@@ -38,6 +46,22 @@ namespace peilin
         private Chart chartWhitePixelRatio;
         private ToolTip toolTip;
         
+        // 由 GitHub Copilot 產生 - 警告提示標籤
+        private Label lblWarningControl;
+        
+        // 由 GitHub Copilot 產生
+        // 誤觸樣品組控件成員變數
+        private PictureBox picFalsePreviewControl;
+        private PictureBox picFalseBinaryPreviewControl;
+        private TextBox lblFalseImageInfoControl;
+        private Button btnFalsePreviousControl;
+        private Button btnFalseNextControl;
+        private Button btnSelectFalseImagesControl;
+        
+        // 由 GitHub Copilot 產生
+        // 正常樣品二值化預覽控件
+        private PictureBox picBinaryPreviewControl;
+        
         // 二值化閾值控件
         private TrackBar trackBarThreshold;
         private Label lblThresholdValue;
@@ -45,6 +69,24 @@ namespace peilin
         #endregion
 
         #region 白色像素分析結果結構
+        // 由 GitHub Copilot 產生
+        // 樣品類型列舉
+        public enum SampleType
+        {
+            Normal,  // 正常樣品
+            False    // 誤觸樣品
+        }
+
+        // 由 GitHub Copilot 產生
+        // 離群值嚴重程度列舉
+        public enum OutlierSeverity
+        {
+            Normal,          // 正常
+            Mild,            // 輕微異常（1σ-2σ）
+            GroupOutlier,    // 組內離群（IQR 檢測）
+            CrossSample      // 疑似誤放（組間交叉）
+        }
+
         public class WhitePixelResult
         {
             public string ImagePath { get; set; }
@@ -53,11 +95,15 @@ namespace peilin
             public int WhitePixels { get; set; }
             public bool IsValid { get; set; }
             public string ErrorMessage { get; set; }
+            public SampleType Type { get; set; } = SampleType.Normal; // 樣品類型
             //public Mat ResultImage { get; set; }
-            private byte[] _compressedImageData; // 儲存壓縮後的圖像資料
+            private byte[] _compressedImageData; // 儲存壓縮後的原圖標註資料
+            private byte[] _compressedBinaryImage; // 儲存壓縮後的二值化圖像資料
             public bool IsOutlier1Sigma { get; set; }
             public bool IsOutlier2Sigma { get; set; }
-            // 設定壓縮後的圖像資料
+            // 由 GitHub Copilot 產生 - 離群值嚴重程度（用於混合檢測）
+            public OutlierSeverity Severity { get; set; } = OutlierSeverity.Normal;
+            // 設定壓縮後的原圖標註資料
             public void SetResultImageData(Mat resultImage)
             {
                 if (resultImage != null && !resultImage.Empty())
@@ -78,7 +124,8 @@ namespace peilin
             {
                 return _compressedImageData != null && _compressedImageData.Length > 0;
             }
-            // 按需取得結果圖像
+            
+            // 按需取得原圖標註
             public Mat GetResultImage()
             {
                 if (_compressedImageData != null && _compressedImageData.Length > 0)
@@ -95,10 +142,52 @@ namespace peilin
                 return new Mat();
             }
 
+            // 由 GitHub Copilot 產生
+            // 設定壓縮後的二值化圖像資料
+            public void SetBinaryImageData(Mat binaryImage)
+            {
+                if (binaryImage != null && !binaryImage.Empty())
+                {
+                    try
+                    {
+                        // 使用 PNG 格式壓縮二值化圖像（黑白圖壓縮率高）
+                        var compressedBytes = binaryImage.ImEncode(".png");
+                        _compressedBinaryImage = compressedBytes;
+                    }
+                    catch
+                    {
+                        _compressedBinaryImage = null;
+                    }
+                }
+            }
+
+            // 按需取得二值化圖像
+            public Mat GetBinaryImage()
+            {
+                if (_compressedBinaryImage != null && _compressedBinaryImage.Length > 0)
+                {
+                    try
+                    {
+                        return Cv2.ImDecode(_compressedBinaryImage, ImreadModes.Grayscale);
+                    }
+                    catch
+                    {
+                        return new Mat();
+                    }
+                }
+                return new Mat();
+            }
+
+            public bool HasBinaryImageData()
+            {
+                return _compressedBinaryImage != null && _compressedBinaryImage.Length > 0;
+            }
+
             // 釋放資源
             public void Dispose()
             {
                 _compressedImageData = null;
+                _compressedBinaryImage = null;
             }
         }
         #endregion
@@ -113,7 +202,7 @@ namespace peilin
         private void InitializeUI()
         {
             this.Text = $"白色像素占比校正 - {targetType}";
-            this.Size = new System.Drawing.Size(1200, 900);
+            this.Size = new System.Drawing.Size(1400, 1150); // 由 GitHub Copilot 產生 - 優化視窗高度以容納完整介面
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -157,14 +246,26 @@ namespace peilin
             targetStation = 0;
             cmbStation.SelectedIndexChanged += CmbStation_SelectedIndexChanged;
 
-            // 選擇照片按鈕
+            // 由 GitHub Copilot 產生
+            // 選擇正常樣品照片按鈕
             var btnSelectImages = new Button
             {
-                Text = "📂 選擇樣品照片",
+                Text = "📂 選擇正常照片",
                 Location = new System.Drawing.Point(210, 55),
-                Size = new System.Drawing.Size(120, 30)
+                Size = new System.Drawing.Size(130, 30),
+                BackColor = Color.LightBlue
             };
             btnSelectImages.Click += BtnSelectImages_Click;
+
+            // 選擇誤觸樣品照片按鈕
+            btnSelectFalseImagesControl = new Button
+            {
+                Text = "📂 選擇誤觸照片",
+                Location = new System.Drawing.Point(350, 55),
+                Size = new System.Drawing.Size(130, 30),
+                BackColor = Color.LightCoral
+            };
+            btnSelectFalseImagesControl.Click += BtnSelectFalseImages_Click;
 
             // 二值化閾值滑桿標籤
             var lblThreshold = new Label
@@ -182,7 +283,7 @@ namespace peilin
                 Maximum = 255,
                 TickFrequency = 25,
                 Value = 180,
-                Size = new System.Drawing.Size(250, 45),
+                Size = new System.Drawing.Size(200, 45),
                 Location = new System.Drawing.Point(310, 90)
             };
             trackBarThreshold.ValueChanged += TrackBarThreshold_ValueChanged;
@@ -191,7 +292,7 @@ namespace peilin
             lblThresholdValue = new Label
             {
                 Text = "180",
-                Location = new System.Drawing.Point(570, 95),
+                Location = new System.Drawing.Point(520, 95),
                 Size = new System.Drawing.Size(50, 25),
                 Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold),
                 ForeColor = Color.DarkBlue
@@ -202,8 +303,8 @@ namespace peilin
             btnAnalyzeControl = new Button
             {
                 Text = "🔍 開始分析",
-                Location = new System.Drawing.Point(630, 90),
-                Size = new System.Drawing.Size(120, 30),
+                Location = new System.Drawing.Point(580, 90),
+                Size = new System.Drawing.Size(180, 30),
                 BackColor = Color.LightGreen,
                 Enabled = false
             };
@@ -212,8 +313,8 @@ namespace peilin
             // 進度條
             progressBarControl = new ProgressBar
             {
-                Location = new System.Drawing.Point(760, 93),
-                Size = new System.Drawing.Size(300, 25),
+                Location = new System.Drawing.Point(770, 93),
+                Size = new System.Drawing.Size(250, 25),
                 Visible = false
             };
 
@@ -221,7 +322,7 @@ namespace peilin
             dgvResultsControl = new DataGridView
             {
                 Location = new System.Drawing.Point(10, 140),
-                Size = new System.Drawing.Size(580, 305),
+                Size = new System.Drawing.Size(580, 445), // 由 GitHub Copilot 產生 - 增加高度使底部與折線圖對齊（原305）
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
@@ -233,28 +334,47 @@ namespace peilin
             {
                 Text = "📊 統計分析結果",
                 Location = new System.Drawing.Point(600, 140),
-                Size = new System.Drawing.Size(580, 200)
+                Size = new System.Drawing.Size(760, 285) // 由 GitHub Copilot 產生 - 增加高度以容納完整的雙組統計資訊
             };
             CreateStatisticsLabels(grpStatisticsControl);
+
+            // 由 GitHub Copilot 產生 - 警告提示標籤（用於顯示疑似問題的照片）
+            lblWarningControl = new Label
+            {
+                Text = "",
+                Location = new System.Drawing.Point(600, 430),
+                Size = new System.Drawing.Size(760, 35),
+                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold),
+                ForeColor = Color.DarkRed,
+                BackColor = Color.LightYellow,
+                BorderStyle = BorderStyle.FixedSingle,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(5, 0, 5, 0),
+                Visible = false, // 初始隱藏，有警告時才顯示
+                AutoEllipsis = true // 文字過長時顯示省略號
+            };
+            toolTip.SetToolTip(lblWarningControl, "點擊圖片列表中對應的照片查看詳情");
 
             // 折線圖
             chartWhitePixelRatio = new Chart
             {
-                Location = new System.Drawing.Point(600, 350),
-                Size = new System.Drawing.Size(580, 255),
+                Location = new System.Drawing.Point(600, 470), // 由 GitHub Copilot 產生 - 調整位置為警告標籤留出空間（原435）
+                Size = new System.Drawing.Size(760, 115), // 由 GitHub Copilot 產生 - 調整高度以維持整體布局（原150）
                 BackColor = Color.White
             };
             InitializeChart();
 
-            // 圖片預覽區域
-            var grpImagePreview = new GroupBox
+            // 由 GitHub Copilot 產生
+            // 正常樣品預覽區域
+            var grpNormalPreview = new GroupBox
             {
-                Text = "📷 分析結果預覽",
-                Location = new System.Drawing.Point(10, 455),
-                Size = new System.Drawing.Size(580, 200)
+                Text = "📷 正常樣品預覽",
+                Location = new System.Drawing.Point(10, 595), // 由 GitHub Copilot 產生 - 調整位置配合折線圖高度增加（原510）
+                Size = new System.Drawing.Size(670, 300),
+                ForeColor = Color.Blue
             };
 
-            // 預覽圖片
+            // 正常樣品原圖標註預覽
             picPreviewControl = new PictureBox
             {
                 Location = new System.Drawing.Point(10, 20),
@@ -263,13 +383,39 @@ namespace peilin
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.Black
             };
+            var lblNormalAnnotated = new Label
+            {
+                Text = "原圖標註",
+                Location = new System.Drawing.Point(10, 195),
+                Size = new System.Drawing.Size(280, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+            };
 
-            // 導航按鈕
+            // 正常樣品二值化預覽
+            picBinaryPreviewControl = new PictureBox
+            {
+                Location = new System.Drawing.Point(300, 20),
+                Size = new System.Drawing.Size(280, 170),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.Black
+            };
+            var lblNormalBinary = new Label
+            {
+                Text = "二值化圖",
+                Location = new System.Drawing.Point(300, 195),
+                Size = new System.Drawing.Size(280, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+            };
+
+            // 正常樣品導航按鈕
             btnPreviousControl = new Button
             {
                 Text = "◀ 上一張",
-                Location = new System.Drawing.Point(300, 30),
-                Size = new System.Drawing.Size(80, 30),
+                Location = new System.Drawing.Point(590, 30),
+                Size = new System.Drawing.Size(70, 30),
                 Enabled = false
             };
             btnPreviousControl.Click += BtnPrevious_Click;
@@ -277,8 +423,8 @@ namespace peilin
             btnNextControl = new Button
             {
                 Text = "下一張 ▶",
-                Location = new System.Drawing.Point(300, 70),
-                Size = new System.Drawing.Size(80, 30),
+                Location = new System.Drawing.Point(590, 70),
+                Size = new System.Drawing.Size(70, 30),
                 Enabled = false
             };
             btnNextControl.Click += BtnNext_Click;
@@ -286,19 +432,19 @@ namespace peilin
             // 全螢幕預覽按鈕
             var btnFullScreen = new Button
             {
-                Text = "🔍 全螢幕預覽",
-                Location = new System.Drawing.Point(300, 110),
-                Size = new System.Drawing.Size(80, 30),
+                Text = "🔍 全螢幕",
+                Location = new System.Drawing.Point(590, 110),
+                Size = new System.Drawing.Size(70, 30),
                 BackColor = Color.LightBlue
             };
             btnFullScreen.Click += BtnFullScreen_Click;
 
-            // 圖片資訊標籤
+            // 正常樣品圖片資訊標籤
             lblImageInfoControl = new TextBox
             {
-                Text = "尚未分析圖片",
-                Location = new System.Drawing.Point(390, 20),
-                Size = new System.Drawing.Size(180, 170),
+                Text = "尚未選擇正常樣品",
+                Location = new System.Drawing.Point(10, 230),
+                Size = new System.Drawing.Size(650, 60),
                 Font = new Font("Microsoft JhengHei", 9),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -309,16 +455,104 @@ namespace peilin
                 TabStop = false
             };
 
-            grpImagePreview.Controls.AddRange(new Control[] {
-                picPreviewControl, btnPreviousControl, btnNextControl, btnFullScreen, lblImageInfoControl
+            grpNormalPreview.Controls.AddRange(new Control[] {
+                picPreviewControl, lblNormalAnnotated, 
+                picBinaryPreviewControl, lblNormalBinary,
+                btnPreviousControl, btnNextControl, btnFullScreen, lblImageInfoControl
+            });
+
+            // 誤觸樣品預覽區域
+            var grpFalsePreview = new GroupBox
+            {
+                Text = "📷 誤觸樣品預覽",
+                Location = new System.Drawing.Point(690, 595), // 由 GitHub Copilot 產生 - 調整位置配合折線圖高度增加（原510）
+                Size = new System.Drawing.Size(670, 300),
+                ForeColor = Color.Red
+            };
+
+            // 誤觸樣品原圖標註預覽
+            picFalsePreviewControl = new PictureBox
+            {
+                Location = new System.Drawing.Point(10, 20),
+                Size = new System.Drawing.Size(280, 170),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.Black
+            };
+            var lblFalseAnnotated = new Label
+            {
+                Text = "原圖標註",
+                Location = new System.Drawing.Point(10, 195),
+                Size = new System.Drawing.Size(280, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+            };
+
+            // 誤觸樣品二值化預覽
+            picFalseBinaryPreviewControl = new PictureBox
+            {
+                Location = new System.Drawing.Point(300, 20),
+                Size = new System.Drawing.Size(280, 170),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.Black
+            };
+            var lblFalseBinary = new Label
+            {
+                Text = "二值化圖",
+                Location = new System.Drawing.Point(300, 195),
+                Size = new System.Drawing.Size(280, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+            };
+
+            // 誤觸樣品導航按鈕
+            btnFalsePreviousControl = new Button
+            {
+                Text = "◀ 上一張",
+                Location = new System.Drawing.Point(590, 30),
+                Size = new System.Drawing.Size(70, 30),
+                Enabled = false
+            };
+            btnFalsePreviousControl.Click += BtnFalsePrevious_Click;
+
+            btnFalseNextControl = new Button
+            {
+                Text = "下一張 ▶",
+                Location = new System.Drawing.Point(590, 70),
+                Size = new System.Drawing.Size(70, 30),
+                Enabled = false
+            };
+            btnFalseNextControl.Click += BtnFalseNext_Click;
+
+            // 誤觸樣品圖片資訊標籤
+            lblFalseImageInfoControl = new TextBox
+            {
+                Text = "尚未選擇誤觸樣品",
+                Location = new System.Drawing.Point(10, 230),
+                Size = new System.Drawing.Size(650, 60),
+                Font = new Font("Microsoft JhengHei", 9),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                ReadOnly = true,
+                WordWrap = true,
+                TabStop = false
+            };
+
+            grpFalsePreview.Controls.AddRange(new Control[] {
+                picFalsePreviewControl, lblFalseAnnotated,
+                picFalseBinaryPreviewControl, lblFalseBinary,
+                btnFalsePreviousControl, btnFalseNextControl, lblFalseImageInfoControl
             });
 
             // 建議值顯示
             lblRecommendationControl = new Label
             {
-                Text = "💡 推薦的 white 參數值將在分析完成後顯示",
-                Location = new System.Drawing.Point(10, 665),
-                Size = new System.Drawing.Size(500, 30),
+                Text = "💡 推薦的參數值將在分析完成後顯示",
+                Location = new System.Drawing.Point(10, 905), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原835）
+                Size = new System.Drawing.Size(700, 50),
                 Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold),
                 ForeColor = Color.DarkGreen
             };
@@ -327,10 +561,11 @@ namespace peilin
             btnApplyControl = new Button
             {
                 Text = "✅ 套用推薦值",
-                Location = new System.Drawing.Point(520, 665),
-                Size = new System.Drawing.Size(120, 30),
+                Location = new System.Drawing.Point(720, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
+                Size = new System.Drawing.Size(120, 40),
                 BackColor = Color.Orange,
-                Enabled = false
+                Enabled = false,
+                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
             };
             btnApplyControl.Click += BtnApply_Click;
 
@@ -338,8 +573,9 @@ namespace peilin
             var btnCancel = new Button
             {
                 Text = "❌ 取消",
-                Location = new System.Drawing.Point(650, 665),
-                Size = new System.Drawing.Size(80, 30)
+                Location = new System.Drawing.Point(850, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
+                Size = new System.Drawing.Size(80, 40),
+                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
             };
             btnCancel.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
@@ -347,29 +583,28 @@ namespace peilin
             var btnExport = new Button
             {
                 Text = "📊 匯出數據",
-                Location = new System.Drawing.Point(740, 665),
-                Size = new System.Drawing.Size(100, 30),
+                Location = new System.Drawing.Point(940, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
+                Size = new System.Drawing.Size(100, 40),
                 BackColor = Color.LightCyan
             };
             btnExport.Click += BtnExport_Click;
 
-            // 清除結果按鈕（加在匯出數據按鈕旁邊）
+            // 清除結果按鈕
             var btnClearResults = new Button
             {
                 Text = "🗑️ 清除結果",
-                Location = new System.Drawing.Point(850, 665),
-                Size = new System.Drawing.Size(100, 30),
-                BackColor = System.Drawing.Color.LightPink,
-                //ToolTipText = "清除目前的分析結果，可重新選擇照片分析"
+                Location = new System.Drawing.Point(1050, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
+                Size = new System.Drawing.Size(100, 40),
+                BackColor = System.Drawing.Color.LightPink
             };
             btnClearResults.Click += BtnClearResults_Click;
             toolTip.SetToolTip(btnClearResults, "清除目前的分析結果，可重新選擇照片分析");
 
             // 加入所有控件
             this.Controls.AddRange(new Control[] {
-                lblDescription, lblStation, cmbStation, btnSelectImages, 
+                lblDescription, lblStation, cmbStation, btnSelectImages, btnSelectFalseImagesControl,
                 lblThreshold, trackBarThreshold, lblThresholdValue, btnAnalyzeControl, progressBarControl,
-                dgvResultsControl, grpStatisticsControl, chartWhitePixelRatio, grpImagePreview,
+                dgvResultsControl, grpStatisticsControl, lblWarningControl, chartWhitePixelRatio, grpNormalPreview, grpFalsePreview,
                 lblRecommendationControl, btnApplyControl, btnCancel, btnExport, btnClearResults
             });
         }
@@ -395,6 +630,10 @@ namespace peilin
                 lblImageInfoControl.Text = "尚未分析圖片";
                 lblRecommendationControl.Text = "💡 推薦的 white 參數值將在分析完成後顯示";
                 lblRecommendationControl.ForeColor = Color.DarkGreen;
+                
+                // 由 GitHub Copilot 產生 - 隱藏警告標籤
+                lblWarningControl.Visible = false;
+                lblWarningControl.Text = "";
 
                 // 重置統計標籤
                 for (int i = 0; i < 10; i++)
@@ -418,25 +657,33 @@ namespace peilin
         }
         private void CreateStatisticsLabels(GroupBox parent)
         {
-            var labels = new[] {
-                "樣品數量：", "有效樣品：", "平均占比：", "中位數占比：",
-                "標準差：", "最小值：", "最大值：", "1σ異常數：", "2σ異常數：", "推薦值："
+            // 由 GitHub Copilot 產生 - 分為正常樣品和誤觸樣品兩組統計標籤
+            var normalLabels = new[] {
+                "正常樣品數：", "有效樣品：", "平均占比：", "中位數占比：",
+                "標準差：", "最小值：", "最大值：", "1σ異常：", "2σ異常：", "推薦值："
             };
 
-            for (int i = 0; i < labels.Length; i++)
+            var falseLabels = new[] {
+                "誤觸樣品數：", "有效樣品：", "平均占比：", "中位數占比：",
+                "標準差：", "最小值：", "最大值：", "1σ異常：", "2σ異常：", "推薦值："
+            };
+
+            // 正常樣品統計 (上半部)
+            for (int i = 0; i < normalLabels.Length; i++)
             {
                 var lbl = new Label
                 {
-                    Text = labels[i],
-                    Location = new System.Drawing.Point(10, 25 + (i % 5) * 30),
+                    Text = normalLabels[i],
+                    Location = new System.Drawing.Point(10, 25 + (i % 5) * 25),
                     Size = new System.Drawing.Size(100, 25),
-                    Name = $"lblStat{i}"
+                    Name = $"lblNormalStat{i}",
+                    ForeColor = Color.Blue
                 };
 
                 var lblValue = new Label
                 {
                     Text = "---",
-                    Location = new System.Drawing.Point(120, 25 + (i % 5) * 30),
+                    Location = new System.Drawing.Point(120, 25 + (i % 5) * 25),
                     Size = new System.Drawing.Size(120, 25),
                     Name = $"lblStatValue{i}",
                     Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
@@ -445,8 +692,41 @@ namespace peilin
                 // 第二列
                 if (i >= 5)
                 {
-                    lbl.Location = new System.Drawing.Point(270, 25 + (i - 5) * 30);
-                    lblValue.Location = new System.Drawing.Point(380, 25 + (i - 5) * 30);
+                    lbl.Location = new System.Drawing.Point(270, 25 + (i - 5) * 25);
+                    lblValue.Location = new System.Drawing.Point(380, 25 + (i - 5) * 25);
+                }
+
+                parent.Controls.AddRange(new Control[] { lbl, lblValue });
+            }
+
+            // 由 GitHub Copilot 產生 - 誤觸樣品統計（下半部，留10px間距）
+            int falseStartY = 155; // 正常樣品結束於 25 + 5*25 = 150，留5px間距
+            for (int i = 0; i < falseLabels.Length; i++)
+            {
+                var lbl = new Label
+                {
+                    Text = falseLabels[i],
+                    Location = new System.Drawing.Point(10, falseStartY + (i % 5) * 25),
+                    Size = new System.Drawing.Size(100, 25),
+                    Name = $"lblFalseStat{i}",
+                    ForeColor = Color.Red
+                };
+
+                var lblValue = new Label
+                {
+                    Text = "---",
+                    Location = new System.Drawing.Point(120, falseStartY + (i % 5) * 25),
+                    Size = new System.Drawing.Size(120, 25),
+                    Name = $"lblFalseStatValue{i}",
+                    Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold),
+                    ForeColor = Color.Red // 由 GitHub Copilot 產生 - 誤觸樣品數據用紅色顯示
+                };
+
+                // 第二列
+                if (i >= 5)
+                {
+                    lbl.Location = new System.Drawing.Point(270, falseStartY + (i - 5) * 25);
+                    lblValue.Location = new System.Drawing.Point(380, falseStartY + (i - 5) * 25);
                 }
 
                 parent.Controls.AddRange(new Control[] { lbl, lblValue });
@@ -502,6 +782,17 @@ namespace peilin
                 MarkerSize = 10
             };
             chartWhitePixelRatio.Series.Add(outlier2Series);
+
+            // 由 GitHub Copilot 產生 - 新增誤觸樣品系列
+            var falseSeries = new Series("誤觸樣品")
+            {
+                ChartType = SeriesChartType.Line,
+                Color = Color.Red,
+                MarkerStyle = MarkerStyle.Diamond,
+                MarkerSize = 6,
+                BorderWidth = 2
+            };
+            chartWhitePixelRatio.Series.Add(falseSeries);
 
             // 平均值線
             var avgSeries = new Series("平均值")
@@ -675,8 +966,30 @@ namespace peilin
                             MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
 
-                    btnAnalyzeControl.Text = $"🔍 分析 {selectedImagePaths.Count} 張照片";
-                    btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
+                    // 由 GitHub Copilot 產生 - 更新正常照片按鈕文字
+                    var btnSelectImages = sender as Button;
+                    if (btnSelectImages != null)
+                    {
+                        btnSelectImages.Text = $"正常照片 ({selectedImagePaths.Count})";
+                    }
+
+                    // 由 GitHub Copilot 產生 - 更新正常樣品預覽區域提示文字
+                    if (lblImageInfoControl != null)
+                    {
+                        lblImageInfoControl.Text = $"已選擇 {selectedImagePaths.Count} 張正常樣品照片，點擊「開始分析」進行分析";
+                        lblImageInfoControl.ForeColor = Color.Blue;
+                    }
+
+                    // 檢查是否已選擇兩組照片，如果是則啟用分析按鈕
+                    btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
+                    if (btnAnalyzeControl.Enabled)
+                    {
+                        btnAnalyzeControl.Text = $"🔍 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                    }
+                    else if (selectedImagePaths.Count > 0)
+                    {
+                        btnAnalyzeControl.Text = $"🔍 開始分析 (需選擇誤觸照片)";
+                    }
                 }
             }
         }
@@ -694,9 +1007,16 @@ namespace peilin
                 return;
             }
 
+            // 由 GitHub Copilot 產生 - 檢查雙組照片
             if (selectedImagePaths.Count == 0)
             {
-                MessageBox.Show("請先選擇照片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("請先選擇正常樣品照片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            
+            if (selectedFalseImagePaths.Count == 0)
+            {
+                MessageBox.Show("請先選擇誤觸樣品照片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -706,22 +1026,39 @@ namespace peilin
 
             try
             {
-                progressBarControl.Maximum = selectedImagePaths.Count;
+                // 由 GitHub Copilot 產生 - 處理雙組圖片
+                progressBarControl.Maximum = selectedImagePaths.Count + selectedFalseImagePaths.Count;
                 progressBarControl.Value = 0;
                 progressBarControl.Visible = true;
 
                 whitePixelResults.Clear();
-                await ProcessImages();
-                AnalyzeOutliers();
-                DisplayAnalysisResults();
-                UpdateChart();
+                falsePixelResults.Clear();
 
-                MessageBox.Show($"白色像素占比分析完成！\n" +
-                               $"總計 {whitePixelResults.Count} 張照片\n" +
-                               $"成功分析 {whitePixelResults.Count(r => r.IsValid)} 張\n" +
-                               $"1σ異常 {whitePixelResults.Count(r => r.IsOutlier1Sigma)} 張\n" +
-                               $"2σ異常 {whitePixelResults.Count(r => r.IsOutlier2Sigma)} 張\n" +
-                               $"推薦值：{recommendedWhiteValue:F1}%",
+                // 分析正常樣品
+                await ProcessImages(selectedImagePaths, whitePixelResults, SampleType.Normal);
+                
+                // 分析誤觸樣品
+                await ProcessImages(selectedFalseImagePaths, falsePixelResults, SampleType.False);
+                
+                AnalyzeOutliers();
+                
+                // 由 GitHub Copilot 產生 - 執行混合檢測（組內離群 + 組間交叉污染）
+                DetectOutliersAndCrossSamples();
+                
+                // 由 GitHub Copilot 產生 - 先計算推薦參數，再顯示結果（避免顯示時 recommendedTolerance 尚未計算）
+                CalculateRecommendedParameters();
+
+                Console.WriteLine("000");
+                DisplayAnalysisResults();
+                Console.WriteLine("111");
+                UpdateChart();
+                Console.WriteLine("222");
+                MessageBox.Show($"白色像素占比分析完成！\n\n" +
+                               $"正常樣品：{whitePixelResults.Count} 張 (推薦值: {recommendedWhiteValue:F1}%)\n" +
+                               $"誤觸樣品：{falsePixelResults.Count} 張 (基準值: {recommendedWhiteNullValue:F1}%)\n" +
+                               $"推薦容忍度：{recommendedTolerance:F1}%\n\n" +
+                               $"正常樣品 1σ異常：{whitePixelResults.Count(r => r.IsOutlier1Sigma)} 張\n" +
+                               $"正常樣品 2σ異常：{whitePixelResults.Count(r => r.IsOutlier2Sigma)} 張",
                                "分析完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -733,7 +1070,7 @@ namespace peilin
             {
                 isAnalyzing = false;
                 btnAnalyzeControl.Enabled = true;
-                btnAnalyzeControl.Text = $"🔍 分析 {selectedImagePaths.Count} 張照片";
+                btnAnalyzeControl.Text = $"🔍 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                 progressBarControl.Visible = false;
             }
         }
@@ -872,20 +1209,31 @@ namespace peilin
                 MessageBox.Show("尚未選擇站點，無法套用。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            
+            // 由 GitHub Copilot 產生 - 檢查是否已計算推薦參數
+            if (recommendedWhiteValue == 0 || recommendedWhiteNullValue == 0)
+            {
+                MessageBox.Show("請先完成正常樣品和誤觸樣品的分析", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            
             try
             {
                 using (var db = new MydbDB())
                 {
-                    // 套用 white 參數
+                    // 由 GitHub Copilot 產生 - 套用四個參數
                     UpdateParameter(db, "white", recommendedWhiteValue.ToString("F1"));
-                    
-                    // 套用 whiteThresh 參數
+                    UpdateParameter(db, "whiteNULL", recommendedWhiteNullValue.ToString("F1"));
                     UpdateParameter(db, "whiteThresh", trackBarThreshold.Value.ToString());
+                    UpdateParameter(db, "whiteTolerance", recommendedTolerance.ToString("F1"));
                 }
 
-                MessageBox.Show($"成功套用參數設定！\n" +
-                               $"white (站點{targetStation}) = {recommendedWhiteValue:F1}%\n" +
-                               $"whiteThresh (站點{targetStation}) = {trackBarThreshold.Value}\n\n" +
+                MessageBox.Show($"成功套用參數設定！\n\n" +
+                               $"white_{targetStation} = {recommendedWhiteValue:F1}%\n" +
+                               $"whiteNULL_{targetStation} = {recommendedWhiteNullValue:F1}%\n" +
+                               $"whiteThresh_{targetStation} = {trackBarThreshold.Value}\n" +
+                               $"whiteTolerance_{targetStation} = {recommendedTolerance:F1}%\n\n" +
+                               $"判定區間：[{(recommendedWhiteValue - recommendedTolerance):F1}%, {(recommendedWhiteValue + recommendedTolerance):F1}%]\n\n" +
                                $"您可以繼續選擇其他照片進行校正，或關閉視窗。",
                                "設定完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -893,7 +1241,7 @@ namespace peilin
                 // this.DialogResult = DialogResult.OK;
 
                 // 可選：重新啟用分析按鈕讓使用者可以重新分析
-                btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
+                btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
 
                 // 可選：更新按鈕文字提示已套用
                 btnApplyControl.Text = "✅ 已套用 (可重新套用)";
@@ -931,7 +1279,7 @@ namespace peilin
         }
 
         // 由 GitHub Copilot 產生
-        // 修正 DataGridView 選擇變更事件
+        // 修正 DataGridView 選擇變更事件（支援正常樣品和誤觸樣品連動預覽）
         private void DgvResults_SelectionChanged(object sender, EventArgs e)
         {
             if (isAnalyzing || _isNavigating) return;
@@ -939,61 +1287,243 @@ namespace peilin
 
             try
             {
-                int newIndex = dgvResultsControl.SelectedRows[0].Index;
+                _isNavigating = true;
+                int selectedRowIndex = dgvResultsControl.SelectedRows[0].Index;
 
-                // 避免重複更新同一張圖片
-                if (newIndex == currentImageIndex) return;
+                // 由 GitHub Copilot 產生 - 判斷選中的是正常樣品還是誤觸樣品
+                // DataGridView 顯示順序：先正常樣品，後誤觸樣品
+                if (selectedRowIndex < whitePixelResults.Count)
+                {
+                    // 選中的是正常樣品
+                    int newNormalIndex = selectedRowIndex;
+                    
+                    // 避免重複更新同一張圖片
+                    if (newNormalIndex == currentImageIndex)
+                    {
+                        _isNavigating = false;
+                        return;
+                    }
 
-                currentImageIndex = newIndex;
+                    currentImageIndex = newNormalIndex;
 
-                // 使用異步方式更新圖像，避免阻塞UI
+                    // 使用異步方式更新圖像，避免阻塞UI
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            this.BeginInvoke(new Action(() =>
+                            {
+                                DisplayCurrentImage();
+                                UpdateNavigationButtons();
+                                _isNavigating = false;
+                            }));
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"正常樣品預覽錯誤: {ex.Message}");
+                            _isNavigating = false;
+                        }
+                    });
+                }
+                else
+                {
+                    // 選中的是誤觸樣品
+                    int newFalseIndex = selectedRowIndex - whitePixelResults.Count;
+                    
+                    // 避免重複更新同一張圖片
+                    if (newFalseIndex == currentFalseImageIndex)
+                    {
+                        _isNavigating = false;
+                        return;
+                    }
+
+                    currentFalseImageIndex = newFalseIndex;
+
+                    // 使用異步方式更新圖像，避免阻塞UI
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            this.BeginInvoke(new Action(() =>
+                            {
+                                DisplayCurrentFalseImage();
+                                UpdateFalseNavigationButtons();
+                                _isNavigating = false;
+                            }));
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"誤觸樣品預覽錯誤: {ex.Message}");
+                            _isNavigating = false;
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DgvResults_SelectionChanged 錯誤: {ex.Message}");
+                _isNavigating = false;
+            }
+        }
+
+        // 由 GitHub Copilot 產生
+        // 誤觸樣品事件處理器
+        private void BtnSelectFalseImages_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "選擇誤觸樣品照片";
+                openFileDialog.Filter = "圖片檔案|*.jpg;*.jpeg;*.png;*.bmp";
+                openFileDialog.Multiselect = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    selectedFalseImagePaths = openFileDialog.FileNames.ToList();
+
+                    if (selectedFalseImagePaths.Count < 10)
+                    {
+                        MessageBox.Show("建議至少選擇10張誤觸照片以獲得更準確的統計結果", "提示",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+
+                    btnSelectFalseImagesControl.Text = $"📂 誤觸照片 ({selectedFalseImagePaths.Count})";
+                    
+                    // 由 GitHub Copilot 產生 - 更新誤觸樣品預覽區域提示文字
+                    if (lblFalseImageInfoControl != null)
+                    {
+                        lblFalseImageInfoControl.Text = $"已選擇 {selectedFalseImagePaths.Count} 張誤觸樣品照片，點擊「🔍 開始分析」進行分析";
+                        lblFalseImageInfoControl.ForeColor = Color.Blue;
+                    }
+                    
+                    // 檢查是否已選擇兩組照片，如果是則啟用分析按鈕
+                    btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
+                    if (btnAnalyzeControl.Enabled)
+                    {
+                        btnAnalyzeControl.Text = $"🔍 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                    }
+                    else if (selectedFalseImagePaths.Count > 0)
+                    {
+                        btnAnalyzeControl.Text = $"🔍 開始分析 (需選擇正常照片)";
+                    }
+                }
+            }
+        }
+
+        private void BtnFalsePrevious_Click(object sender, EventArgs e)
+        {
+            if (falsePixelResults.Count == 0 || _isNavigating) return;
+
+            try
+            {
+                _isNavigating = true;
+                btnFalsePreviousControl.Enabled = false;
+                btnFalseNextControl.Enabled = false;
+
+                currentFalseImageIndex--;
+                if (currentFalseImageIndex < 0)
+                    currentFalseImageIndex = falsePixelResults.Count - 1;
+
                 Task.Run(() =>
                 {
                     try
                     {
                         this.BeginInvoke(new Action(() =>
                         {
-                            DisplayCurrentImage();
+                            DisplayCurrentFalseImage();
                         }));
                     }
-                    catch (Exception ex)
+                    finally
                     {
-                        System.Diagnostics.Debug.WriteLine($"選擇變更錯誤: {ex.Message}");
+                        Task.Delay(200).ContinueWith(t =>
+                        {
+                            this.BeginInvoke(new Action(() =>
+                            {
+                                _isNavigating = false;
+                                UpdateFalseNavigationButtons();
+                            }));
+                        });
                     }
                 });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DgvResults_SelectionChanged 錯誤: {ex.Message}");
+                _isNavigating = false;
+                MessageBox.Show($"導航錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UpdateFalseNavigationButtons();
+            }
+        }
+
+        private void BtnFalseNext_Click(object sender, EventArgs e)
+        {
+            if (falsePixelResults.Count == 0 || _isNavigating) return;
+
+            try
+            {
+                _isNavigating = true;
+                btnFalsePreviousControl.Enabled = false;
+                btnFalseNextControl.Enabled = false;
+
+                currentFalseImageIndex = (currentFalseImageIndex + 1) % falsePixelResults.Count;
+
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        this.BeginInvoke(new Action(() =>
+                        {
+                            DisplayCurrentFalseImage();
+                        }));
+                    }
+                    finally
+                    {
+                        Task.Delay(200).ContinueWith(t =>
+                        {
+                            this.BeginInvoke(new Action(() =>
+                            {
+                                _isNavigating = false;
+                                UpdateFalseNavigationButtons();
+                            }));
+                        });
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _isNavigating = false;
+                MessageBox.Show($"導航錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UpdateFalseNavigationButtons();
             }
         }
         #endregion
 
         #region 圖像處理方法
-        private async Task ProcessImages()
+        // 由 GitHub Copilot 產生 - 支援雙組處理的方法
+        private async Task ProcessImages(List<string> imagePaths, List<WhitePixelResult> results, SampleType sampleType)
         {
             await Task.Run(() =>
             {
-                for (int i = 0; i < selectedImagePaths.Count; i++)
+                for (int i = 0; i < imagePaths.Count; i++)
                 {
-                    string imagePath = selectedImagePaths[i];
+                    string imagePath = imagePaths[i];
 
                     try
                     {
                         this.BeginInvoke(new Action(() =>
                         {
-                            progressBarControl.Value = i;
-                            btnAnalyzeControl.Text = $"🔄 處理 {i + 1}/{selectedImagePaths.Count}";
+                            progressBarControl.Value += 1;
+                            string typeText = sampleType == SampleType.Normal ? "正常" : "誤觸";
+                            btnAnalyzeControl.Text = $"🔄 處理{typeText}樣品 {i + 1}/{imagePaths.Count}";
                         }));
 
                         var result = ProcessSingleImage(imagePath);
-                        whitePixelResults.Add(result);
+                        result.Type = sampleType; // 設定樣品類型
+                        results.Add(result);
 
                         System.Threading.Thread.Sleep(50);
                     }
                     catch (Exception ex)
                     {
-                        whitePixelResults.Add(new WhitePixelResult
+                        results.Add(new WhitePixelResult
                         {
                             ImagePath = Path.GetFileName(imagePath),
                             IsValid = false,
@@ -1025,8 +1555,9 @@ namespace peilin
 
                 // 執行白色像素分析
                 using (var resultImage = new Mat())
+                using (var binaryImage = new Mat()) // 由 GitHub Copilot 產生 - 新增二值化圖像
                 {
-                    var (whitePixelRatio, totalPixels, whitePixels) = AnalyzeWhitePixels(image, resultImage, currentThreshold);
+                    var (whitePixelRatio, totalPixels, whitePixels) = AnalyzeWhitePixels(image, resultImage, binaryImage, currentThreshold);
 
                     var result = new WhitePixelResult
                     {
@@ -1034,18 +1565,21 @@ namespace peilin
                         WhitePixelRatio = whitePixelRatio,
                         TotalPixels = totalPixels,
                         WhitePixels = whitePixels,
-                        IsValid = true
+                        IsValid = true,
+                        Type = SampleType.Normal // 預設為正常樣品
                     };
 
-                    // 設定壓縮後的圖像資料
+                    // 由 GitHub Copilot 產生 - 設定壓縮後的圖像資料
                     result.SetResultImageData(resultImage);
+                    result.SetBinaryImageData(binaryImage);
 
                     return result;
                 }
             }
         } //演算法
 
-        private (float ratio, int totalPixels, int whitePixels) AnalyzeWhitePixels(Mat image, Mat resultImage, int minthresh)
+        // 由 GitHub Copilot 產生 - 修改簽章以輸出二值化圖像
+        private (float ratio, int totalPixels, int whitePixels) AnalyzeWhitePixels(Mat image, Mat resultImage, Mat binaryImage, int minthresh)
         {
             using (var gray = new Mat())
             using (var binary = new Mat())
@@ -1056,12 +1590,15 @@ namespace peilin
                 // 二值化處理
                 Cv2.Threshold(gray, binary, minthresh, 255, ThresholdTypes.Binary);
 
+                // 由 GitHub Copilot 產生 - 複製二值化結果供外部使用
+                binary.CopyTo(binaryImage);
+
                 // 計算白色像素
                 int totalPixels = image.Width * image.Height;
                 int whitePixels = Cv2.CountNonZero(binary);
                 float ratio = (float)whitePixels / totalPixels * 100.0f;
 
-                // 創建結果圖像
+                // 創建結果圖像（原圖標註版本）
                 image.CopyTo(resultImage);
 
                 // 在圖像上標註統計信息
@@ -1089,6 +1626,7 @@ namespace peilin
         #region 統計分析方法
         private void AnalyzeOutliers()
         {
+            // 由 GitHub Copilot 產生 - 分析正常樣品的離群值
             var validResults = whitePixelResults.Where(r => r.IsValid).ToList();
             if (validResults.Count < 3) return;
 
@@ -1115,23 +1653,395 @@ namespace peilin
             // 計算推薦值（中位數）
             var sortedRatios = ratios.OrderBy(x => x).ToList();
             recommendedWhiteValue = GetMedian(sortedRatios);
+
+            // 由 GitHub Copilot 產生 - 分析誤觸樣品的離群值
+            var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
+            if (validFalseResults.Count >= 3)
+            {
+                var falseRatios = validFalseResults.Select(r => r.WhitePixelRatio).ToList();
+                double falseMean = falseRatios.Average();
+                double falseStdDev = CalculateStandardDeviation(falseRatios, falseMean);
+
+                // 標記誤觸樣品的異常值
+                foreach (var result in validFalseResults)
+                {
+                    double deviation = Math.Abs(result.WhitePixelRatio - falseMean);
+
+                    if (deviation > 2 * falseStdDev)
+                    {
+                        result.IsOutlier2Sigma = true;
+                        result.IsOutlier1Sigma = true;
+                    }
+                    else if (deviation > falseStdDev)
+                    {
+                        result.IsOutlier1Sigma = true;
+                    }
+                }
+            }
+        }
+
+        // 由 GitHub Copilot 產生
+        // 混合檢測：組內離群值檢測 + 組間交叉污染檢測（改良版：避免誤判分離良好的樣品組）
+        private void DetectOutliersAndCrossSamples()
+        {
+            var validNormal = whitePixelResults.Where(r => r.IsValid).ToList();
+            var validFalse = falsePixelResults.Where(r => r.IsValid).ToList();
+
+            if (validNormal.Count < 3 || validFalse.Count < 3)
+            {
+                return; // 樣品數量不足，無法進行檢測
+            }
+
+            var normalRatios = validNormal.Select(r => r.WhitePixelRatio).OrderBy(x => x).ToList();
+            var falseRatios = validFalse.Select(r => r.WhitePixelRatio).OrderBy(x => x).ToList();
+
+            // 計算正常樣品的 IQR 邊界
+            float q1_normal = GetPercentile(normalRatios, 25);
+            float q3_normal = GetPercentile(normalRatios, 75);
+            float iqr_normal = q3_normal - q1_normal;
+            float lower_normal = q1_normal - 1.5f * iqr_normal;
+            float upper_normal = q3_normal + 1.5f * iqr_normal;
+
+            // 計算誤觸樣品的 IQR 邊界
+            float q1_false = GetPercentile(falseRatios, 25);
+            float q3_false = GetPercentile(falseRatios, 75);
+            float iqr_false = q3_false - q1_false;
+            float lower_false = q1_false - 1.5f * iqr_false;
+            float upper_false = q3_false + 1.5f * iqr_false;
+
+            // 計算組間中界線
+            float median_normal = GetMedian(normalRatios);
+            float median_false = GetMedian(falseRatios);
+            float boundary = (median_normal + median_false) / 2.0f;
+
+            // 由 GitHub Copilot 產生 - 判斷是否需要啟用組間交叉檢測
+            // 計算兩組中位數的距離
+            float distance = Math.Abs(median_normal - median_false);
+            
+            // 計算兩組的範圍（用3σ或IQR範圍，取較大值）
+            double std_normal = CalculateStandardDeviation(normalRatios, normalRatios.Average());
+            double std_false = CalculateStandardDeviation(falseRatios, falseRatios.Average());
+            
+            float normal_range = Math.Max((float)(std_normal * 3.0), iqr_normal * 1.5f);
+            float false_range = Math.Max((float)(std_false * 3.0), iqr_false * 1.5f);
+            
+            // 只有當距離小於兩組範圍之和時，才啟用交叉檢測
+            // 這樣可以避免誤判分離良好的樣品組（例如：正常10%、誤觸25%）
+            bool enableCrossCheck = distance < (normal_range + false_range);
+
+            // 由 GitHub Copilot 產生 - 記錄診斷資訊
+            System.Diagnostics.Debug.WriteLine($"=== 混合檢測診斷 ===");
+            System.Diagnostics.Debug.WriteLine($"正常樣品中位數：{median_normal:F2}%，3σ範圍：{std_normal * 3.0:F2}%，IQR：{iqr_normal:F2}%");
+            System.Diagnostics.Debug.WriteLine($"誤觸樣品中位數：{median_false:F2}%，3σ範圍：{std_false * 3.0:F2}%，IQR：{iqr_false:F2}%");
+            System.Diagnostics.Debug.WriteLine($"兩組距離：{distance:F2}%");
+            System.Diagnostics.Debug.WriteLine($"檢測閾值：{(normal_range + false_range):F2}%");
+            System.Diagnostics.Debug.WriteLine($"組間交叉檢測：{(enableCrossCheck ? "✅ 啟用（分布接近）" : "❌ 停用（分離良好）")}");
+
+            // 檢測正常樣品
+            foreach (var sample in validNormal)
+            {
+                // 第一層：組內離群值檢測（始終啟用）
+                if (sample.WhitePixelRatio < lower_normal || sample.WhitePixelRatio > upper_normal)
+                {
+                    sample.Severity = OutlierSeverity.GroupOutlier;
+                }
+                // 第二層：組間交叉污染檢測（只在分布接近時啟用）
+                else if (enableCrossCheck && sample.WhitePixelRatio < boundary)
+                {
+                    sample.Severity = OutlierSeverity.CrossSample;
+                }
+                // 正常或輕微異常（1σ-2σ）不額外標記
+                else if (sample.IsOutlier1Sigma)
+                {
+                    sample.Severity = OutlierSeverity.Mild;
+                }
+                else
+                {
+                    sample.Severity = OutlierSeverity.Normal;
+                }
+            }
+
+            // 檢測誤觸樣品
+            foreach (var sample in validFalse)
+            {
+                // 第一層：組內離群值檢測（始終啟用）
+                if (sample.WhitePixelRatio < lower_false || sample.WhitePixelRatio > upper_false)
+                {
+                    sample.Severity = OutlierSeverity.GroupOutlier;
+                }
+                // 第二層：組間交叉污染檢測（只在分布接近時啟用）
+                else if (enableCrossCheck && sample.WhitePixelRatio > boundary)
+                {
+                    sample.Severity = OutlierSeverity.CrossSample;
+                }
+                // 正常或輕微異常（1σ-2σ）不額外標記
+                else if (sample.IsOutlier1Sigma)
+                {
+                    sample.Severity = OutlierSeverity.Mild;
+                }
+                else
+                {
+                    sample.Severity = OutlierSeverity.Normal;
+                }
+            }
+        }
+
+        // 由 GitHub Copilot 產生
+        // 計算百分位數（用於 IQR 計算）
+        private float GetPercentile(List<float> sortedValues, int percentile)
+        {
+            if (sortedValues.Count == 0) return 0;
+            
+            double index = (percentile / 100.0) * (sortedValues.Count - 1);
+            int lowerIndex = (int)Math.Floor(index);
+            int upperIndex = (int)Math.Ceiling(index);
+            
+            if (lowerIndex == upperIndex)
+            {
+                return sortedValues[lowerIndex];
+            }
+            
+            double fraction = index - lowerIndex;
+            return sortedValues[lowerIndex] + (float)fraction * (sortedValues[upperIndex] - sortedValues[lowerIndex]);
+        }
+
+        // 由 GitHub Copilot 產生
+        // 生成警告訊息文字
+        private string GenerateWarningMessage()
+        {
+            var warnings = new List<string>();
+
+            // 收集正常樣品的問題
+            var normalCrossSamples = whitePixelResults.Where(r => r.IsValid && r.Severity == OutlierSeverity.CrossSample).ToList();
+            var normalOutliers = whitePixelResults.Where(r => r.IsValid && r.Severity == OutlierSeverity.GroupOutlier).ToList();
+
+            if (normalCrossSamples.Count > 0)
+            {
+                var indices = string.Join("、", normalCrossSamples.Select((r, i) => $"#{whitePixelResults.IndexOf(r) + 1}"));
+                warnings.Add($"正常樣品 {indices}（疑似誤放）");
+            }
+
+            if (normalOutliers.Count > 0)
+            {
+                var indices = string.Join("、", normalOutliers.Select((r, i) => $"#{whitePixelResults.IndexOf(r) + 1}"));
+                warnings.Add($"正常樣品 {indices}（組內離群）");
+            }
+
+            // 收集誤觸樣品的問題
+            var falseCrossSamples = falsePixelResults.Where(r => r.IsValid && r.Severity == OutlierSeverity.CrossSample).ToList();
+            var falseOutliers = falsePixelResults.Where(r => r.IsValid && r.Severity == OutlierSeverity.GroupOutlier).ToList();
+
+            if (falseCrossSamples.Count > 0)
+            {
+                var indices = string.Join("、", falseCrossSamples.Select((r, i) => $"#{falsePixelResults.IndexOf(r) + 1}"));
+                warnings.Add($"誤觸樣品 {indices}（疑似誤放）");
+            }
+
+            if (falseOutliers.Count > 0)
+            {
+                var indices = string.Join("、", falseOutliers.Select((r, i) => $"#{falsePixelResults.IndexOf(r) + 1}"));
+                warnings.Add($"誤觸樣品 {indices}（組內離群）");
+            }
+
+            if (warnings.Count > 0)
+            {
+                return "⚠️ 發現疑似問題：" + string.Join(" | ", warnings);
+            }
+
+            return "";
+        }
+
+        // 由 GitHub Copilot 產生
+        // 計算推薦參數（white、whiteNULL、whiteTolerance）
+        private void CalculateRecommendedParameters()
+        {
+            var validNormalResults = whitePixelResults.Where(r => r.IsValid).ToList();
+            var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
+
+            if (validNormalResults.Count < 3 || validFalseResults.Count < 3)
+            {
+                MessageBox.Show("樣品數量不足，無法計算推薦參數（建議至少各3張）", "警告",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 計算正常樣品統計
+            var normalRatios = validNormalResults.Select(r => r.WhitePixelRatio).ToList();
+            float white_normal = GetMedian(normalRatios);
+            double std_normal = CalculateStandardDeviation(normalRatios, normalRatios.Average());
+
+            // 計算誤觸樣品統計
+            var falseRatios = validFalseResults.Select(r => r.WhitePixelRatio).ToList();
+            float white_null = GetMedian(falseRatios);
+            double std_null = CalculateStandardDeviation(falseRatios, falseRatios.Average());
+
+            // 由 GitHub Copilot 產生 - 處理誤觸樣品標準差為零的特殊情況
+            // 當誤觸樣品數值完全一致時，使用最小標準差 0.3% 作為基準
+            const double MIN_STD_DEV = 0.3;
+            if (std_null < 0.01) // 標準差接近零（數值完全一致）
+            {
+                std_null = MIN_STD_DEV;
+            }
+
+            // 由 GitHub Copilot 產生 - 混合策略計算 whiteTolerance
+            // 結合距離、統計、經驗值三種方法，確保容忍度既能容納偏離樣品又保持安全距離
+
+            // 1. 計算距離
+            float distance = Math.Abs(white_normal - white_null);
+
+            // 2. 基於距離的動態容忍度（50% 距離）
+            const float DYNAMIC_RATIO = 0.5f;
+            float dynamic_tolerance = distance * DYNAMIC_RATIO;
+
+            // 3. 基於統計的容忍度（3σ）
+            float statistical_tolerance = (float)(std_normal * 3.0);
+
+            // 4. 基於經驗的絕對最小容忍度（2%）
+            const float ABSOLUTE_MIN = 2.0f;
+
+            // 5. 三者取最大值作為基礎容忍度
+            float tolerance_base = Math.Max(Math.Max(dynamic_tolerance, statistical_tolerance), ABSOLUTE_MIN);
+
+            // 6. 上限保護：不超過距離的 60%，且絕對不超過 5%
+            const float MAX_RATIO = 0.6f;
+            const float ABSOLUTE_MAX = 5.0f;
+            float max_tolerance_by_distance = distance * MAX_RATIO;
+            float max_tolerance = Math.Min(max_tolerance_by_distance, ABSOLUTE_MAX);
+            float tolerance_normal = Math.Min(tolerance_base, max_tolerance);
+
+            // 由 GitHub Copilot 產生 - 記錄容忍度計算資訊供顯示
+            string toleranceCalculationInfo = $"容忍度計算：\n" +
+                                             $"  距離：{distance:F2}%\n" +
+                                             $"  動態容忍度 (50%距離)：{dynamic_tolerance:F2}%\n" +
+                                             $"  統計容忍度 (3σ)：{statistical_tolerance:F2}%\n" +
+                                             $"  絕對最小值：{ABSOLUTE_MIN:F2}%\n" +
+                                             $"  基礎容忍度：{tolerance_base:F2}%\n" +
+                                             $"  上限 (60%距離，最大5%)：{max_tolerance:F2}%\n" +
+                                             $"  最終容忍度：{tolerance_normal:F2}%";
+
+            // 計算正常樣品的判定區間
+            float normal_lower = white_normal - tolerance_normal;
+            float normal_upper = white_normal + tolerance_normal;
+
+            // 計算誤觸樣品的判定區間
+            float null_lower = white_null - (float)(std_null * 3.0);
+            float null_upper = white_null + (float)(std_null * 3.0);
+
+            // 由 GitHub Copilot 產生 - 檢查兩個區間是否重疊（不假設誰大誰小）
+            bool hasOverlap = !(normal_upper < null_lower || normal_lower > null_upper);
+
+            string warningMessage = "";
+
+            if (hasOverlap)
+            {
+                // 計算重疊範圍
+                float overlap_start = Math.Max(normal_lower, null_lower);
+                float overlap_end = Math.Min(normal_upper, null_upper);
+                float overlap_range = overlap_end - overlap_start;
+
+                warningMessage = $"⚠️ 警告：正常與誤觸樣品的判定區間重疊 {overlap_range:F2}%\n\n" +
+                               $"正常判定區間：[{normal_lower:F2}%, {normal_upper:F2}%]\n" +
+                               $"誤觸判定區間：[{null_lower:F2}%, {null_upper:F2}%]\n" +
+                               $"重疊區間：[{overlap_start:F2}%, {overlap_end:F2}%]\n\n" +
+                               toleranceCalculationInfo + "\n\n" +
+                               $"建議調整 whiteThresh 閾值後重新分析以增加區分度。";
+            }
+
+            // 設定推薦值
+            recommendedWhiteValue = white_normal;
+            recommendedWhiteNullValue = white_null;
+            recommendedTolerance = tolerance_normal;
+
+            // 由 GitHub Copilot 產生 - 顯示詳細的區分度資訊
+            if (!string.IsNullOrEmpty(warningMessage))
+            {
+                MessageBox.Show(warningMessage, "區分度檢查", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else
+            {
+                // 計算安全距離
+                float safety_distance = 0;
+                if (white_normal > white_null)
+                {
+                    safety_distance = normal_lower - null_upper;
+                }
+                else
+                {
+                    safety_distance = null_lower - normal_upper;
+                }
+
+                string successMessage = $"✅ 區分度良好：兩組樣品的判定區間未重疊\n\n" +
+                                      $"正常判定區間：[{normal_lower:F2}%, {normal_upper:F2}%]\n" +
+                                      $"誤觸判定區間：[{null_lower:F2}%, {null_upper:F2}%]\n" +
+                                      $"安全距離：{safety_distance:F2}%\n\n" +
+                                      toleranceCalculationInfo;
+
+                MessageBox.Show(successMessage, "區分度檢查", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void DisplayAnalysisResults()
         {
-            var resultsData = whitePixelResults.Select((r, index) => new
-            {
-                順序 = index + 1,
-                照片名稱 = r.ImagePath,
-                是否有效 = r.IsValid ? "✅" : "❌",
-                白色像素數 = r.IsValid ? r.WhitePixels.ToString() : "---",
-                總像素數 = r.IsValid ? r.TotalPixels.ToString() : "---",
-                占比百分比 = r.IsValid ? r.WhitePixelRatio.ToString("F2") + "%" : "---",
-                異常狀態 = GetOutlierStatus(r),
-                錯誤訊息 = r.ErrorMessage ?? ""
-            }).ToList();
+            // 由 GitHub Copilot 產生 - 合併正常樣品和誤觸樣品到列表中
+            var allResults = new List<object>();
 
-            dgvResultsControl.DataSource = resultsData;
+            // 加入正常樣品
+            foreach (var (r, index) in whitePixelResults.Select((r, i) => (r, i)))
+            {
+                allResults.Add(new
+                {
+                    樣品類型 = "正常",
+                    順序 = index + 1,
+                    照片名稱 = r.ImagePath,
+                    是否有效 = r.IsValid ? "✅" : "❌",
+                    白色像素數 = r.IsValid ? r.WhitePixels.ToString() : "---",
+                    總像素數 = r.IsValid ? r.TotalPixels.ToString() : "---",
+                    占比百分比 = r.IsValid ? r.WhitePixelRatio.ToString("F2") + "%" : "---",
+                    異常狀態 = GetOutlierStatus(r),
+                    錯誤訊息 = r.ErrorMessage ?? ""
+                });
+            }
+            
+            // 加入誤觸樣品
+            foreach (var (r, index) in falsePixelResults.Select((r, i) => (r, i)))
+            {
+                allResults.Add(new
+                {
+                    樣品類型 = "誤觸",
+                    順序 = index + 1,
+                    照片名稱 = r.ImagePath,
+                    是否有效 = r.IsValid ? "✅" : "❌",
+                    白色像素數 = r.IsValid ? r.WhitePixels.ToString() : "---",
+                    總像素數 = r.IsValid ? r.TotalPixels.ToString() : "---",
+                    占比百分比 = r.IsValid ? r.WhitePixelRatio.ToString("F2") + "%" : "---",
+                    異常狀態 = GetOutlierStatus(r),
+                    錯誤訊息 = r.ErrorMessage ?? ""
+                });
+            }
+
+            dgvResultsControl.DataSource = allResults;
+
+            // 由 GitHub Copilot 產生 - 為疑似問題的列表行著色
+            foreach (DataGridViewRow row in dgvResultsControl.Rows)
+            {
+                var status = row.Cells["異常狀態"].Value?.ToString();
+
+                if (status?.Contains("疑似誤放") == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.LightCoral; // 紅底：疑似誤放
+                    row.DefaultCellStyle.ForeColor = Color.DarkRed;
+
+                    // 由 GitHub Copilot 產生 - 修復 Font 為 null 的問題
+                    // 先檢查當前 Font 是否為 null，如果是則使用 DataGridView 的預設字型
+                    Font baseFont = row.DefaultCellStyle.Font ?? dgvResultsControl.DefaultCellStyle.Font ?? this.Font;
+                    row.DefaultCellStyle.Font = new Font(baseFont, FontStyle.Bold);
+                }
+                else if (status?.Contains("組內離群") == true)
+                {
+                    row.DefaultCellStyle.BackColor = Color.LightYellow; // 黃底：組內離群
+                    row.DefaultCellStyle.ForeColor = Color.DarkOrange;
+                }
+            }
 
             if (!eventsInitialized)
             {
@@ -1152,34 +2062,59 @@ namespace peilin
                 MessageBox.Show("沒有有效的分析結果，請檢查照片品質", "警告",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+
+            // 由 GitHub Copilot 產生 - 顯示誤觸樣品圖像
+            if (falsePixelResults.Count > 0)
+            {
+                currentFalseImageIndex = 0;
+                DisplayCurrentFalseImage();
+            }
+
+            // 由 GitHub Copilot 產生 - 顯示警告訊息
+            string warningMessage = GenerateWarningMessage();
+            if (!string.IsNullOrEmpty(warningMessage))
+            {
+                lblWarningControl.Text = warningMessage;
+                lblWarningControl.Visible = true;
+            }
+            else
+            {
+                lblWarningControl.Visible = false;
+            }
         }
 
         private string GetOutlierStatus(WhitePixelResult result)
         {
             if (!result.IsValid) return "無效";
+            
+            // 由 GitHub Copilot 產生 - 優先顯示混合檢測的嚴重程度
+            if (result.Severity == OutlierSeverity.CrossSample) return "🔴 疑似誤放";
+            if (result.Severity == OutlierSeverity.GroupOutlier) return "🟠 組內離群";
+            
+            // 原有的 σ 檢測標記（輕微異常不額外警告）
             if (result.IsOutlier2Sigma) return "🔴 2σ異常";
             if (result.IsOutlier1Sigma) return "🟡 1σ異常";
+            
             return "✅ 正常";
         }
 
         // 由 GitHub Copilot 產生
-        // 修正分析完成後的按鈕狀態設定
+        // 修改為顯示雙組統計數據
         private void CalculateAndDisplayStatistics(List<WhitePixelResult> validResults)
         {
+            // 正常樣品統計
             int totalCount = whitePixelResults.Count;
             int validCount = validResults.Count;
-
             var ratios = validResults.Select(r => r.WhitePixelRatio).ToList();
-
             double avgRatio = ratios.Average();
             double medianRatio = GetMedian(ratios);
             double stdDev = CalculateStandardDeviation(ratios, avgRatio);
             float minRatio = ratios.Min();
             float maxRatio = ratios.Max();
-
             int outliers1Sigma = validResults.Count(r => r.IsOutlier1Sigma);
             int outliers2Sigma = validResults.Count(r => r.IsOutlier2Sigma);
 
+            // 由 GitHub Copilot 產生 - 更新正常樣品統計標籤
             var statValues = new string[] {
                 totalCount.ToString(),
                 validCount.ToString(),
@@ -1202,7 +2137,116 @@ namespace peilin
                 }
             }
 
-            lblRecommendationControl.Text = $"💡 推薦設定：white (站點{targetStation}) = {recommendedWhiteValue:F1}%";
+            // 由 GitHub Copilot 產生 - 誤觸樣品統計（完整顯示所有10項統計資訊）
+            var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
+            if (validFalseResults.Count > 0)
+            {
+                var falseRatios = validFalseResults.Select(r => r.WhitePixelRatio).ToList();
+                double falseAvg = falseRatios.Average();
+                double falseMedian = GetMedian(falseRatios);
+                double falseStdDev = CalculateStandardDeviation(falseRatios, falseAvg);
+                float falseMin = falseRatios.Min();
+                float falseMax = falseRatios.Max();
+                int falseOutliers1Sigma = validFalseResults.Count(r => r.IsOutlier1Sigma);
+                int falseOutliers2Sigma = validFalseResults.Count(r => r.IsOutlier2Sigma);
+
+                // 由 GitHub Copilot 產生 - 更新誤觸樣品的所有統計標籤（包含平均、中位數、標準差）
+                var falseStatValues = new string[] {
+                    falsePixelResults.Count.ToString(),
+                    validFalseResults.Count.ToString(),
+                    falseAvg.ToString("F2") + "%",
+                    falseMedian.ToString("F2") + "%",
+                    falseStdDev.ToString("F2") + "%",
+                    falseMin.ToString("F2") + "%",
+                    falseMax.ToString("F2") + "%",
+                    falseOutliers1Sigma.ToString(),
+                    falseOutliers2Sigma.ToString(),
+                    recommendedWhiteNullValue.ToString("F1") + "%"
+                };
+
+                for (int i = 0; i < falseStatValues.Length; i++)
+                {
+                    var lblFalseValue = grpStatisticsControl.Controls.Find($"lblFalseStatValue{i}", false).FirstOrDefault() as Label;
+                    if (lblFalseValue != null)
+                    {
+                        lblFalseValue.Text = falseStatValues[i];
+                    }
+                }
+            }
+            else
+            {
+                // 由 GitHub Copilot 產生 - 若無誤觸樣品資料，將所有標籤設為 "---"
+                for (int i = 0; i < 10; i++)
+                {
+                    var lblFalseValue = grpStatisticsControl.Controls.Find($"lblFalseStatValue{i}", false).FirstOrDefault() as Label;
+                    if (lblFalseValue != null)
+                    {
+                        lblFalseValue.Text = "---";
+                    }
+                }
+            }
+
+            // 由 GitHub Copilot 產生 - 計算並顯示區分度資訊（不假設誰大誰小）
+            var validFalse = falsePixelResults.Where(r => r.IsValid).ToList();
+            string safetyInfo = "";
+            if (validFalse.Count > 0)
+            {
+                var falseRatios = validFalse.Select(r => r.WhitePixelRatio).ToList();
+                double falseStdDev = CalculateStandardDeviation(falseRatios, falseRatios.Average());
+                
+                // 由 GitHub Copilot 產生 - 處理誤觸標準差為零的情況
+                const double MIN_STD_DEV = 0.3;
+                if (falseStdDev < 0.01)
+                {
+                    falseStdDev = MIN_STD_DEV;
+                }
+
+                // 計算正常樣品判定區間
+                float normal_lower = recommendedWhiteValue - recommendedTolerance;
+                float normal_upper = recommendedWhiteValue + recommendedTolerance;
+
+                // 計算誤觸樣品判定區間
+                float null_lower = recommendedWhiteNullValue - (float)(falseStdDev * 3.0);
+                float null_upper = recommendedWhiteNullValue + (float)(falseStdDev * 3.0);
+
+                // 檢查是否重疊
+                bool hasOverlap = !(normal_upper < null_lower || normal_lower > null_upper);
+
+                if (hasOverlap)
+                {
+                    float overlap_start = Math.Max(normal_lower, null_lower);
+                    float overlap_end = Math.Min(normal_upper, null_upper);
+                    float overlap_range = overlap_end - overlap_start;
+                    
+                    safetyInfo = $"\n⚠️ 警告：判定區間重疊 {overlap_range:F2}%！" +
+                               $"\n正常區間：[{normal_lower:F2}%, {normal_upper:F2}%]" +
+                               $"\n誤觸區間：[{null_lower:F2}%, {null_upper:F2}%]";
+                }
+                else
+                {
+                    // 計算安全距離（不假設大小關係）
+                    float safety_distance = 0;
+                    if (recommendedWhiteValue > recommendedWhiteNullValue)
+                    {
+                        safety_distance = normal_lower - null_upper;
+                    }
+                    else
+                    {
+                        safety_distance = null_lower - normal_upper;
+                    }
+                    
+                    safetyInfo = $"\n✅ 安全距離：{safety_distance:F2}%" +
+                               $"\n正常區間：[{normal_lower:F2}%, {normal_upper:F2}%]" +
+                               $"\n誤觸區間：[{null_lower:F2}%, {null_upper:F2}%]";
+                }
+            }
+
+            lblRecommendationControl.Text = $"💡 推薦參數：\n" +
+                $"white_{targetStation} = {recommendedWhiteValue:F1}%  |  " +
+                $"whiteNULL_{targetStation} = {recommendedWhiteNullValue:F1}%  |  " +
+                $"whiteTolerance_{targetStation} = {recommendedTolerance:F1}%  |  " +
+                $"whiteThresh_{targetStation} = {trackBarThreshold.Value}" +
+                safetyInfo;
 
             // 重置套用按鈕為未套用狀態
             btnApplyControl.Enabled = true;
@@ -1225,6 +2269,7 @@ namespace peilin
             chartWhitePixelRatio.Series["白色像素占比"].Points.Clear();
             chartWhitePixelRatio.Series["1σ異常"].Points.Clear();
             chartWhitePixelRatio.Series["2σ異常"].Points.Clear();
+            chartWhitePixelRatio.Series["誤觸樣品"].Points.Clear(); // 由 GitHub Copilot 產生
             chartWhitePixelRatio.Series["平均值"].Points.Clear();
             chartWhitePixelRatio.Series["+1σ"].Points.Clear();
             chartWhitePixelRatio.Series["-1σ"].Points.Clear();
@@ -1278,9 +2323,36 @@ namespace peilin
                     sigma2LowerSeries.Points.AddXY(xValue, mean - 2 * stdDev);
                 }
 
+                // 由 GitHub Copilot 產生 - 新增誤觸樣品數據
+                var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
+                if (validFalseResults.Count > 0)
+                {
+                    var falseSeries = chartWhitePixelRatio.Series["誤觸樣品"];
+                    int offsetX = validResults.Count + 1; // 誤觸樣品從正常樣品後面開始
+
+                    for (int i = 0; i < validFalseResults.Count; i++)
+                    {
+                        var result = validFalseResults[i];
+                        int xValue = offsetX + i;
+                        falseSeries.Points.AddXY(xValue, result.WhitePixelRatio);
+
+                        // 為誤觸樣品也繪製統計線
+                        avgSeries.Points.AddXY(xValue, mean);
+                        sigma1UpperSeries.Points.AddXY(xValue, mean + stdDev);
+                        sigma1LowerSeries.Points.AddXY(xValue, mean - stdDev);
+                        sigma2UpperSeries.Points.AddXY(xValue, mean + 2 * stdDev);
+                        sigma2LowerSeries.Points.AddXY(xValue, mean - 2 * stdDev);
+                    }
+                }
+
                 // 更新圖表標題
                 chartWhitePixelRatio.Titles.Clear();
-                chartWhitePixelRatio.Titles.Add($"白色像素占比分析 - {targetType} 站點{targetStation}");
+                string title = $"白色像素占比分析 - {targetType} 站點{targetStation}";
+                if (falsePixelResults.Count > 0)
+                {
+                    title += $" (正常:{validResults.Count} / 誤觸:{falsePixelResults.Count(r => r.IsValid)})";
+                }
+                chartWhitePixelRatio.Titles.Add(title);
             }
             finally
             {
@@ -1292,91 +2364,21 @@ namespace peilin
 
         #region 顯示方法
         // 由 GitHub Copilot 產生
-        // 完全重寫圖像顯示方法，解決卡死問題
+        // 顯示當前正常樣品圖像（原圖標註 + 二值化圖）
         private void DisplayCurrentImage()
         {
             if (whitePixelResults.Count == 0 || currentImageIndex >= whitePixelResults.Count) return;
 
             var currentResult = whitePixelResults[currentImageIndex];
 
-            // 強制釋放舊的圖像資源
-            if (picPreviewControl.Image != null)
-            {
-                var oldImage = picPreviewControl.Image;
-                picPreviewControl.Image = null;
-                oldImage.Dispose();
+            // 顯示原圖標註
+            DisplayImageInPictureBox(currentResult, picPreviewControl, true);
+            
+            // 顯示二值化圖
+            DisplayImageInPictureBox(currentResult, picBinaryPreviewControl, false);
 
-                // 強制垃圾回收
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-            }
-
-            Mat resultImage = null;
-            System.Drawing.Bitmap bitmap = null;
-
-            try
-            {
-                // 檢查是否有圖像資料
-                if (!currentResult.HasImageData())
-                {
-                    picPreviewControl.Image = null;
-                    lblImageInfoControl.Text = "無可用的圖像資料";
-                    return;
-                }
-
-                // 載入結果圖像
-                resultImage = currentResult.GetResultImage();
-
-                if (resultImage == null || resultImage.Empty())
-                {
-                    picPreviewControl.Image = null;
-                    lblImageInfoControl.Text = "圖像載入失敗";
-                    return;
-                }
-
-                // 創建適當大小的縮圖以節省記憶體
-                using (var resizedImage = new Mat())
-                {
-                    // 計算適合的大小（最大280x170，保持比例）
-                    double scaleX = 280.0 / resultImage.Width;
-                    double scaleY = 170.0 / resultImage.Height;
-                    double scale = Math.Min(Math.Min(scaleX, scaleY), 1.0); // 不要放大
-
-                    if (scale < 1.0)
-                    {
-                        var newSize = new OpenCvSharp.Size(
-                            (int)(resultImage.Width * scale),
-                            (int)(resultImage.Height * scale)
-                        );
-                        Cv2.Resize(resultImage, resizedImage, newSize, 0, 0, InterpolationFlags.Area);
-                    }
-                    else
-                    {
-                        resultImage.CopyTo(resizedImage);
-                    }
-
-                    // 轉換為 Bitmap
-                    bitmap = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(resizedImage);
-                    picPreviewControl.Image = bitmap;
-                    bitmap = null; // 避免在 finally 中重複釋放
-                }
-
-                UpdateImageInfo(currentResult);
-            }
-            catch (Exception ex)
-            {
-                lblImageInfoControl.Text = $"圖像顯示錯誤：{ex.Message}";
-                picPreviewControl.Image = null;
-                System.Diagnostics.Debug.WriteLine($"DisplayCurrentImage 錯誤: {ex.Message}");
-            }
-            finally
-            {
-                // 確保資源釋放
-                resultImage?.Dispose();
-                bitmap?.Dispose();
-            }
-
+            // 更新資訊
+            UpdateImageInfo(currentResult);
             UpdateNavigationButtons();
         }
 
@@ -1425,6 +2427,128 @@ namespace peilin
                 dgvResultsControl.ClearSelection();
                 dgvResultsControl.Rows[currentImageIndex].Selected = true;
             }
+        }
+
+        // 由 GitHub Copilot 產生
+        // 顯示當前誤觸樣品圖像
+        private void DisplayCurrentFalseImage()
+        {
+            if (falsePixelResults.Count == 0 || currentFalseImageIndex >= falsePixelResults.Count) return;
+
+            var currentResult = falsePixelResults[currentFalseImageIndex];
+
+            // 顯示原圖標註
+            DisplayImageInPictureBox(currentResult, picFalsePreviewControl, true);
+            
+            // 顯示二值化圖
+            DisplayImageInPictureBox(currentResult, picFalseBinaryPreviewControl, false);
+
+            // 更新資訊
+            UpdateFalseImageInfo(currentResult);
+            UpdateFalseNavigationButtons();
+        }
+
+        // 顯示圖像到指定的 PictureBox（通用方法）
+        private void DisplayImageInPictureBox(WhitePixelResult result, PictureBox pictureBox, bool isAnnotated)
+        {
+            // 釋放舊圖像
+            if (pictureBox.Image != null)
+            {
+                var oldImage = pictureBox.Image;
+                pictureBox.Image = null;
+                oldImage.Dispose();
+            }
+
+            Mat sourceImage = null;
+            System.Drawing.Bitmap bitmap = null;
+
+            try
+            {
+                // 載入圖像
+                sourceImage = isAnnotated ? result.GetResultImage() : result.GetBinaryImage();
+
+                if (sourceImage == null || sourceImage.Empty())
+                {
+                    pictureBox.Image = null;
+                    return;
+                }
+
+                // 創建縮圖
+                using (var resizedImage = new Mat())
+                {
+                    double scaleX = 280.0 / sourceImage.Width;
+                    double scaleY = 170.0 / sourceImage.Height;
+                    double scale = Math.Min(Math.Min(scaleX, scaleY), 1.0);
+
+                    if (scale < 1.0)
+                    {
+                        var newSize = new OpenCvSharp.Size(
+                            (int)(sourceImage.Width * scale),
+                            (int)(sourceImage.Height * scale)
+                        );
+                        Cv2.Resize(sourceImage, resizedImage, newSize, 0, 0, InterpolationFlags.Area);
+                    }
+                    else
+                    {
+                        sourceImage.CopyTo(resizedImage);
+                    }
+
+                    bitmap = OpenCvSharp.Extensions.BitmapConverter.ToBitmap(resizedImage);
+                    pictureBox.Image = bitmap;
+                    bitmap = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                pictureBox.Image = null;
+                System.Diagnostics.Debug.WriteLine($"DisplayImageInPictureBox 錯誤: {ex.Message}");
+            }
+            finally
+            {
+                sourceImage?.Dispose();
+                bitmap?.Dispose();
+            }
+        }
+
+        private void UpdateFalseImageInfo(WhitePixelResult currentResult)
+        {
+            string info = $"📷 圖片 {currentFalseImageIndex + 1}/{falsePixelResults.Count}: {currentResult.ImagePath}\r\n\r\n";
+            info += $"🔍 分析狀態: {(currentResult.IsValid ? "✅ 成功分析" : "❌ 分析失敗")}\r\n\r\n";
+
+            if (currentResult.IsValid)
+            {
+                info += $"📊 白色像素數: {currentResult.WhitePixels:N0}\r\n";
+                info += $"📊 總像素數: {currentResult.TotalPixels:N0}\r\n";
+                info += $"📊 占比: {currentResult.WhitePixelRatio:F2}%\r\n\r\n";
+
+                // 異常狀態
+                if (currentResult.IsOutlier2Sigma)
+                    info += "🔴 異常狀態: 超過2個標準差 (嚴重異常)\r\n";
+                else if (currentResult.IsOutlier1Sigma)
+                    info += "🟡 異常狀態: 超過1個標準差 (輕微異常)\r\n";
+                else
+                    info += "✅ 異常狀態: 正常範圍內\r\n";
+
+                info += "\r\n💡 此圖片的白色像素占比：\r\n";
+                if (currentResult.WhitePixelRatio < 5.0f)
+                    info += "• 偏低 - 可能光線不足或物體較暗";
+                else if (currentResult.WhitePixelRatio > 30.0f)
+                    info += "• 偏高 - 可能過度曝光或背景過亮";
+                else
+                    info += "• 適中 - 符合一般預期範圍";
+            }
+            else
+            {
+                info += $"❌ 錯誤原因: {currentResult.ErrorMessage ?? "未知錯誤"}";
+            }
+
+            lblFalseImageInfoControl.Text = info;
+        }
+
+        private void UpdateFalseNavigationButtons()
+        {
+            btnFalsePreviousControl.Enabled = falsePixelResults.Count > 1;
+            btnFalseNextControl.Enabled = falsePixelResults.Count > 1;
         }
         #endregion
 
