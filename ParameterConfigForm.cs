@@ -1866,7 +1866,8 @@ namespace peilin
                             H = typeData.H,
                             HasGroove = typeData.hasgroove,
                             BoxOrPack = typeData.boxorpack,
-                            HasYZP = typeData.hasYZP
+                            HasYZP = typeData.hasYZP,
+                            package = typeData.package
                         };
                     }
                 }
@@ -2326,6 +2327,7 @@ namespace peilin
             public string HasGroove { get; set; }
             public string BoxOrPack { get; set; }
             public string HasYZP { get; set; }
+            public string package { get; set; }
         }
         #endregion
 
