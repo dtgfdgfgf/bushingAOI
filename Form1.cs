@@ -695,6 +695,16 @@ namespace peilin
         #region Receiver
         public void Receiver(int camID, Mat Src, DateTime dt)
         {
+            // 由 GitHub Copilot 產生 - 調機模式防禦性檢查
+            if (app.isAdjustmentMode)
+            {
+                // 理論上不應該到這裡（因為 Camera0.cs 的 OnImageGrabbed 已經阻擋）
+                // 但保留這個檢查作為雙重保險
+                Log.Warning($"Receiver: 調機模式下收到影像 (CamID={camID})，已忽略");
+                Src?.Dispose();  // 釋放影像
+                return;
+            }
+
             if (!app.SoftTriggerMode)
             {
                 if (app.status)
@@ -5220,6 +5230,15 @@ namespace peilin
 
                     lbAdd("停止檢測", "inf", "");
                     
+                    // 由 GitHub Copilot 產生 - 修正：明確停止相機
+                    if (!app.offline)
+                    {
+                        // 1. 先停止相機抓取
+                        cam.Stop();
+                        System.Threading.Thread.Sleep(100); // 等待停止完成
+                        lbAdd("相機已停止", "inf", "");
+                    }
+                    
                     if (!app.offline)
                     {
                         //app.status = false;
@@ -5335,6 +5354,7 @@ namespace peilin
                     {
                         PLC_SetM(1, false); //激磁
                         PLC_SetM(5, false); //拍照停
+                        PLC_SetM(30, false);
                         PLC_SetM(333, false); 
                     }
                     lbAdd("停止調機", "inf", "");
@@ -5492,12 +5512,10 @@ namespace peilin
                             tasks.Add(Task.Factory.StartNew(() => trigger(0)));
                             //await Task.Run(() => trigger(0));
                             PLC_SetM(1, true);
-                            //PLC_SetM(5, true);
-                            //PLC_SetM(333, true);
-                            調機設定ToolStripMenuItem_Click(null, null);
-
-                            //燈具控制
                             PLC_SetM(30, true);
+                            //PLC_SetM(5, true);
+                            PLC_SetM(333, true);
+                            調機設定ToolStripMenuItem_Click(null, null);
                             
                         }
                         uiLock(false);
@@ -5609,7 +5627,8 @@ namespace peilin
             調機模式ToolStripMenuItem.Checked = true;
 
             app.DetectMode = 1;
-
+            button1.Enabled = true;
+            button2.Enabled = true;
             Invoke(new Action(() => button1.Text = "開始調機"));
             Invoke(new Action(() => button2.Text = "停止調機"));
             PLC_SetM(333, true);
@@ -6593,6 +6612,18 @@ namespace peilin
 
         private void button1_Click(object sender, EventArgs e)
         {
+            // 由 GitHub Copilot 產生 - 調機模式優先檢查，不受狀態限制
+            if (app.DetectMode == 1)
+            {
+                // 調機模式：直接開始調機，不檢查狀態和其他參數
+                // 由 GitHub Copilot 產生 - 立即設定調機模式旗標，避免影像進入檢測流程
+                app.isAdjustmentMode = true;
+                switchButton(false);
+                lbAdd("開始調機", "inf", "");
+                return;
+            }
+
+            // 檢測模式：需要檢查狀態
             if (app.currentState != app.SystemState.Stopped)
             {
                 string message = GetStateMessage();
@@ -6700,14 +6731,21 @@ namespace peilin
                     MessageBox.Show("尚未設定料號。");
                 }
             }
-            else if (app.DetectMode == 1)
-            {
-                // **新增：調機模式不受狀態限制**
-                switchButton(false);
-            }
+            // 由 GitHub Copilot 產生 - 移除此處的調機模式處理，已在函式開頭處理
         }
         private void button2_Click(object sender, EventArgs e)
         {
+            // 由 GitHub Copilot 產生 - 調機模式優先檢查，不受狀態限制
+            if (app.DetectMode == 1)
+            {
+                // 調機模式：直接停止調機
+                // 由 GitHub Copilot 產生 - 重置調機模式旗標
+                app.isAdjustmentMode = false;
+                switchButton(true);
+                lbAdd("停止調機", "inf", "");
+                return;
+            }
+
             // 使用 DefectCountManager 執行寫入
             // **新增：檢查狀態，只有在運行中才能停止**
             if (app.currentState != app.SystemState.Running)
@@ -6873,6 +6911,7 @@ namespace peilin
                                 label33.Text = c.material.ToString() + c.thick.ToString() + c.PTFEColor.ToString();
                                 label22.Text = c.boxorpack;
                                 label54.Text = c.ID.ToString() + "ID x " + c.OD.ToString() + "OD x " + c.H.ToString() + "H";
+                                label61.Text = c.package;
                             }
                         }
                     }
@@ -7157,6 +7196,7 @@ namespace peilin
                             Log.Information($"D99：{app.counter["stop3"] % 15}");
                             Log.Information($"D101：{app.counter["stop3"]-1}");
 
+                            /*
                             button26.Text = "ON";
                             button26.BackColor = Color.FromArgb(128, 255, 128);
                             PLC_SetM(6, true);
@@ -7164,7 +7204,7 @@ namespace peilin
                             button12.BackColor = Color.FromArgb(255, 128, 128);
                             PLC_SetM(9, true);
                             updateLabel();
-
+                            */
                             /*
                             app.counter["stop0"] = totalcount;
                             app.counter["stop1"] = totalcount;
@@ -8324,299 +8364,310 @@ namespace peilin
         void read_plc()
         {
             while (true)
-            {             
-                if (app.status)
+            {
+                if (!app.offline)
                 {
-                    try
+                    if (app.status)
                     {
-                        #region 監控第一個樣品
-                        if (!_systemInitialized && !app.offline)
+                        try
                         {
-                            lock (_initLock)
+                            #region 監控第一個樣品
+                            if (!_systemInitialized && !app.offline)
                             {
-                                if (!_systemInitialized)
+                                lock (_initLock)
                                 {
-                                    int currentD100 = PLC_CheckD(100);
-
-                                    // D100 > 0 代表第一個物體經過第一站光纖
-                                    if (currentD100 > 0)
+                                    if (!_systemInitialized)
                                     {
-                                        _systemInitialized = true;
-                                        Log.Information($"首次偵測到物體（D100 = {currentD100}），系統初始化完成，開始正常收圖");
-                                    }
-                                }
-                            }
-                        }
-                        #endregion
+                                        int currentD100 = PLC_CheckD(100);
 
-                        if (app.plc_stop)
-                        {
-                            this.Enabled = true;
-                            button2_Click(null, null);
-                            app.plc_stop = false;
-                            app.alertTriggered = false; // 重置標記
-                            this.Refresh();
-                        }
-
-                        else
-                        {
-                            updateLabel();
-                            #region 監控OK1 OK2 未啟用 （高頻率讀取無法監控）
-                            /*
-                            // 讀 D803/D805/D807（32bit）
-                            int curD803 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 803);
-                            int curD805 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 805);
-                            int curD807 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 807);
-
-                            if (_prevD803 < 0) _prevD803 = curD803;
-                            if (_prevD805 < 0) _prevD805 = curD805;
-                            if (_prevD807 < 0) _prevD807 = curD807;
-
-                            bool hasProduction = false;
-
-                            // === 監控 D803 (OK1) ===
-                            if (curD803 > _prevD803)
-                            {
-                                DateTime plcPushTime = DateTime.Now; // **實際推料時間**
-                                int delta = curD803 - _prevD803;
-                                
-                                if (delta > 3) 
-                                    Log.Warning($"[PLC推料] D803 連跳 {delta}，可能有遺漏");
-
-                                for (int i = 0; i < delta; i++)
-                                {
-                                    if (app.pendingOK1.TryDequeue(out int sid))
-                                    {
-                                        // 從字典取得拍照時間
-                                        if (app.samplePhotoTimes.TryGetValue(sid, out DateTime photoTime))
+                                        // D100 > 0 代表第一個物體經過第一站光纖
+                                        if (currentD100 > 0)
                                         {
-                                            double totalMs = (plcPushTime - photoTime).TotalMilliseconds;
-                                            
-                                            // **統一Log格式 - OK1實際推料**
-                                            Log.Information($"[樣品 {sid}] PLC實際推料:{plcPushTime:HH:mm:ss.fff} | 通道:OK1 | 總耗時:{totalMs:F0}ms");
-                                        }
-                                        else
-                                        {
-                                            Log.Warning($"[樣品 {sid}] PLC推料完成，但找不到拍照時間記錄，此次推料時間:{plcPushTime:HH:mm:ss.fff}");
+                                            _systemInitialized = true;
+                                            Log.Information($"首次偵測到物體（D100 = {currentD100}），系統初始化完成，開始正常收圖");
                                         }
                                     }
-                                    else
-                                    {
-                                        Log.Warning($"[PLC推料] D803 增加但 pendingOK1 佇列為空");
-                                    }
                                 }
-                                _prevD803 = curD803;
-                                hasProduction = true;
                             }
-
-                            // === 監控 D805 (OK2) ===
-                            if (curD805 > _prevD805)
-                            {
-                                DateTime plcPushTime = DateTime.Now;
-                                int delta = curD805 - _prevD805;
-                                
-                                if (delta > 3) 
-                                    Log.Warning($"[PLC推料] D805 連跳 {delta}，可能有遺漏");
-
-                                for (int i = 0; i < delta; i++)
-                                {
-                                    if (app.pendingOK2.TryDequeue(out int sid))
-                                    {
-                                        if (app.samplePhotoTimes.TryGetValue(sid, out DateTime photoTime))
-                                        {
-                                            double totalMs = (plcPushTime - photoTime).TotalMilliseconds;
-                                            
-                                            // **統一Log格式 - OK2實際推料**
-                                            Log.Information($"[樣品 {sid}] PLC實際推料:{plcPushTime:HH:mm:ss.fff} | 通道:OK2 | 總耗時:{totalMs:F0}ms");
-                                        }
-                                        else
-                                        {
-                                            Log.Warning($"[樣品 {sid}] PLC推料完成，但找不到拍照時間記錄");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Log.Warning($"[PLC推料] D805 增加但 pendingOK2 佇列為空");
-                                    }
-                                }
-                                _prevD805 = curD805;
-                                hasProduction = true;
-                            }
-
-                            // === 監控 D807 (OK總數) - 僅作驗證 ===
-                            if (curD807 > _prevD807)
-                            {
-                                int delta = curD807 - _prevD807;
-                                if (delta > 3) 
-                                    Log.Warning($"[PLC推料] D807 連跳 {delta}");
-                                _prevD807 = curD807;
-                            }
-
-                            // 若有生產輸出，重置NULL計數與時間
-                            if (hasProduction)
-                            {
-                                
-                                if (_consecutiveNullCount > 0)
-                                {
-                                    Log.Information($"[Production] 恢復正常生產，清除NULL計數(原={_consecutiveNullCount})");
-                                }
-                                
-                                //_consecutiveNullCount = 0;
-                                //_lastTotalCount = currentTotalCount;
-                                _lastProductiveTime = DateTime.Now;
-                            }
-                            else if(_lastProductiveTime != null)
-                            {
-                                
-                                // 檢查無生產輸出逾時
-                                TimeSpan idleSpan = DateTime.Now - _lastProductiveTime.Value;
-                                double idleSeconds = idleSpan.TotalSeconds;
-                                if (idleSeconds > app.ProductiveTimeoutSec)
-                                {
-                                    Log.Error($"[Production] 無生產輸出逾時({idleSeconds:F0}秒 > {app.ProductiveTimeoutSec}秒)，觸發停機");
-                                    this.Invoke(new Action(() =>
-                                    {
-                                        MessageBox.Show($"已連續{idleSeconds:F0}秒NULL，系統將停機檢查，請進入復歸流程", "生產異常", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                        button2_Click(null, null); // 停止檢測
-                                    }));
-                                    _lastProductiveTime = null; // 重置避免重複觸發
-                                }
-                                
-                            }
-                            */
                             #endregion
 
-                            bool hasError = !PLC_CheckX(0) || PLC_CheckM(27) || PLC_CheckM(21);
+                            if (app.plc_stop)
+                            {
+                                this.Enabled = true;
+                                button2_Click(null, null);
+                                app.plc_stop = false;
+                                app.alertTriggered = false; // 重置標記
+                                this.Refresh();
+                            }
 
-                            if (hasError && !app.alertTriggered) // 只在首次檢測到錯誤時觸發
-                            {
-                                app.alertTriggered = true;
-                                this.BeginInvoke(new Action(() => ShowAlert()));
-                            }
-                            else if (!hasError && app.alertTriggered)
-                            {
-                                app.alertTriggered = false; // 錯誤解除時重置標記
-                            }
                             else
                             {
-                                // 在介面更新檔板狀態
-                                //if ((PLC_CheckM(6) || PLC_CheckM(7)) && button26.Text != "ON")
+                                updateLabel();
+                                #region 監控OK1 OK2 未啟用 （高頻率讀取無法監控）
                                 /*
-                                if ((PLC_Value.Point_Y[2][3] || PLC_Value.Point_Y[2][4]) && button26.Text != "ON") //OK檔板ON
+                                // 讀 D803/D805/D807（32bit）
+                                int curD803 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 803);
+                                int curD805 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 805);
+                                int curD807 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 807);
+
+                                if (_prevD803 < 0) _prevD803 = curD803;
+                                if (_prevD805 < 0) _prevD805 = curD805;
+                                if (_prevD807 < 0) _prevD807 = curD807;
+
+                                bool hasProduction = false;
+
+                                // === 監控 D803 (OK1) ===
+                                if (curD803 > _prevD803)
                                 {
-                                    BeginInvoke(new Action(() => button26.Text = "ON"));
-                                    BeginInvoke(new Action(() => button26.BackColor = button26.BackColor = Color.Lime));
+                                    DateTime plcPushTime = DateTime.Now; // **實際推料時間**
+                                    int delta = curD803 - _prevD803;
+
+                                    if (delta > 3) 
+                                        Log.Warning($"[PLC推料] D803 連跳 {delta}，可能有遺漏");
+
+                                    for (int i = 0; i < delta; i++)
+                                    {
+                                        if (app.pendingOK1.TryDequeue(out int sid))
+                                        {
+                                            // 從字典取得拍照時間
+                                            if (app.samplePhotoTimes.TryGetValue(sid, out DateTime photoTime))
+                                            {
+                                                double totalMs = (plcPushTime - photoTime).TotalMilliseconds;
+
+                                                // **統一Log格式 - OK1實際推料**
+                                                Log.Information($"[樣品 {sid}] PLC實際推料:{plcPushTime:HH:mm:ss.fff} | 通道:OK1 | 總耗時:{totalMs:F0}ms");
+                                            }
+                                            else
+                                            {
+                                                Log.Warning($"[樣品 {sid}] PLC推料完成，但找不到拍照時間記錄，此次推料時間:{plcPushTime:HH:mm:ss.fff}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Log.Warning($"[PLC推料] D803 增加但 pendingOK1 佇列為空");
+                                        }
+                                    }
+                                    _prevD803 = curD803;
+                                    hasProduction = true;
+                                }
+
+                                // === 監控 D805 (OK2) ===
+                                if (curD805 > _prevD805)
+                                {
+                                    DateTime plcPushTime = DateTime.Now;
+                                    int delta = curD805 - _prevD805;
+
+                                    if (delta > 3) 
+                                        Log.Warning($"[PLC推料] D805 連跳 {delta}，可能有遺漏");
+
+                                    for (int i = 0; i < delta; i++)
+                                    {
+                                        if (app.pendingOK2.TryDequeue(out int sid))
+                                        {
+                                            if (app.samplePhotoTimes.TryGetValue(sid, out DateTime photoTime))
+                                            {
+                                                double totalMs = (plcPushTime - photoTime).TotalMilliseconds;
+
+                                                // **統一Log格式 - OK2實際推料**
+                                                Log.Information($"[樣品 {sid}] PLC實際推料:{plcPushTime:HH:mm:ss.fff} | 通道:OK2 | 總耗時:{totalMs:F0}ms");
+                                            }
+                                            else
+                                            {
+                                                Log.Warning($"[樣品 {sid}] PLC推料完成，但找不到拍照時間記錄");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Log.Warning($"[PLC推料] D805 增加但 pendingOK2 佇列為空");
+                                        }
+                                    }
+                                    _prevD805 = curD805;
+                                    hasProduction = true;
+                                }
+
+                                // === 監控 D807 (OK總數) - 僅作驗證 ===
+                                if (curD807 > _prevD807)
+                                {
+                                    int delta = curD807 - _prevD807;
+                                    if (delta > 3) 
+                                        Log.Warning($"[PLC推料] D807 連跳 {delta}");
+                                    _prevD807 = curD807;
+                                }
+
+                                // 若有生產輸出，重置NULL計數與時間
+                                if (hasProduction)
+                                {
+
+                                    if (_consecutiveNullCount > 0)
+                                    {
+                                        Log.Information($"[Production] 恢復正常生產，清除NULL計數(原={_consecutiveNullCount})");
+                                    }
+
+                                    //_consecutiveNullCount = 0;
+                                    //_lastTotalCount = currentTotalCount;
+                                    _lastProductiveTime = DateTime.Now;
+                                }
+                                else if(_lastProductiveTime != null)
+                                {
+
+                                    // 檢查無生產輸出逾時
+                                    TimeSpan idleSpan = DateTime.Now - _lastProductiveTime.Value;
+                                    double idleSeconds = idleSpan.TotalSeconds;
+                                    if (idleSeconds > app.ProductiveTimeoutSec)
+                                    {
+                                        Log.Error($"[Production] 無生產輸出逾時({idleSeconds:F0}秒 > {app.ProductiveTimeoutSec}秒)，觸發停機");
+                                        this.Invoke(new Action(() =>
+                                        {
+                                            MessageBox.Show($"已連續{idleSeconds:F0}秒NULL，系統將停機檢查，請進入復歸流程", "生產異常", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            button2_Click(null, null); // 停止檢測
+                                        }));
+                                        _lastProductiveTime = null; // 重置避免重複觸發
+                                    }
+
                                 }
                                 */
+                                #endregion
 
-                                #region 每分紀錄
-                                try
+                                bool hasError = !PLC_CheckX(0) || PLC_CheckM(27) || PLC_CheckM(21);
+
+                                if (hasError && !app.alertTriggered) // 只在首次檢測到錯誤時觸發
                                 {
-                                    if ((DateTime.Now - app.rec_time).TotalSeconds >= 65)
+                                    app.alertTriggered = true;
+                                    this.BeginInvoke(new Action(() => ShowAlert()));
+                                }
+                                else if (!hasError && app.alertTriggered)
+                                {
+                                    app.alertTriggered = false; // 錯誤解除時重置標記
+                                }
+                                else
+                                {
+                                    // 在介面更新檔板狀態
+                                    //if ((PLC_CheckM(6) || PLC_CheckM(7)) && button26.Text != "ON")
+                                    /*
+                                    if ((PLC_Value.Point_Y[2][3] || PLC_Value.Point_Y[2][4]) && button26.Text != "ON") //OK檔板ON
                                     {
-                                        var d801 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 801);
-                                        var d807 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 807);
-                                        //var d809 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 809);
-                                        var d809 = PLC_CheckD(809);
+                                        BeginInvoke(new Action(() => button26.Text = "ON"));
+                                        BeginInvoke(new Action(() => button26.BackColor = button26.BackColor = Color.Lime));
+                                    }
+                                    */
 
-                                        // 修正：將 OK 數量取整到 50 的倍數（向下取整）
-                                        int q = d807 / 50;
-                                        d807 = q * 50;  // 正確：例如 d807=123 -> q=2 -> d807=100
+                                    #region 每分紀錄
+                                    try
+                                    {
+                                        if ((DateTime.Now - app.rec_time).TotalSeconds >= 65)
+                                        {
+                                            var handle1 = new ManualResetEvent(false);
+                                            PLC_ModBus.CheckValue(1, ValueUnit.D, 801, 14, false, handle1);
+                                            handle1.WaitOne();
+                                            var d801 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 801);
+                                            var d803 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 803);
+                                            var d805 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 805);
+                                            var d807 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 807);
+                                            var d809 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 809);
+                                            //var d809 = PLC_CheckD(809);
+                                            var d811 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 811);
+                                            //var d811 = PLC_CheckD(811);
+                                            var d813 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 813);
 
-                                        var ngCount = d801;
-                                        var okCount = d807;
-                                        var nullCount = d809;
+                                            // 修正：將 OK 數量取整到 50 的倍數（向下取整）
+                                            int q = d807 / 50;
+                                            d807 = q * 50;  // 正確：例如 d807=123 -> q=2 -> d807=100
 
-                                        Dictionary<string, int> generalCounts = new Dictionary<string, int>
+                                            var ngCount = d801;
+                                            var okCount = d807;
+                                            var nullCount = d809;
+
+                                            Dictionary<string, int> generalCounts = new Dictionary<string, int>
                                         {
                                             { "OK", okCount },
                                             { "NG", ngCount },
                                             { "NULL", nullCount }
                                         };
 
-                                        // 使用 DefectCountManager 寫入數據
-                                        bool writeSuccess = DefectCountManager.WriteAllDefectCounts(
-                                            app.produce_No,
-                                            app.LotID,
-                                            app.dc,
-                                            generalCounts
-                                        );
+                                            // 使用 DefectCountManager 寫入數據
+                                            bool writeSuccess = DefectCountManager.WriteAllDefectCounts(
+                                                app.produce_No,
+                                                app.LotID,
+                                                app.dc,
+                                                generalCounts
+                                            );
 
-                                        if (!writeSuccess)
-                                        {
-                                            Log.Error("定期寫入 DefectCount 失敗");
+                                            if (!writeSuccess)
+                                            {
+                                                Log.Error("定期寫入 DefectCount 失敗");
+                                            }
+
+                                            app.rec_time = DateTime.Now;
                                         }
 
-                                        app.rec_time = DateTime.Now;
                                     }
-
-                                }
-                                catch (Exception e1)
-                                {
-                                    Log.Error("readplc error:" + e1.ToString());
-                                }
-                                #endregion
-                                /*
-                                try
-                                {
-                                    if ((DateTime.Now - app.lastIn).TotalSeconds > int.Parse(app.param["empty_th0"]))
+                                    catch (Exception e1)
                                     {
-                                        PLC_SetM(999, true);
-                                        //PLC_SetM(20, true);
-                                        button2_Click(null, null);
-                                        lbAdd("無進料時間超出門檻，自動停機。", "err", "");
+                                        Log.Error("readplc error:" + e1.ToString());
                                     }
-                                }
-                                catch (Exception e1)
-                                {
-                                    Log.Error("readplc error:" + e1.ToString());
-                                    //lbAdd("readplc wrong2", "inf", e1.ToString());
-                                }
-                                */
-                                /*
-                                #region 速度
-                                try
-                                {
-                                    if (app.finishtime.Count > 0)
+                                    #endregion
+                                    /*
+                                    try
                                     {
-                                        while ((DateTime.Now - app.finishtime[0]).TotalMinutes >= 1)
+                                        if ((DateTime.Now - app.lastIn).TotalSeconds > int.Parse(app.param["empty_th0"]))
                                         {
-                                            app.finishtime.RemoveAt(0);
-                                            if (app.finishtime.Count == 0)
+                                            PLC_SetM(999, true);
+                                            //PLC_SetM(20, true);
+                                            button2_Click(null, null);
+                                            lbAdd("無進料時間超出門檻，自動停機。", "err", "");
+                                        }
+                                    }
+                                    catch (Exception e1)
+                                    {
+                                        Log.Error("readplc error:" + e1.ToString());
+                                        //lbAdd("readplc wrong2", "inf", e1.ToString());
+                                    }
+                                    */
+                                    /*
+                                    #region 速度
+                                    try
+                                    {
+                                        if (app.finishtime.Count > 0)
+                                        {
+                                            while ((DateTime.Now - app.finishtime[0]).TotalMinutes >= 1)
                                             {
-                                                break;
+                                                app.finishtime.RemoveAt(0);
+                                                if (app.finishtime.Count == 0)
+                                                {
+                                                    break;
+                                                }
+                                            }
+
+                                            if ((DateTime.Now - app.finishtime[app.finishtime.Count - 1]).TotalSeconds > 1)
+                                            {
+                                                BeginInvoke(new Action(() => label13.Text = "0 PCS/分"));
                                             }
                                         }
 
-                                        if ((DateTime.Now - app.finishtime[app.finishtime.Count - 1]).TotalSeconds > 1)
-                                        {
-                                            BeginInvoke(new Action(() => label13.Text = "0 PCS/分"));
-                                        }
+                                        var oneminspeed = app.finishtime.Count;
+                                        BeginInvoke(new Action(() => label51.Text = oneminspeed + " PCS"));
                                     }
-
-                                    var oneminspeed = app.finishtime.Count;
-                                    BeginInvoke(new Action(() => label51.Text = oneminspeed + " PCS"));
+                                    catch (Exception e1)
+                                    {
+                                        Log.Error("readplc error" + e1.ToString());
+                                        // lbAdd("readplc wrong3", "inf", e1.ToString());
+                                    }
+                                    #endregion
+                                    */
                                 }
-                                catch (Exception e1)
-                                {
-                                    Log.Error("readplc error" + e1.ToString());
-                                    // lbAdd("readplc wrong3", "inf", e1.ToString());
-                                }
-                                #endregion
-                                */
                             }
                         }
+                        catch (Exception e1)
+                        {
+                            lbAdd("readplc wrong", "inf", e1.ToString());
+                        }
+                        //Thread.Sleep(20);
+                        //Thread.Sleep(100);
                     }
-                    catch (Exception e1)
+                    else
                     {
-                        lbAdd("readplc wrong", "inf", e1.ToString());
+                        app._reader.WaitOne();
                     }
-                    //Thread.Sleep(20);
-                    //Thread.Sleep(100);
-                }
-                else
-                {
-                    app._reader.WaitOne();
                 }
             }
         }
@@ -9855,13 +9906,6 @@ namespace peilin
             return dst;
         }
 
-        /// <summary>
-        /// 檢測ROI中的小黑點
-        /// </summary>
-        /// <param name="roiImage">從DetectAndExtractROI得到的ROI圖像</param>
-        /// <param name="stop">站點編號</param>
-        /// <param name="count">圖像編號</param>
-        /// <returns>檢測結果：是否有小黑點瑕疵，以及處理後的結果圖像</returns>
         public (bool hasBlackDots, Mat resultImage, List<Point[]> detectedContours) DetectBlackDots(Mat roiImage, int stop, int count)
         {
             // 由 GitHub Copilot 產生
@@ -10019,13 +10063,7 @@ namespace peilin
                 return (false, roiImage?.Clone(), new List<Point[]>());
             }
         }
-        
-        // 在Form1類中添加過殺降低處理方法
-        /// <summary>
-        /// 對outsc瑕疵進行過殺降低處理
-        /// </summary>
-        /// <param name="validDefects">有效的瑕疵檢測結果</param>
-        /// <returns>經過過殺降低處理後的瑕疵檢測結果</returns>
+
         private List<DetectionResult> ApplyOutscOverkillReduction(List<DetectionResult> validDefects, int stop)
         {
             // 篩選出outsc瑕疵和其他瑕疵
@@ -10038,46 +10076,60 @@ namespace peilin
                 return validDefects;
             }
 
-            // 如果有3個以上outsc瑕疵，正常顯示
-            if (outscDefects.Count >= 3)
-            {
-                return validDefects;
-            }
-
-            // 如果只有1個或2個outsc瑕疵，需要進行篩選
             List<DetectionResult> filteredOutscDefects = new List<DetectionResult>();
 
-            if (outscDefects.Count == 2)
+            // 從資料庫讀取站點的長邊閾值
+            double outscLongerSide = GetDoubleParam(app.param, $"outscLen_{stop}", 100.0);
+
+            if (outscDefects.Count >= 8)
             {
-                // 檢查兩個瑕疵框是否連在一起
-                var defect1 = outscDefects[0];
-                var defect2 = outscDefects[1];
+                // ≥8個：確實有嚴重問題，全部保留
+                filteredOutscDefects.AddRange(outscDefects);
+                //Log.Debug($"站點{stop}: {outscDefects.Count}個outsc瑕疵（≥8），全部保留");
+            }
+            else if (outscDefects.Count >= 2)
+            {
+                // 2-7個：先合併相鄰矩形，再檢查合併後的長邊
+                var mergedDefects = MergeAdjacentOutscDefects(outscDefects, mergeDistance: 50);
 
-                Rect rect1 = new Rect(defect1.box[0], defect1.box[1],
-                                     defect1.box[2] - defect1.box[0], defect1.box[3] - defect1.box[1]);
-                Rect rect2 = new Rect(defect2.box[0], defect2.box[1],
-                                     defect2.box[2] - defect2.box[0], defect2.box[3] - defect2.box[1]);
-
-                double distance = CalculateMinimumDistance(rect1, rect2);
-
-                if (distance <= 100)
+                // 檢查每個合併後的矩形
+                foreach (var defect in mergedDefects)
                 {
-                    // 兩個檢測框距離在100像素以內，正常顯示
-                    filteredOutscDefects.AddRange(outscDefects);
+                    int width = defect.box[2] - defect.box[0];
+                    int height = defect.box[3] - defect.box[1];
+                    double longerSide = Math.Max(width, height);
+
+                    if (longerSide >= outscLongerSide)
+                    {
+                        // 合併後長邊達標，這個合併群組的所有原始框都保留
+                        // 找出這個合併框對應的原始框
+                        var originalDefects = FindOriginalDefects(defect, outscDefects);
+                        filteredOutscDefects.AddRange(originalDefects);
+
+                        //Log.Debug($"站點{stop}: 合併後長邊{longerSide}px ≥ 閾值{outscLongerSide}px，保留{originalDefects.Count}個原始框");
+                    }
+                    else
+                    {
+                        //Log.Debug($"站點{stop}: 合併後長邊{longerSide}px < 閾值{outscLongerSide}px，過濾");
+                    }
+                }
+            }
+            else // outscDefects.Count == 1
+            {
+                // 1個：直接檢查長邊
+                var defect = outscDefects[0];
+                int width = defect.box[2] - defect.box[0];
+                int height = defect.box[3] - defect.box[1];
+                double longerSide = Math.Max(width, height);
+
+                if (longerSide >= outscLongerSide)
+                {
+                    filteredOutscDefects.Add(defect);
+                    //Log.Debug($"站點{stop}: 單一outsc長邊{longerSide}px ≥ 閾值{outscLongerSide}px，保留");
                 }
                 else
                 {
-                    // 分別對每個瑕疵進行篩選
-                    filteredOutscDefects.AddRange(outscDefects.Where(defect => PassesOutscFilter(defect, stop)));
-                }
-            }
-            else if (outscDefects.Count == 1)
-            {
-                // 只有一個瑕疵，進行篩選
-                var defect = outscDefects[0];
-                if (PassesOutscFilter(defect, stop))
-                {
-                    filteredOutscDefects.Add(defect);
+                    //Log.Debug($"站點{stop}: 單一outsc長邊{longerSide}px < 閾值{outscLongerSide}px，過濾");
                 }
             }
 
@@ -10089,94 +10141,153 @@ namespace peilin
             return result;
         }
 
-        /// <summary>
-        /// 計算兩個矩形之間的最小距離
-        /// </summary>
-        /// <param name="rect1">第一個矩形</param>
-        /// <param name="rect2">第二個矩形</param>
-        /// <returns>最小距離</returns>
-        private double CalculateMinimumDistance(Rect rect1, Rect rect2)
+        private List<DetectionResult> FindOriginalDefects(DetectionResult mergedDefect, List<DetectionResult> originalDefects)
         {
-            // 獲取每個矩形的角點
-            Point[] rect1Points = new Point[]
-            {
-                new Point(rect1.X, rect1.Y),                                // 左上
-                new Point(rect1.X + rect1.Width, rect1.Y),                 // 右上
-                new Point(rect1.X, rect1.Y + rect1.Height),                // 左下
-                new Point(rect1.X + rect1.Width, rect1.Y + rect1.Height)   // 右下
-            };
+            var result = new List<DetectionResult>();
+            Rect mergedRect = new Rect(
+                mergedDefect.box[0],
+                mergedDefect.box[1],
+                mergedDefect.box[2] - mergedDefect.box[0],
+                mergedDefect.box[3] - mergedDefect.box[1]
+            );
 
-            Point[] rect2Points = new Point[]
+            foreach (var original in originalDefects)
             {
-                new Point(rect2.X, rect2.Y),                                // 左上
-                new Point(rect2.X + rect2.Width, rect2.Y),                 // 右上
-                new Point(rect2.X, rect2.Y + rect2.Height),                // 左下
-                new Point(rect2.X + rect2.Width, rect2.Y + rect2.Height)   // 右下
-            };
+                Rect originalRect = new Rect(
+                    original.box[0],
+                    original.box[1],
+                    original.box[2] - original.box[0],
+                    original.box[3] - original.box[1]
+                );
 
-            double minDistance = double.MaxValue;
-
-            // 計算所有角點之間的距離，找出最小值
-            foreach (var point1 in rect1Points)
-            {
-                foreach (var point2 in rect2Points)
+                // 如果原始框與合併框有重疊或包含關係，視為屬於這個合併群組
+                if (mergedRect.IntersectsWith(originalRect) || mergedRect.Contains(originalRect))
                 {
-                    double distance = Math.Sqrt(Math.Pow(point1.X - point2.X, 2) + Math.Pow(point1.Y - point2.Y, 2));
-                    if (distance < minDistance)
+                    result.Add(original);
+                }
+            }
+
+            return result;
+        }
+
+        private List<DetectionResult> MergeAdjacentOutscDefects(List<DetectionResult> defects, double mergeDistance = 50)
+        {
+            if (defects.Count <= 1)
+                return defects;
+
+            // 創建矩形列表，附帶原始索引
+            var rectList = defects.Select((d, idx) => new
+            {
+                Index = idx,
+                Rect = new Rect(d.box[0], d.box[1],
+                               d.box[2] - d.box[0],
+                               d.box[3] - d.box[1]),
+                Original = d
+            }).ToList();
+
+            // 使用 Union-Find 演算法找出需要合併的群組
+            var parent = Enumerable.Range(0, rectList.Count).ToArray();
+
+            int Find(int x)
+            {
+                if (parent[x] != x)
+                    parent[x] = Find(parent[x]);
+                return parent[x];
+            }
+
+            void Union(int x, int y)
+            {
+                int px = Find(x);
+                int py = Find(y);
+                if (px != py)
+                    parent[px] = py;
+            }
+
+            // 檢查所有矩形對，距離小於閾值則合併
+            for (int i = 0; i < rectList.Count; i++)
+            {
+                for (int j = i + 1; j < rectList.Count; j++)
+                {
+                    double distance = CalculateRectDistance(rectList[i].Rect, rectList[j].Rect);
+                    if (distance <= mergeDistance)
                     {
-                        minDistance = distance;
+                        Union(i, j);
                     }
                 }
             }
 
-            return minDistance;
+            // 按群組分組
+            var groups = rectList
+                .Select((item, idx) => new { Item = item, Group = Find(idx) })
+                .GroupBy(x => x.Group)
+                .Select(g => g.Select(x => x.Item).ToList())
+                .ToList();
+
+            // 合併每個群組
+            var mergedDefects = new List<DetectionResult>();
+
+            foreach (var group in groups)
+            {
+                if (group.Count == 1)
+                {
+                    // 單一矩形，直接加入
+                    mergedDefects.Add(group[0].Original);
+                }
+                else
+                {
+                    // 多個矩形，合併成一個
+                    var mergedRect = group[0].Rect;
+                    double maxScore = group[0].Original.score;
+
+                    foreach (var item in group.Skip(1))
+                    {
+                        mergedRect = MergeRects(mergedRect, item.Rect);
+                        maxScore = Math.Max(maxScore, item.Original.score);
+                    }
+
+                    // 創建合併後的 DetectionResult
+                    var mergedDefect = new DetectionResult
+                    {
+                        box = new List<int>
+                        {
+                            mergedRect.X,
+                            mergedRect.Y,
+                            mergedRect.X + mergedRect.Width,
+                            mergedRect.Y + mergedRect.Height
+                        },
+                        class_id = group[0].Original.class_id,
+                        class_name = group[0].Original.class_name,
+                        score = maxScore // 使用最高分數
+                    };
+
+                    mergedDefects.Add(mergedDefect);
+                }
+            }
+
+            return mergedDefects;
         }
 
-        /// <summary>
-        /// 檢查單個outsc瑕疵是否通過篩選條件
-        /// </summary>
-        /// <param name="defect">瑕疵檢測結果</param>
-        /// <returns>是否通過篩選</returns>
-        // 由 GitHub Copilot 產生 - 修正參數讀取，使用 GetIntParam 避免格式錯誤
-        private bool PassesOutscFilter(DetectionResult defect, int stop)
+        private Rect MergeRects(Rect rect1, Rect rect2)
         {
-            int width = defect.box[2] - defect.box[0];
-            int height = defect.box[3] - defect.box[1];
-            int area = width * height;
+            int x1 = Math.Min(rect1.Left, rect2.Left);
+            int y1 = Math.Min(rect1.Top, rect2.Top);
+            int x2 = Math.Max(rect1.Right, rect2.Right);
+            int y2 = Math.Max(rect1.Bottom, rect2.Bottom);
 
-            // 計算長寬比
-            float aspectRatio = Math.Max(width, height) / (float)Math.Min(width, height);
-
-            // 計算長邊
-            int longerSide = Math.Max(width, height);
-
-            // 讀取參數，提供預設值避免格式錯誤
-            int outscAspectRatio = GetIntParam(app.param, $"outscAspectRatio_{stop}", 4);
-            int outscLongerSide = GetIntParam(app.param, $"outscLongerSide_{stop}", 100);
-            int outscArea = GetIntParam(app.param, $"outscArea_{stop}", 5000);
-
-            // 條件1: 長寬比為4:1以上
-            if (aspectRatio >= outscAspectRatio)
-            {
-                return true;
-            }
-
-            // 條件2: 長邊100以上且面積5000以上
-            if (longerSide >= outscLongerSide && area >= outscArea)
-            {
-                return true;
-            }
-
-            // 條件3: 分數0.85以上
-            if (defect.score >= 0.85)
-            {
-                return true;
-            }
-
-            return false;
+            return new Rect(x1, y1, x2 - x1, y2 - y1);
         }
+        private double CalculateRectDistance(Rect rect1, Rect rect2)
+        {
+            // 檢查是否重疊
+            if (rect1.IntersectsWith(rect2))
+                return 0;
 
-        // 在 #region OTP五彩鋅色彩檢測相關函數 區段新增
+            // 計算水平和垂直距離
+            double dx = Math.Max(0, Math.Max(rect1.Left - rect2.Right, rect2.Left - rect1.Right));
+            double dy = Math.Max(0, Math.Max(rect1.Top - rect2.Bottom, rect2.Top - rect1.Bottom));
+
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
 
         /// <summary>
         /// 基於實際分析數據的簡化色彩驗證器
@@ -12530,7 +12641,7 @@ namespace peilin
                 return;
             }
 
-            // 解析檔名並按樣品編號排序 (a-b 格式，a是樣品編號，b是站號1-4)
+            // 由 GitHub Copilot 產生 - 解析檔名並按樣品編號和站號排序 (a-b 格式，a是樣品編號，b是站號1-4)
             var sortedFiles = imageFiles.Select(file =>
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
@@ -12547,16 +12658,59 @@ namespace peilin
 
                 return new { FilePath = file, SampleId = sampleId, StationId = stationId };
             })
-            .OrderBy(item => item.SampleId)  // 按樣品編號排序
+            .OrderBy(item => item.SampleId)   // 由 GitHub Copilot 產生 - 先按樣品編號排序（數字排序）
+            .ThenBy(item => item.StationId)   // 由 GitHub Copilot 產生 - 再按站號排序，確保同一樣品的4站按1234順序處理
             .ToArray();
 
             lbAdd($"找到 {sortedFiles.Length} 張測試圖片", "inf", "");
 
-            // 檢查解析結果
+            // 由 GitHub Copilot 產生 - 檢查解析結果和圖片分布
             if (sortedFiles.All(item => item.StationId == 0))
             {
                 MessageBox.Show("檔案命名格式不符預期 (應為'a-b'格式，其中b為1~4的站號)", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
+            }
+
+            // 由 GitHub Copilot 產生 - 統計圖片分布情況以便診斷
+            var uniqueSamples = sortedFiles.Select(f => f.SampleId).Distinct().Count();
+            var station1Count = sortedFiles.Count(f => f.StationId == 1);
+            var station2Count = sortedFiles.Count(f => f.StationId == 2);
+            var station3Count = sortedFiles.Count(f => f.StationId == 3);
+            var station4Count = sortedFiles.Count(f => f.StationId == 4);
+
+            lbAdd($"圖片分布: 樣品數={uniqueSamples}, 站1={station1Count}, 站2={station2Count}, 站3={station3Count}, 站4={station4Count}", "inf", "");
+
+            // 由 GitHub Copilot 產生 - 顯示前10張和後10張圖片順序，用於驗證排序
+            var first10 = sortedFiles.Take(10).Select(f => $"{f.SampleId}-{f.StationId}");
+            var last10 = sortedFiles.Skip(Math.Max(0, sortedFiles.Length - 10)).Select(f => $"{f.SampleId}-{f.StationId}");
+            lbAdd($"前10張: {string.Join(", ", first10)}", "inf", "");
+            lbAdd($"後10張: {string.Join(", ", last10)}", "inf", "");
+
+            // 由 GitHub Copilot 產生 - 檢查是否每個樣品都有完整的4個站點
+            var sampleStationGroups = sortedFiles.GroupBy(f => f.SampleId)
+                .Select(g => new { SampleId = g.Key, Stations = g.Select(f => f.StationId).OrderBy(s => s).ToList() })
+                .ToList();
+
+            var incompleteSamples = sampleStationGroups
+                .Where(g => g.Stations.Count != 4 || !g.Stations.SequenceEqual(new[] { 1, 2, 3, 4 }))
+                .ToList();
+
+            if (incompleteSamples.Count > 0)
+            {
+                lbAdd($"警告: 發現 {incompleteSamples.Count} 個樣品的站點不完整！", "war", "");
+                foreach (var sample in incompleteSamples.Take(10))  // 只顯示前10個
+                {
+                    string stationList = string.Join(",", sample.Stations);
+                    lbAdd($"  樣品 {sample.SampleId}: 只有站點 [{stationList}]", "war", "");
+                }
+                if (incompleteSamples.Count > 10)
+                {
+                    lbAdd($"  ... 還有 {incompleteSamples.Count - 10} 個樣品有問題", "war", "");
+                }
+            }
+            else
+            {
+                lbAdd($"檢查通過: 所有 {uniqueSamples} 個樣品都有完整的4個站點", "inf", "");
             }
 
             // 初始化記錄變數
@@ -12566,17 +12720,23 @@ namespace peilin
             // 設定測試模式
             app.testc = true;  // 開啟測試模式標記
 
-            // 暫存原始狀態
+            // 由 GitHub Copilot 產生 - 暫存原始狀態（包含系統狀態）
             bool originalStatus = app.status;
             bool originalSoftTriggerMode = app.SoftTriggerMode;
+            app.SystemState originalSystemState = app.currentState;
 
-            // 設定為運行狀態，並關閉軟體觸發模式
+            // 由 GitHub Copilot 產生 - 設定為運行狀態，並關閉軟體觸發模式
+            // 必須設定 currentState 為 Running，否則停止按鈕會一直彈出警告
             app.status = true;
+            app.currentState = app.SystemState.Running;
             app.SoftTriggerMode = false;
             app._reader.Set();
 
-            // 由 GitHub Copilot 產生 // 修改: 使用 TryUpdate 或 indexer 賦值 (ConcurrentDictionary 的索引器本身是執行緒安全的)
-            // 重設計數器確保從0開始
+            // 由 GitHub Copilot 產生 - 初始化統計資料以避免匯出時發生 NullReferenceException
+            ResultManager.InitializeStats();
+
+            // 由 GitHub Copilot 產生 - 修復：只在開始時重設計數器一次
+            // 重設計數器確保從0開始（只執行一次）
             app.counter["stop0"] = 0;
             app.counter["stop1"] = 0;
             app.counter["stop2"] = 0;
@@ -12584,6 +12744,8 @@ namespace peilin
 
             int processedImageCount = 0;
             int successCount = 0;
+            int skippedCount = 0;  // 由 GitHub Copilot 產生 - 記錄跳過的圖片數量
+            int failedCount = 0;   // 由 GitHub Copilot 產生 - 記錄讀取失敗的圖片數量
 
             try
             {
@@ -12596,6 +12758,7 @@ namespace peilin
                     if (fileInfo.StationId < 1 || fileInfo.StationId > 4)
                     {
                         lbAdd($"圖片 {Path.GetFileName(fileInfo.FilePath)} 站號 {fileInfo.StationId} 不在有效範圍1-4內，已跳過", "war", "");
+                        skippedCount++;  // 由 GitHub Copilot 產生
                         continue;
                     }
 
@@ -12604,31 +12767,63 @@ namespace peilin
                     if (src.Empty())
                     {
                         lbAdd($"無法讀取圖片: {Path.GetFileName(fileInfo.FilePath)}", "war", "跳過此圖片");
+                        // 由 GitHub Copilot 產生 - 即使 Mat 是空的也需要釋放資源
+                        src.Dispose();
+                        failedCount++;  // 由 GitHub Copilot 產生
                         continue;
                     }
 
                     // 使用 Receiver 方法模擬相機進圖 (站號從0開始，所以要減1)
                     int camID = fileInfo.StationId - 1;
 
-                    // 由 GitHub Copilot 產生 // 修改: 不需要檢查 ContainsKey，ConcurrentDictionary 的索引器是執行緒安全的
-                    // 更新計數器
-                    app.counter["stop" + camID] = 0;
+                    // 由 GitHub Copilot 產生 - 移除每張圖的計數器重設（已在開頭統一重設）
+                    // 計數器會在 Receiver 內部自動遞增，不應該在這裡重設
+
+                    // 由 GitHub Copilot 產生 - 記錄當前計數器值用於除錯
+                    int currentCounter = app.counter.TryGetValue("stop" + camID, out int val) ? val : 0;
 
                     // 使用 Receiver 方法將圖片送入處理流程
                     Receiver(camID, src, DateTime.Now);
 
-                    lbAdd($"將圖片 {Path.GetFileName(fileInfo.FilePath)} 送入相機{fileInfo.StationId}處理流程，樣品編號:{fileInfo.SampleId}", "inf", "");
+                    // 由 GitHub Copilot 產生 - Receiver 會複製 Mat，原始 Mat 需要立即釋放以避免記憶體洩漏
+                    src.Dispose();
 
                     processedImageCount++;
                     successCount++;
 
-                    // 模擬進圖間隔 (可調整)
-                    await Task.Delay(100);
+                    // 由 GitHub Copilot 產生 - 優化：動態調整延遲，確保系統穩定處理（防止 OK 進 NULL）
+                    int totalQueueCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
+                                         app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
 
-                    // 每處理10張圖更新一次介面
-                    if (processedImageCount % 10 == 0)
+                    // 由 GitHub Copilot 產生 - 優化：提高基礎延遲，確保每張圖都有足夠處理時間
+                    int delay = 200; // 基礎延遲提高到 200ms，防止 OK 樣品被判定為 NULL
+                    
+                    if (totalQueueCount > 60)
                     {
-                        lbAdd($"已處理 {processedImageCount} 張圖片", "inf", "");
+                        // 佇列超過 60 張，大幅減速
+                        delay = 600;
+                        if (processedImageCount % 20 == 0)
+                        {
+                            lbAdd($"佇列積壓嚴重 {totalQueueCount} 張，減速處理中...", "war", "");
+                        }
+                    }
+                    else if (totalQueueCount > 40)
+                    {
+                        // 佇列超過 40 張，適度減速
+                        delay = 400;
+                    }
+                    else if (totalQueueCount > 20)
+                    {
+                        // 佇列超過 20 張，微調減速
+                        delay = 250;
+                    }
+
+                    await Task.Delay(delay);
+
+                    // 由 GitHub Copilot 產生 - 優化：每 20 張圖更新一次進度
+                    if (processedImageCount % 20 == 0)
+                    {
+                        lbAdd($"已處理 {processedImageCount}/{sortedFiles.Length} 張圖片 (佇列:{totalQueueCount}, 延遲:{delay}ms)", "inf", "");
                         Application.DoEvents(); // 更新UI
                     }
 
@@ -12640,33 +12835,114 @@ namespace peilin
                     }
                 }
 
-                // 等待所有隊列處理完畢
+                // 由 GitHub Copilot 產生 - 優化：縮短等待間隔，加快隊列檢查頻率
                 lbAdd("等待所有隊列處理完畢...", "inf", "");
                 int timeout = 0;
+                int maxTimeout = 4000;  // 由 GitHub Copilot 產生 - 增加到 4000 (4000 × 150ms = 10 分鐘)
+                int lastQueueCount = -1;
+                int noChangeCount = 0;  // 由 GitHub Copilot 產生 - 記錄佇列數量連續不變的次數
+
                 while ((app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
                         app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count > 0) &&
-                      timeout < 100 && app.status)
+                      timeout < maxTimeout && app.status)
                 {
-                    await Task.Delay(300);
+                    // 由 GitHub Copilot 產生 - 優化：將等待間隔從 300ms 減少到 150ms，加快反應速度
+                    await Task.Delay(150);
                     timeout++;
 
-                    // 每3秒更新一次狀態
-                    if (timeout % 10 == 0)
+                    int currentQueueCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
+                                           app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
+
+                    // 由 GitHub Copilot 產生 - 優化：調整卡住檢測閾值（40 × 150ms = 6 秒）
+                    if (currentQueueCount == lastQueueCount)
                     {
-                        lbAdd($"隊列剩餘項目: 相機1={app.Queue_Bitmap1.Count}, 相機2={app.Queue_Bitmap2.Count}, " +
-                              $"相機3={app.Queue_Bitmap3.Count}, 相機4={app.Queue_Bitmap4.Count}", "inf", "");
+                        noChangeCount++;
+                        if (noChangeCount >= 40)  // 40 × 150ms = 6 秒沒變化
+                        {
+                            lbAdd($"警告: 佇列處理似乎卡住了，剩餘 {currentQueueCount} 張圖片未處理", "war", "");
+                            lbAdd("建議: 1) 檢查 AI 模型是否正常運作 2) 檢查日誌是否有錯誤訊息", "war", "");
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        noChangeCount = 0;  // 重置計數器
+                    }
+                    lastQueueCount = currentQueueCount;
+
+                    // 由 GitHub Copilot 產生 - 優化：降低日誌輸出頻率（每 20 次 = 3 秒更新一次）
+                    if (timeout % 20 == 0)
+                    {
+                        int remainingImages = currentQueueCount;
+                        int elapsedSeconds = timeout * 150 / 1000;
+                        lbAdd($"隊列剩餘: 相機1={app.Queue_Bitmap1.Count}, 相機2={app.Queue_Bitmap2.Count}, " +
+                              $"相機3={app.Queue_Bitmap3.Count}, 相機4={app.Queue_Bitmap4.Count} " +
+                              $"(已等待 {elapsedSeconds} 秒)", "inf", "");
                         Application.DoEvents(); // 更新UI
                     }
                 }
 
-                // 完成測試
-                totalTimer.Stop();
-                string resultMessage = $"離線測試完成\n共處理 {processedImageCount} 張圖片\n成功 {successCount} 張\n耗時: {totalTimer.ElapsedMilliseconds / 1000.0:F1} 秒";
+                // 由 GitHub Copilot 產生 - 檢查是否因為 timeout 而結束
+                if (timeout >= maxTimeout)
+                {
+                    int remainingCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
+                                        app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
+                    lbAdd($"警告: 等待超時（{maxTimeout * 150 / 1000} 秒），佇列中還有 {remainingCount} 張圖片未處理", "war", "");
+                }
 
-                lbAdd($"離線測試完成，共處理 {processedImageCount} 張圖片，成功 {successCount} 張，耗時: {totalTimer.ElapsedMilliseconds / 1000.0:F1} 秒",
+                // 由 GitHub Copilot 產生 - 完成測試，顯示詳細統計
+                totalTimer.Stop();
+                string resultMessage = $"離線測試完成\n" +
+                                      $"總圖片數: {sortedFiles.Length}\n" +
+                                      $"成功送入: {successCount} 張\n" +
+                                      $"讀取失敗: {failedCount} 張\n" +
+                                      $"站號錯誤: {skippedCount} 張\n" +
+                                      $"耗時: {totalTimer.ElapsedMilliseconds / 1000.0:F1} 秒";
+
+                lbAdd($"離線測試完成 - 總數:{sortedFiles.Length}, 成功:{successCount}, 失敗:{failedCount}, 跳過:{skippedCount}, 耗時:{totalTimer.ElapsedMilliseconds / 1000.0:F1}秒",
                       "inf", "");
 
                 MessageBox.Show(resultMessage, "測試完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // 由 GitHub Copilot 產生 - 離線測試後匯出檢測統計
+                #region 匯出檢測統計
+                DialogResult exportResult = MessageBox.Show(
+                        "是否要匯出瑕疵統計資料？",
+                        "匯出統計",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question);
+
+                if (exportResult == DialogResult.Yes)
+                {
+                    // 建立資料夾路徑
+                    string statsFolder = System.IO.Path.Combine(Environment.CurrentDirectory, "Statistics");
+                    if (!Directory.Exists(statsFolder))
+                    {
+                        Directory.CreateDirectory(statsFolder);
+                    }
+
+                    // 生成檔案名稱
+                    string fileName = string.Format("瑕疵統計_離線測試_{0}_{1}_{2:yyyyMMdd_HHmmss}.csv",
+                                                   app.produce_No,
+                                                   app.LotID,
+                                                   DateTime.Now);
+                    string filePath = System.IO.Path.Combine(statsFolder, fileName);
+
+                    // 匯出統計資料
+                    bool success = ResultManager.ExportStatsToCsv(filePath);
+
+                    if (success)
+                    {
+                        lbAdd($"瑕疵統計已成功匯出至: {filePath}", "inf", "");
+                        MessageBox.Show($"瑕疵統計已成功匯出至:\n{filePath}", "匯出成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        lbAdd("匯出瑕疵統計失敗", "war", "");
+                        MessageBox.Show("匯出瑕疵統計失敗", "匯出失敗", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                #endregion
             }
             catch (Exception ex)
             {
@@ -12675,8 +12951,9 @@ namespace peilin
             }
             finally
             {
-                // 復原系統狀態
+                // 由 GitHub Copilot 產生 - 復原系統狀態（包含 currentState）
                 app.status = originalStatus;
+                app.currentState = originalSystemState;
                 app.SoftTriggerMode = originalSoftTriggerMode;
                 app.test = false;
 
@@ -13732,12 +14009,26 @@ namespace peilin
         /// <returns>如果像素占比在有效範圍內，返回true；否則返回false</returns>
         public bool CheckWhitePixelRatio(Mat image, int stop)
         {
+            // 由 GitHub Copilot 產生 - 調機模式或離線測試模式下跳過白色像素檢查
+            if (app.DetectMode == 1)
+            {
+                // 調機模式：不執行白色像素檢查，直接返回 true（視為有效圖像）
+                return true;
+            }
+
+            // 由 GitHub Copilot 產生 - 離線測試模式也跳過白色像素檢查
+            // 因為離線測試使用的是歷史圖片，白色像素比例可能與實時拍攝不同
+            if (app.testc)
+            {
+                return true;
+            }
+
             try
             {
                 int minthresh = 0;
                 if (stop == 1 || stop == 4)
                 {
-                    minthresh = 180; 
+                    minthresh = 180;
                 }
                 else if (stop == 2)
                 {
@@ -13767,9 +14058,12 @@ namespace peilin
                 gray.Dispose();
                 binary.Dispose();
 
+                // 由 GitHub Copilot 產生 - 使用安全的參數讀取方式
                 // 從參數中讀取標準值
                 double standardRatio;
-                if (double.TryParse(app.param[$"white_{stop}"], out standardRatio))
+                string whiteParamKey = $"white_{stop}";
+                if (app.param != null && app.param.TryGetValue(whiteParamKey, out string whiteValue) &&
+                    double.TryParse(whiteValue, out standardRatio))
                 {
                     // 設定允許的誤差範圍 (±2%)
                     //double lowerBound = standardRatio - 2.0;
@@ -13858,22 +14152,21 @@ namespace peilin
                 bool b = true;
                 if (double.TryParse(app.param[$"white_{stop}"], out standardRatio))
                 {
-                    // 設定允許的誤差範圍 (±2%)
-                    //double lowerBound = standardRatio - 2.0;
-                    //double upperBound = standardRatio + 2.0;
+                    double tolerance = 0.0;
+                    string toleranceKey = $"whiteTolerance_{stop}";
 
-                    // 判斷是否在允許範圍內
-                    if (stop == 1 || stop == 2)
+                    if (app.param.ContainsKey(toleranceKey) &&
+                        double.TryParse(app.param[toleranceKey], out tolerance))
                     {
-                        a = ratio < standardRatio + 2;
-                        b = ratio > standardRatio - 2;
+                        // 使用資料庫的容忍度
+                        a = ratio < standardRatio + tolerance;
+                        b = ratio > standardRatio - tolerance;
                         isValid = (a && b);
                     }
-                    else if (stop == 3 || stop == 4)
+                    else
                     {
-                        a = ratio < standardRatio + 3;
-                        b = ratio > standardRatio - 3;
-                        isValid = (a && b);
+                        Log.Warning("white 或 whiteTolerance 參數有誤");
+                        isValid = false;
                     }
                     // 記錄日誌
                     //lbAdd($"站點 {stop} 白色像素占比: {ratio:F2}%, 標準值: {standardRatio}%, 允許範圍: [{lowerBound:F2}%, {upperBound:F2}%], 有效性: {(isValid ? "有效" : "無效")}", "inf", "PixelRatioCheck");
@@ -16386,7 +16679,7 @@ namespace peilin
         /// 由 GitHub Copilot 產生
         /// 安全取得 double 參數，避免格式錯誤造成例外
         /// </summary>
-        private static double GetDoubleParam(IDictionary<string, string> param, string key, double defaultValue)
+        public static double GetDoubleParam(IDictionary<string, string> param, string key, double defaultValue)
         {
             if (param != null && param.TryGetValue(key, out var s) && double.TryParse(s, out var v))
                 return v;
@@ -17022,23 +17315,35 @@ namespace peilin
                     return false;
 
                 // 直接從PLC讀取相關計數
-                /*
+                
                 int ngCount = Form1.PLC_CheckD(801);
                 int okCount = Form1.PLC_CheckD(807);
                 int nullCount = Form1.PLC_CheckD(809);
-                */
+
+                /*
+                var handle1 = new ManualResetEvent(false);
+                PLC_ModBus.CheckValue(1, ValueUnit.D, 801, 14, false, handle1);
+                handle1.WaitOne();
                 var d801 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 801);
+                var d803 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 803);
+                var d805 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 805);
                 var d807 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 807);
-                //var d809 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 809);
-                var d809 = Form1.PLC_CheckD(809);
+                var d809 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 809);
+                //var d809 = PLC_CheckD(809);
+                var d811 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 811);
+                //var d811 = PLC_CheckD(811);
+                var d813 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 813);
+                */
 
                 // 修正：將 OK 數量取整到 50 的倍數（向下取整）
-                int q = d807 / 50;
-                d807 = q * 50;  // 正確：例如 d807=123 -> q=2 -> d807=100
+                int q = okCount / 50;
+                okCount = q * 50;  // 正確：例如 d807=123 -> q=2 -> d807=100
 
+                /*
                 var ngCount = d801;
                 var okCount = d807;
                 var nullCount = d809;
+                */
 
                 // 準備一般計數字典(OK/NG/NULL)
                 Dictionary<string, int> generalCounts = new Dictionary<string, int>
@@ -18099,28 +18404,158 @@ public class ResultManager
             using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
             {
                 #region 總體統計
-                // 總體統計摘要（保持原來的實現）
+                // 由 GitHub Copilot 產生 - 總體統計摘要（增加 null 安全檢查）
                 writer.WriteLine();
+                writer.WriteLine($"LOT ID:,{app.LotID}");
+                writer.WriteLine($"工單數量:,{app.order}");
                 writer.WriteLine("==== 總體統計 ====");
-                int totalSamples = sampleResults.Count;
-                int totalNG = sampleResults.Count(s => s.Value.isNG);
-                int totalOK = totalSamples - totalNG;
-                float ngPercentage = totalSamples > 0 ? ((float)totalNG / totalSamples * 100) : 0;
+
+                // 由 GitHub Copilot 產生 - 以樣品為單位計算總數（不是站點單位）
+                // 從sampleResults中統計唯一的樣品ID數量
+                int totalSamples = 0;
+                int totalOK = 0;
+                int totalNG = 0;
+
+                // 由 GitHub Copilot 產生 - 統計所有樣品的OK/NG狀態（一個樣品有任一站NG就算NG）
+                var sampleStatusGroup = sampleResults.GroupBy(r => r.Key).Select(g => new
+                {
+                    SampleId = g.Key,
+                    IsNG = g.Any(r => r.Value.isNG)
+                }).ToList();
+
+                totalSamples = sampleStatusGroup.Count;
+                totalOK = sampleStatusGroup.Count(s => !s.IsNG);
+                totalNG = sampleStatusGroup.Count(s => s.IsNG);
+
+                // 由 GitHub Copilot 產生 - 如果sampleResults為空，從站點統計推算
+                if (totalSamples == 0)
+                {
+                    // 使用站點統計推算：取最小站點的樣品數作為總數（代表完成所有站點檢測的樣品數）
+                    var stationTotals = stationOkNgStats.Values.Select(s => s.ok + s.ng).ToList();
+                    totalSamples = stationTotals.Count > 0 ? stationTotals.Min() : 0;
+
+                    // 從站點瑕疵統計推算OK/NG（取平均值）
+                    if (stationTotals.Count > 0 && totalSamples > 0)
+                    {
+                        int avgOK = (int)stationOkNgStats.Values.Average(s => s.ok);
+                        int avgNG = (int)stationOkNgStats.Values.Average(s => s.ng);
+                        totalOK = avgOK;
+                        totalNG = avgNG;
+                    }
+                }
+
+                // 由 GitHub Copilot 產生 - 計算 OK 率和不良率
+                double okPercentage = totalSamples > 0 ? (totalOK * 100.0 / totalSamples) : 0;
+                double ngPercentage = totalSamples > 0 ? (totalNG * 100.0 / totalSamples) : 0;
 
                 writer.WriteLine($"總樣品數,{totalSamples}");
-                writer.WriteLine($"OK數量,{totalOK}");
-                writer.WriteLine($"NG數量,{totalNG}");
-                writer.WriteLine($"不良率(%),{ngPercentage:F2}");
+                writer.WriteLine($"OK數量,{totalOK},OK率(%),{okPercentage:F2}");
+                writer.WriteLine($"NG數量,{totalNG},不良率(%),{ngPercentage:F2}");
                 #endregion
+                #region 瑕疵類型統計
+                // 瑕疵類型統計
+                var defectTypeSummary = new Dictionary<string, int>();
+                foreach (var sample in sampleResults.Where(s => s.Value.isNG))
+                {
+                    string defectName = sample.Value.defectName ?? "未知瑕疵";
+                    if (defectTypeSummary.ContainsKey(defectName))
+                        defectTypeSummary[defectName]++;
+                    else
+                        defectTypeSummary[defectName] = 1;
+                }
 
+                writer.WriteLine();
+                writer.WriteLine("==== 瑕疵統計（只統計 NG 樣品） ====");
+                writer.WriteLine("瑕疵類型,數量,比例");
+                foreach (var defect in defectTypeSummary.OrderByDescending(d => d.Value))
+                {
+                    // 計算此瑕疵在所有NG樣本中的比例
+                    float defectPercentage = totalNG > 0 ? ((float)defect.Value / totalNG) : 0;
+                    writer.WriteLine($"{defect.Key},{defect.Value},{defectPercentage:F2}");
+                    //writer.WriteLine($"{defect.Key},{defect.Value}");
+                }
+                #endregion
+                #region 分數分布分析
+                // 由 GitHub Copilot 產生 - 添加新的分數分布分析部分（加入 null 檢查）
+                writer.WriteLine();
+                writer.WriteLine("==== 所有檢出瑕疵分布（包含 OK 樣品中的低分瑕疵） ====");
+
+                // 由 GitHub Copilot 產生 - 收集分數數據，加入 try-catch 避免 NullReferenceException
+                try
+                {
+                    var defectScores = ScoreAnalyzer.CollectDefectScores();
+                    if (defectScores != null && defectScores.Count > 0)
+                    {
+                        var scoreStats = ScoreAnalyzer.CalculateStatistics(defectScores);
+                        var optimalThresholds = ScoreAnalyzer.FindOptimalThresholds(defectScores);
+
+                        writer.WriteLine("瑕疵類型,樣本數量,最小值,最大值,平均值,5%分位數,25%分位數,中位數,75%分位數,95%分位數,99%分位數,推薦閾值");
+
+                        foreach (var defect in scoreStats)
+                        {
+                            string defectName = defect.Key;
+                            var stats = defect.Value;
+                            int count = defectScores.ContainsKey(defectName) ? defectScores[defectName].Count : 0;
+                            float recommendedThreshold = optimalThresholds.ContainsKey(defectName) ?
+                                                         optimalThresholds[defectName] : 0.5f;
+
+                            writer.WriteLine($"{defectName},{count}," +
+                                             $"{stats.min:F2},{stats.max:F2},{stats.avg:F2}," +
+                                             $"{stats.p5:F2},{stats.p25:F2}," +
+                                             $"{stats.median:F2},{stats.p75:F2}," +
+                                             $"{stats.p95:F2},{stats.p99:F2}," +
+                                             $"{recommendedThreshold:F2}");
+                        }
+                    }
+                    else
+                    {
+                        writer.WriteLine("無分數數據");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    writer.WriteLine($"分數分析失敗: {ex.Message}");
+                }
+                #endregion
                 #region 12/34 合併統計OK/NG
-                var group12Stats = new List<(bool isNG, float? score, string defectName)>();
-                var group34Stats = new List<(bool isNG, float? score, string defectName)>();
-                // 統計OK/NG數量
-                int group12OK = group12Stats.Count(x => !x.isNG);
-                int group12NG = group12Stats.Count(x => x.isNG);
-                int group34OK = group34Stats.Count(x => !x.isNG);
-                int group34NG = group34Stats.Count(x => x.isNG);
+                // 由 GitHub Copilot 產生 - 修正: 以樣品為單位統計，任一站 NG 則該樣品算 NG
+                int group12OK = 0, group12NG = 0;
+                int group34OK = 0, group34NG = 0;
+
+                // 由 GitHub Copilot 產生 - 遍歷所有樣品，檢查站點 1 和 2 的結果
+                foreach (var samplePair in sampleStationResults)
+                {
+                    int sampleId = samplePair.Key;
+                    var stations = samplePair.Value;
+
+                    // 檢查站點 1 和 2（只要有其中一站的資料）
+                    bool hasStat1or2 = stations.ContainsKey(1) || stations.ContainsKey(2);
+                    if (hasStat1or2)
+                    {
+                        // 只要站點 1 或 2 任一個是 NG，該樣品就算 NG
+                        bool isNG12 = (stations.ContainsKey(1) && stations[1].IsNG) ||
+                                      (stations.ContainsKey(2) && stations[2].IsNG);
+                        
+                        if (isNG12)
+                            group12NG++;
+                        else
+                            group12OK++;
+                    }
+
+                    // 檢查站點 3 和 4（只要有其中一站的資料）
+                    bool hasStat3or4 = stations.ContainsKey(3) || stations.ContainsKey(4);
+                    if (hasStat3or4)
+                    {
+                        // 只要站點 3 或 4 任一個是 NG，該樣品就算 NG
+                        bool isNG34 = (stations.ContainsKey(3) && stations[3].IsNG) ||
+                                      (stations.ContainsKey(4) && stations[4].IsNG);
+                        
+                        if (isNG34)
+                            group34NG++;
+                        else
+                            group34OK++;
+                    }
+                }
                 
                 writer.WriteLine();
                 writer.WriteLine("==== 合併組別OK/NG統計 ====");
@@ -18136,7 +18571,12 @@ public class ResultManager
                 {
                     int station = stationPair.Key;
                     var defectCounts = stationPair.Value;
-                    var okNgStats = stationOkNgStats[station];
+
+                    // 由 GitHub Copilot 產生 - 使用 TryGetValue 避免 KeyNotFoundException
+                    if (!stationOkNgStats.TryGetValue(station, out var okNgStats))
+                    {
+                        okNgStats = (0, 0);
+                    }
 
                     // 如果沒有瑕疵，輸出站點基本資訊
                     if (defectCounts.Count == 0)
@@ -18151,58 +18591,6 @@ public class ResultManager
                             writer.WriteLine($"{station},{okNgStats.ok},{okNgStats.ng},{defectPair.Key},{defectPair.Value}");
                         }
                     }
-                }
-                #endregion
-
-                #region 瑕疵類型統計
-                // 瑕疵類型統計
-                var defectTypeSummary = new Dictionary<string, int>();
-                foreach (var sample in sampleResults.Where(s => s.Value.isNG))
-                {
-                    string defectName = sample.Value.defectName ?? "未知瑕疵";
-                    if (defectTypeSummary.ContainsKey(defectName))
-                        defectTypeSummary[defectName]++;
-                    else
-                        defectTypeSummary[defectName] = 1;
-                }
-
-                writer.WriteLine();
-                writer.WriteLine("==== 瑕疵統計 ====");
-                writer.WriteLine("瑕疵類型,數量,比例");
-                foreach (var defect in defectTypeSummary.OrderByDescending(d => d.Value))
-                {
-                    // 計算此瑕疵在所有NG樣本中的比例
-                    float defectPercentage = totalNG > 0 ? ((float)defect.Value / totalNG) : 0;
-                    writer.WriteLine($"{defect.Key},{defect.Value},{defectPercentage:F2}");
-                    //writer.WriteLine($"{defect.Key},{defect.Value}");
-                }
-                #endregion
-                #region 分數分布分析
-                // 添加新的分數分布分析部分
-                writer.WriteLine();
-                writer.WriteLine("==== 分數分布分析 ====");
-
-                // 收集分數數據
-                var defectScores = ScoreAnalyzer.CollectDefectScores();
-                var scoreStats = ScoreAnalyzer.CalculateStatistics(defectScores);
-                var optimalThresholds = ScoreAnalyzer.FindOptimalThresholds(defectScores);
-
-                writer.WriteLine("瑕疵類型,樣本數量,最小值,最大值,平均值,5%分位數,25%分位數,中位數,75%分位數,95%分位數,99%分位數,推薦閾值");
-
-                foreach (var defect in scoreStats)
-                {
-                    string defectName = defect.Key;
-                    var stats = defect.Value;
-                    int count = defectScores[defectName].Count;
-                    float recommendedThreshold = optimalThresholds.ContainsKey(defectName) ?
-                                                 optimalThresholds[defectName] : 0.5f;
-
-                    writer.WriteLine($"{defectName},{count}," +
-                                     $"{stats.min:F2},{stats.max:F2},{stats.avg:F2}," +
-                                     $"{stats.p5:F2},{stats.p25:F2}," +
-                                     $"{stats.median:F2},{stats.p75:F2}," +
-                                     $"{stats.p95:F2},{stats.p99:F2}," +
-                                     $"{recommendedThreshold:F2}");
                 }
                 #endregion
 
@@ -18759,6 +19147,9 @@ public class app
     public static bool status = false, live = false, paramUpdate = false; //機台運行狀態
     public static bool SoftTriggerMode = false;
     public static bool Mode = false;
+    
+    // 由 GitHub Copilot 產生 - 新增調機模式旗標
+    public static bool isAdjustmentMode = false; // 調機模式旗標（parameter_info 使用）
 
     public static float okNgThreshold = 0.5f;   // OK/NG 判定閾值
     public static int margin = 45;             // 給 boundingRect 擴張的 margin
