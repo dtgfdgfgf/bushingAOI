@@ -17,10 +17,10 @@ namespace basler
     public class Camera
     {
         // Basler Camera 陣列 (模擬多相機)
-        private static Basler.Pylon.Camera[] m_BaslerCameras = new Basler.Pylon.Camera[app.MaxCameraCount];
+        private static Basler.Pylon.Camera[] m_BaslerCameras = new Basler.Pylon.Camera[camera_app.MaxCameraCount];
 
         // 是否已啟動抓圖 (對應原本 GrabOver 的概念)
-        private static bool[] isGrabOver = new bool[app.MaxCameraCount];
+        private static bool[] isGrabOver = new bool[camera_app.MaxCameraCount];
 
         // 紀錄實際偵測到的相機數
         private static int CameraCount = 0;
@@ -112,7 +112,7 @@ namespace basler
             try
             {
                 // 檢查相機狀態和事件計數
-                for (int i = 0; i < app.MaxCameraCount; i++)
+                for (int i = 0; i < camera_app.MaxCameraCount; i++)
                 {
                     if (m_BaslerCameras[i] != null && m_BaslerCameras[i].IsOpen)
                     {
@@ -258,10 +258,10 @@ namespace basler
             }
 
             // 最高只開啟 app.MaxCameraCount 台
-            if (CameraCount > app.MaxCameraCount)
-                CameraCount = app.MaxCameraCount;
+            if (CameraCount > camera_app.MaxCameraCount)
+                CameraCount = camera_app.MaxCameraCount;
 
-            app.SoftTriggerMode = false;
+            camera_app.SoftTriggerMode = false;
             //Setting(1);
 
             // 初始化 CSV 檔案路徑
@@ -366,7 +366,7 @@ namespace basler
         /// </summary>
         public bool CheckCamera(int CameraID)
         {
-            if (CameraID < 0 || CameraID >= app.MaxCameraCount) return false;
+            if (CameraID < 0 || CameraID >= camera_app.MaxCameraCount) return false;
             return (m_BaslerCameras[CameraID] != null);
         }
 
@@ -443,7 +443,7 @@ namespace basler
             }
             catch { }
 
-            for (int i = 0; i < app.MaxCameraCount; i++)
+            for (int i = 0; i < camera_app.MaxCameraCount; i++)
             {
                 // 檢查相機是否存在
                 if (m_BaslerCameras[i] == null) continue;
@@ -478,7 +478,7 @@ namespace basler
                     m_BaslerCameras[i].Parameters[PLCamera.TriggerSelector].SetValue(PLCamera.TriggerSelector.FrameStart);
                     m_BaslerCameras[i].Parameters[PLCamera.TriggerMode].SetValue(PLCamera.TriggerMode.Off);
                     m_BaslerCameras[i].Parameters[PLCamera.AcquisitionMode].SetValue(PLCamera.AcquisitionMode.Continuous);
-                    app.SoftTriggerMode = true;
+                    camera_app.SoftTriggerMode = true;
                 }
                 else if (Mode == 1)
                 {
@@ -495,7 +495,7 @@ namespace basler
                     // 3. 最後設定擷取模式
                     m_BaslerCameras[i].Parameters[PLCamera.AcquisitionMode].SetValue(PLCamera.AcquisitionMode.Continuous);
 
-                    app.SoftTriggerMode = false;
+                    camera_app.SoftTriggerMode = false;
 
                 }
                 else if (Mode == 2)
@@ -505,7 +505,7 @@ namespace basler
                     m_BaslerCameras[i].Parameters[PLCamera.TriggerSource].SetValue(PLCamera.TriggerSource.Software);
                     m_BaslerCameras[i].Parameters[PLCamera.TriggerMode].SetValue(PLCamera.TriggerMode.On);
                     m_BaslerCameras[i].Parameters[PLCamera.AcquisitionMode].SetValue(PLCamera.AcquisitionMode.Continuous);
-                    app.SoftTriggerMode = true;
+                    camera_app.SoftTriggerMode = true;
                 }
 
                 // 在第二站相機上確認設置是否成功
@@ -647,7 +647,7 @@ namespace basler
         /// </summary>
         public void Start()
         {
-            for (int i = 0; i < app.MaxCameraCount; i++)
+            for (int i = 0; i < camera_app.MaxCameraCount; i++)
             {
                 //StartSingle(i);
                 try
@@ -713,7 +713,7 @@ namespace basler
         /// </summary>
         public void Stop()
         {
-            for (int i = 0; i < app.MaxCameraCount; i++)
+            for (int i = 0; i < camera_app.MaxCameraCount; i++)
             {
                 StopSingle(i);
             }
@@ -724,7 +724,7 @@ namespace basler
         /// </summary>
         public void Close()
         {
-            for (int i = 0; i < app.MaxCameraCount; i++)
+            for (int i = 0; i < camera_app.MaxCameraCount; i++)
             {
                 if (m_BaslerCameras[i] != null)
                 {
@@ -745,7 +745,7 @@ namespace basler
         /// </summary>
         public bool checkCameraCount()
         {
-            return (CameraCount == app.MaxCameraCount);
+            return (CameraCount == camera_app.MaxCameraCount);
         }
 
         /// <summary>
@@ -754,7 +754,7 @@ namespace basler
         /// <returns>若有無法連接之相機，回傳名稱，或空字串</returns>
         public bool IsOpened(int cameraIndex)
         {
-            if (cameraIndex < 0 || cameraIndex >= app.MaxCameraCount) return false;
+            if (cameraIndex < 0 || cameraIndex >= camera_app.MaxCameraCount) return false;
             return (m_BaslerCameras[cameraIndex] != null &&
                     m_BaslerCameras[cameraIndex].IsOpen);
         }
@@ -805,7 +805,7 @@ namespace basler
                             m_BaslerCameras[index].Open();
 
                             // 标记相机已连接
-                            app.CameraLinked[index] = true;
+                            camera_app.CameraLinked[index] = true;
                         }
                         else if (!m_BaslerCameras[index].IsOpen)
                         {
@@ -837,7 +837,7 @@ namespace basler
                             };
                             // 相機已創建但未開啟，則開啟
                             m_BaslerCameras[index].Open();
-                            app.CameraLinked[index] = true;
+                            camera_app.CameraLinked[index] = true;
                         }
                     }
                     else
@@ -896,7 +896,16 @@ namespace basler
         {
             IGrabResult grabResult = e.GrabResult;
             if (!grabResult.IsValid) return;
-            if (!app.Run) return;
+            if (!camera_app.Run) return;
+
+            // 由 GitHub Copilot 產生 - 調機模式檢查
+            // 調機模式下，影像不進入處理佇列，只用於即時預覽
+            if (app.isAdjustmentMode)
+            {
+                // 影像會由 parameter_info.cs 的 GetCurrentFrame() 直接讀取
+                // 不需要進入 Receiver → Queue_Bitmap → 處理流程
+                return;
+            }
 
             DateTime time_start = DateTime.Now; // 拍照開始時間（計時）
             
@@ -1196,7 +1205,7 @@ namespace basler
         /// </example>
         public Mat GetCurrentFrame(int cameraID, bool preserveCurrentMode = false)
         {
-            if (cameraID < 0 || cameraID >= app.MaxCameraCount || m_BaslerCameras[cameraID] == null)
+            if (cameraID < 0 || cameraID >= camera_app.MaxCameraCount || m_BaslerCameras[cameraID] == null)
                 return null;
 
             // 備份當前模式
@@ -1268,7 +1277,7 @@ namespace basler
     /// <summary>
     /// 你原先的 app class，保持不動
     /// </summary>
-    public class app
+    public class camera_app
     {
         public const byte MaxCameraCount = 4; //最大攝影機數量
         public static bool Run = true; //app運作狀態
