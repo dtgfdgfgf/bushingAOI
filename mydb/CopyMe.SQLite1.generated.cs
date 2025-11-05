@@ -162,6 +162,7 @@ namespace peilin
 		[Column(),       NotNull] public string boxorpack { get; set; } // varchar(30)
 		[Column(),       NotNull] public double thick { get; set; } // float
 		[Column(),       NotNull] public string hasYZP { get; set; } // varchar(30)
+		[Column(),       NotNull] public string package { get; set; } // varchar(30)
 	}
 
 	[Table("user")]
