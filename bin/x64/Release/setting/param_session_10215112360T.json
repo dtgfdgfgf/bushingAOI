@@ -1,6 +1,6 @@
 {
-  "SessionId": "20251103_10215112360T",
-  "CreatedTime": "2025-11-03T09:31:02.2268134+08:00",
+  "SessionId": "20251105_10215112360T",
+  "CreatedTime": "2025-11-05T13:56:14.6266003+08:00",
   "SourceType": "10215112360T",
   "TargetType": "10215112360T",
   "Parameters": [
@@ -673,7 +673,7 @@
     {
       "Type": "10215112360T",
       "Name": "white",
-      "Value": "15.3",
+      "Value": "31.2",
       "Stop": 1,
       "ChineseName": "白色像素占比",
       "Zone": 0,
@@ -826,7 +826,7 @@
     {
       "Type": "10215112360T",
       "Name": "whiteThresh",
-      "Value": "121",
+      "Value": "80",
       "Stop": 1,
       "ChineseName": "白色像素閾值",
       "Zone": 0,
@@ -861,11 +861,83 @@
     },
     {
       "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 1,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 2,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 3,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 4,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "17.3",
+      "Stop": 1,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "25.0",
+      "Stop": 2,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "26.9",
+      "Stop": 3,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "22.9",
+      "Stop": 4,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
       "Name": "exposure",
       "Value": "1000",
       "Stop": 1,
       "ChineseName": "曝光時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -874,7 +946,7 @@
       "Value": "800",
       "Stop": 2,
       "ChineseName": "曝光時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -883,7 +955,7 @@
       "Value": "600",
       "Stop": 3,
       "ChineseName": "曝光時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -892,7 +964,7 @@
       "Value": "150",
       "Stop": 4,
       "ChineseName": "曝光時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -901,7 +973,7 @@
       "Value": "4",
       "Stop": 1,
       "ChineseName": "增益",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -910,7 +982,7 @@
       "Value": "6",
       "Stop": 2,
       "ChineseName": "增益",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -919,7 +991,7 @@
       "Value": "10",
       "Stop": 3,
       "ChineseName": "增益",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -928,7 +1000,7 @@
       "Value": "6",
       "Stop": 4,
       "ChineseName": "增益",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -937,7 +1009,7 @@
       "Value": "460",
       "Stop": 1,
       "ChineseName": "拍照延遲時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -946,7 +1018,7 @@
       "Value": "445",
       "Stop": 2,
       "ChineseName": "拍照延遲時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -955,7 +1027,7 @@
       "Value": "447",
       "Stop": 3,
       "ChineseName": "拍照延遲時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -964,7 +1036,7 @@
       "Value": "551",
       "Stop": 4,
       "ChineseName": "拍照延遲時間",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -973,7 +1045,7 @@
       "Value": "1223",
       "Stop": 4,
       "ChineseName": "預設外環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -982,7 +1054,7 @@
       "Value": "1000",
       "Stop": 4,
       "ChineseName": "預設外環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -991,7 +1063,7 @@
       "Value": "678",
       "Stop": 4,
       "ChineseName": "預設外半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1000,7 +1072,7 @@
       "Value": "478",
       "Stop": 4,
       "ChineseName": "預設內半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1009,7 +1081,7 @@
       "Value": "1234",
       "Stop": 3,
       "ChineseName": "預設外環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1018,7 +1090,7 @@
       "Value": "1002",
       "Stop": 3,
       "ChineseName": "預設外環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1027,7 +1099,7 @@
       "Value": "641",
       "Stop": 3,
       "ChineseName": "預設外半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1036,7 +1108,7 @@
       "Value": "418",
       "Stop": 3,
       "ChineseName": "預設內半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1045,7 +1117,7 @@
       "Value": "1149",
       "Stop": 1,
       "ChineseName": "預設外環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1054,7 +1126,7 @@
       "Value": "1032",
       "Stop": 1,
       "ChineseName": "預設外環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1063,7 +1135,7 @@
       "Value": "701",
       "Stop": 1,
       "ChineseName": "預設外半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1072,7 +1144,7 @@
       "Value": "424",
       "Stop": 1,
       "ChineseName": "預設內半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1081,7 +1153,7 @@
       "Value": "1152",
       "Stop": 1,
       "ChineseName": "預設內環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1090,7 +1162,7 @@
       "Value": "1027",
       "Stop": 1,
       "ChineseName": "預設內環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1099,7 +1171,7 @@
       "Value": "1236",
       "Stop": 3,
       "ChineseName": "預設內環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1108,7 +1180,7 @@
       "Value": "1001",
       "Stop": 3,
       "ChineseName": "預設內環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1117,7 +1189,7 @@
       "Value": "1214",
       "Stop": 4,
       "ChineseName": "預設內環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1126,7 +1198,7 @@
       "Value": "1005",
       "Stop": 4,
       "ChineseName": "預設內環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1135,7 +1207,7 @@
       "Value": "1188",
       "Stop": 2,
       "ChineseName": "預設內環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1144,7 +1216,7 @@
       "Value": "1037",
       "Stop": 2,
       "ChineseName": "預設內環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1153,7 +1225,7 @@
       "Value": "405",
       "Stop": 2,
       "ChineseName": "預設內半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1162,7 +1234,7 @@
       "Value": "1194",
       "Stop": 2,
       "ChineseName": "預設外環X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1171,7 +1243,7 @@
       "Value": "1074",
       "Stop": 2,
       "ChineseName": "預設外環Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1180,7 +1252,7 @@
       "Value": "677",
       "Stop": 2,
       "ChineseName": "預設外半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1189,7 +1261,7 @@
       "Value": "4500",
       "Stop": 4,
       "ChineseName": "站4到NG出料",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1198,7 +1270,7 @@
       "Value": "1250",
       "Stop": 4,
       "ChineseName": "站4到OK1出料",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1207,7 +1279,7 @@
       "Value": "1940",
       "Stop": 4,
       "ChineseName": "站4到OK2出料",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1216,7 +1288,7 @@
       "Value": "5020",
       "Stop": 4,
       "ChineseName": "站4到NULL出料",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1225,7 +1297,7 @@
       "Value": "1149",
       "Stop": 1,
       "ChineseName": "最外中心X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1234,7 +1306,7 @@
       "Value": "1048",
       "Stop": 1,
       "ChineseName": "最外中心Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1243,7 +1315,7 @@
       "Value": "768",
       "Stop": 1,
       "ChineseName": "最外半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1252,7 +1324,7 @@
       "Value": "1199",
       "Stop": 2,
       "ChineseName": "最外中心X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1261,7 +1333,7 @@
       "Value": "1062",
       "Stop": 2,
       "ChineseName": "最外中心Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1270,7 +1342,7 @@
       "Value": "743",
       "Stop": 2,
       "ChineseName": "最外半徑",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1279,7 +1351,7 @@
       "Value": "0.0261",
       "Stop": 1,
       "ChineseName": "檢測精度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1288,7 +1360,7 @@
       "Value": "0.0313",
       "Stop": 3,
       "ChineseName": "檢測精度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1297,7 +1369,7 @@
       "Value": "0.0274",
       "Stop": 2,
       "ChineseName": "檢測精度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1306,7 +1378,7 @@
       "Value": "0.0294",
       "Stop": 4,
       "ChineseName": "檢測精度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1315,7 +1387,7 @@
       "Value": "60",
       "Stop": 3,
       "ChineseName": "調整對比度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1324,7 +1396,7 @@
       "Value": "10",
       "Stop": 3,
       "ChineseName": "調整亮度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1333,7 +1405,7 @@
       "Value": "80",
       "Stop": 3,
       "ChineseName": "最小刮痕",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1342,7 +1414,7 @@
       "Value": "500",
       "Stop": 3,
       "ChineseName": "最大刮痕",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1351,7 +1423,7 @@
       "Value": "60",
       "Stop": 4,
       "ChineseName": "調整對比度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1360,7 +1432,7 @@
       "Value": "10",
       "Stop": 4,
       "ChineseName": "調整亮度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1369,7 +1441,7 @@
       "Value": "80",
       "Stop": 4,
       "ChineseName": "最小刮痕",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1378,7 +1450,7 @@
       "Value": "500",
       "Stop": 4,
       "ChineseName": "最大刮痕",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1387,7 +1459,7 @@
       "Value": "-5",
       "Stop": 1,
       "ChineseName": "調整亮度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1396,7 +1468,7 @@
       "Value": "-35",
       "Stop": 2,
       "ChineseName": "調整亮度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1405,7 +1477,7 @@
       "Value": "25",
       "Stop": 1,
       "ChineseName": "調整對比度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1414,7 +1486,7 @@
       "Value": "240",
       "Stop": 2,
       "ChineseName": "找開口",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1423,7 +1495,7 @@
       "Value": "210",
       "Stop": 3,
       "ChineseName": "找開口",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1432,7 +1504,7 @@
       "Value": "240",
       "Stop": 4,
       "ChineseName": "找開口",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1441,7 +1513,7 @@
       "Value": "10",
       "Stop": 3,
       "ChineseName": "縫隙擴展",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1450,7 +1522,7 @@
       "Value": "10",
       "Stop": 4,
       "ChineseName": "縫隙擴展",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1459,7 +1531,7 @@
       "Value": "-33",
       "Stop": 2,
       "ChineseName": "物體位置中心偏移X",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1468,7 +1540,7 @@
       "Value": "8",
       "Stop": 2,
       "ChineseName": "物體位置中心偏移Y",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1477,7 +1549,7 @@
       "Value": "4.0",
       "Stop": 3,
       "ChineseName": "金屬面刮痕長寬比門檻",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1486,7 +1558,7 @@
       "Value": "4.0",
       "Stop": 4,
       "ChineseName": "金屬面刮痕長寬比門檻",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1495,7 +1567,7 @@
       "Value": "100",
       "Stop": 3,
       "ChineseName": "金屬面刮痕長邊長度門檻",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1504,7 +1576,7 @@
       "Value": "100",
       "Stop": 4,
       "ChineseName": "金屬面刮痕長邊長度門檻",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1513,7 +1585,7 @@
       "Value": "5000",
       "Stop": 3,
       "ChineseName": "金屬面刮痕面積門檻",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1522,43 +1594,43 @@
       "Value": "5000",
       "Stop": 4,
       "ChineseName": "金屬面刮痕面積門檻",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
       "Type": "10215112360T",
       "Name": "white",
-      "Value": "15.3",
+      "Value": "31.2",
       "Stop": 1,
       "ChineseName": "白色像素占比",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10215112360T",
-      "Name": "white",
-      "Value": "10.6",
-      "Stop": 2,
-      "ChineseName": "白色像素占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
       "Type": "10215112360T",
       "Name": "white",
       "Value": "10.5",
-      "Stop": 3,
+      "Stop": 2,
       "ChineseName": "白色像素占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
       "Type": "10215112360T",
       "Name": "white",
-      "Value": "5.8",
+      "Value": "9.9",
+      "Stop": 3,
+      "ChineseName": "白色像素占比",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "white",
+      "Value": "6.5",
       "Stop": 4,
       "ChineseName": "白色像素占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1567,7 +1639,7 @@
       "Value": "35",
       "Stop": 2,
       "ChineseName": "調整對比度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1576,7 +1648,7 @@
       "Value": "0",
       "Stop": 1,
       "ChineseName": "不用找非ROI",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1585,7 +1657,7 @@
       "Value": "0",
       "Stop": 2,
       "ChineseName": "不用找非ROI",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1594,7 +1666,7 @@
       "Value": "1",
       "Stop": 3,
       "ChineseName": "找開口",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1603,7 +1675,7 @@
       "Value": "1",
       "Stop": 4,
       "ChineseName": "找開口",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1612,7 +1684,7 @@
       "Value": "0",
       "Stop": 1,
       "ChineseName": "找開口",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1621,7 +1693,7 @@
       "Value": "5",
       "Stop": 3,
       "ChineseName": "縫隙擴展",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1630,7 +1702,7 @@
       "Value": "5",
       "Stop": 4,
       "ChineseName": "縫隙擴展",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1639,7 +1711,7 @@
       "Value": "50",
       "Stop": 2,
       "ChineseName": "物體偏移容忍度",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1648,7 +1720,7 @@
       "Value": "0.2",
       "Stop": 1,
       "ChineseName": "瑕疵在非ROI區占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1657,7 +1729,7 @@
       "Value": "0.2",
       "Stop": 2,
       "ChineseName": "瑕疵在非ROI區占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1666,7 +1738,7 @@
       "Value": "0.2",
       "Stop": 3,
       "ChineseName": "瑕疵在非ROI區占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1675,16 +1747,16 @@
       "Value": "0.2",
       "Stop": 4,
       "ChineseName": "瑕疵在非ROI區占比",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
       "Type": "10215112360T",
       "Name": "whiteThresh",
-      "Value": "121",
+      "Value": "80",
       "Stop": 1,
       "ChineseName": "白色像素閾值",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1693,7 +1765,7 @@
       "Value": "240",
       "Stop": 2,
       "ChineseName": "白色像素閾值",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1702,7 +1774,7 @@
       "Value": "200",
       "Stop": 3,
       "ChineseName": "白色像素閾值",
-      "Zone": 1,
+      "Zone": 2,
       "IsSelected": false
     },
     {
@@ -1711,7 +1783,79 @@
       "Value": "180",
       "Stop": 4,
       "ChineseName": "白色像素閾值",
-      "Zone": 1,
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 1,
+      "ChineseName": "白比率容忍度",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 2,
+      "ChineseName": "白比率容忍度",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 3,
+      "ChineseName": "白比率容忍度",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 4,
+      "ChineseName": "白比率容忍度",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "17.3",
+      "Stop": 1,
+      "ChineseName": "無樣品白比率",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "25.1",
+      "Stop": 2,
+      "ChineseName": "無樣品白比率",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "26.9",
+      "Stop": 3,
+      "ChineseName": "無樣品白比率",
+      "Zone": 2,
+      "IsSelected": false
+    },
+    {
+      "Type": "10215112360T",
+      "Name": "whiteNULL",
+      "Value": "22.9",
+      "Stop": 4,
+      "ChineseName": "無樣品白比率",
+      "Zone": 2,
       "IsSelected": false
     }
   ]
