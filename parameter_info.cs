@@ -258,6 +258,9 @@ namespace peilin
                 StopCamera();
                 camera.Stop();
 
+                // 由 GitHub Copilot 產生 - 設置調機模式旗標
+                app.isAdjustmentMode = true; // 進入調機模式
+
                 // 設定新的相機索引
                 currentCameraIndex = cameraIndex;
 
@@ -273,7 +276,7 @@ namespace peilin
                 updateTimer.Start();
 
                 // 顯示提示訊息
-                lbAdd($"開始顯示相機 {cameraIndex + 1} 的影像", "info", "");
+                lbAdd($"開始顯示相機 {cameraIndex + 1} 的影像（調機模式）", "info", "");
             }
             catch (Exception ex)
             {
@@ -295,17 +298,91 @@ namespace peilin
         {
             if (currentCameraIndex >= 0)
             {
-                updateTimer.Stop();
-                currentCameraIndex = -1;
-                UpdateButtonsState(-1);
+                try
+                {
+                    // 由 GitHub Copilot 產生 - 修正佇列清空時機
+                    // 1. 第一步：阻擋新影像進入佇列
+                    app.isAdjustmentMode = false; // 離開調機模式
 
-                // 清空ROI參數輸入框
-                textBox4.Text = "";
-                textBox6.Text = "";
-                textBox7.Text = "";
+                    // 2. 停止計時器（同步等待）
+                    if (updateTimer != null && updateTimer.Enabled)
+                    {
+                        updateTimer.Stop();
+                        System.Threading.Thread.Sleep(150); // 等待最後一次 Tick 完成
+                    }
 
-                // 設置相機為硬體觸發模式
-                camera.Setting(1);
+                    // 3. 清空佇列（在相機仍在連續模式時，避免模式切換後又有新影像）
+                    ClearCameraQueue(currentCameraIndex);
+
+                    // 4. 停止相機抓取
+                    camera.Stop();
+                    
+                    // 5. 等待相機完全停止
+                    System.Threading.Thread.Sleep(100);
+
+                    // 6. 切換回硬體觸發模式
+                    camera.Setting(1);
+                    
+                    // 7. 等待模式切換完成
+                    System.Threading.Thread.Sleep(100);
+
+                    // 8. 重置介面狀態
+                    currentCameraIndex = -1;
+                    UpdateButtonsState(-1);
+
+                    // 9. 清空 ROI 參數輸入框
+                    textBox4.Text = "";
+                    textBox6.Text = "";
+                    textBox7.Text = "";
+
+                    lbAdd("相機已安全停止並切換回檢測模式", "info", "");
+                }
+                catch (Exception ex)
+                {
+                    lbAdd("停止相機時發生錯誤", "error", ex.Message);
+                }
+            }
+        }
+
+        // 由 GitHub Copilot 產生
+        // 新增：清空特定相機的影像佇列
+        private void ClearCameraQueue(int cameraIndex)
+        {
+            try
+            {
+                switch (cameraIndex)
+                {
+                    case 0:
+                        while (app.Queue_Bitmap1.TryDequeue(out var img1))
+                        {
+                            img1?.image?.Dispose();
+                        }
+                        break;
+                    case 1:
+                        while (app.Queue_Bitmap2.TryDequeue(out var img2))
+                        {
+                            img2?.image?.Dispose();
+                        }
+                        break;
+                    case 2:
+                        while (app.Queue_Bitmap3.TryDequeue(out var img3))
+                        {
+                            img3?.image?.Dispose();
+                        }
+                        break;
+                    case 3:
+                        while (app.Queue_Bitmap4.TryDequeue(out var img4))
+                        {
+                            img4?.image?.Dispose();
+                        }
+                        break;
+                }
+                
+                lbAdd($"已清空相機 {cameraIndex + 1} 的影像佇列", "info", "");
+            }
+            catch (Exception ex)
+            {
+                lbAdd("清空佇列時發生錯誤", "error", ex.Message);
             }
         }
 
@@ -321,29 +398,25 @@ namespace peilin
         // 更新顯示
         private void UpdateDisplay()
         {
+            // 由 GitHub Copilot 產生
+            // 修正: 完整的 using 鏈確保所有 Mat 物件釋放
             try
             {
-                // 獲取當前相機的影像
-                Mat frame = GetLatestFrame(currentCameraIndex);
-                if (frame == null || frame.Empty())
+                using (Mat frame = GetLatestFrame(currentCameraIndex))
                 {
-                    return;
+                    if (frame == null || frame.Empty()) return;
+
+                    using (Mat processedFrame = DrawROIOnFrame(frame, currentCameraIndex))
+                    using (Mat resizedFrame = new Mat())
+                    {
+                        Cv2.Resize(processedFrame, resizedFrame, new Size(), scaleFactor, scaleFactor, InterpolationFlags.Linear);
+
+                        // 轉換為 Bitmap（這是必須的，因為 PictureBox 需要 Bitmap）
+                        Bitmap oldBitmap = cherngerPictureBox1.Image as Bitmap;
+                        cherngerPictureBox1.Image = resizedFrame.ToBitmap();
+                        oldBitmap?.Dispose(); // 釋放舊 Bitmap
+                    }
                 }
-
-                // 處理影像 (繪製 ROI)
-                Mat processedFrame = DrawROIOnFrame(frame, currentCameraIndex);
-
-                // 縮放影像以適合顯示
-                Mat resizedFrame = new Mat();
-                Cv2.Resize(processedFrame, resizedFrame, new Size(), scaleFactor, scaleFactor, InterpolationFlags.Linear);
-
-                // 顯示到 PictureBox
-                cherngerPictureBox1.Image?.Dispose(); // 釋放舊影像資源
-                cherngerPictureBox1.Image = resizedFrame.ToBitmap();
-
-                // 釋放資源
-                frame.Dispose();
-                processedFrame.Dispose();
             }
             catch (Exception ex)
             {
@@ -355,37 +428,43 @@ namespace peilin
         // 獲取最新的相機影像
         private Mat GetLatestFrame(int cameraIndex)
         {
+            // 由 GitHub Copilot 產生
+            // 修正: 調機模式直接從相機讀取，不經過佇列
             try
             {
-                // 直接從相機獲取一幀
-                
-                Mat frame = camera.GetCurrentFrame(cameraIndex);
+                // 調機模式：直接從相機獲取最新影像（不經過佇列）
+                if (app.isAdjustmentMode)
+                {
+                    Mat frame = camera.GetCurrentFrame(cameraIndex, preserveCurrentMode: true);
+                    
+                    if (frame != null && !frame.Empty())
+                    {
+                        return frame; // 已經是新分配的 Mat，呼叫方負責釋放
+                    }
+                    
+                    // 如果獲取失敗，返回測試影像
+                    return CreateTestImage(cameraIndex);
+                }
 
-                if (frame != null && !frame.Empty())
-                {
-                    return frame;
-                }
-                
-                // 如果無法直接從相機獲取，嘗試從隊列獲取
-                if (app.Queue_Bitmap1.Count > 0 && cameraIndex == 0)
-                {
-                    // 現有的從隊列獲取影像的代碼...
-                }
+                // 非調機模式：原有邏輯（從佇列獲取，如果需要的話）
+                // 這部分在調機模式下不應該執行
                 // ...其餘的現有代碼...
-
+                
                 // 如果都失敗，則創建測試影像
                 return CreateTestImage(cameraIndex);
             }
             catch (Exception ex)
             {
                 lbAdd("獲取影像失敗", "error", ex.Message);
-                return null;
+                return CreateTestImage(cameraIndex);
             }
         }
 
         // 創建測試用影像 (如果無法獲取真實相機影像)
         private Mat CreateTestImage(int cameraIndex)
         {
+            // 由 GitHub Copilot 產生
+            // 修正: 明確文件化這個方法分配新 Mat，呼叫方負責釋放
             Mat testImage = new Mat(2048, 2448, MatType.CV_8UC3, new Scalar(240, 240, 240));
 
             // 在測試影像上畫一些內容
@@ -396,13 +475,15 @@ namespace peilin
             Cv2.PutText(testImage, $"Camera {cameraIndex + 1}", new Point(100, 100),
                 HersheyFonts.HersheyComplex, 2, new Scalar(0, 0, 255), 3);
 
-            return testImage;
+            return testImage; // 呼叫方必須釋放
         }
 
         // 在影像上繪製 ROI (修改為使用臨時參數)
         private Mat DrawROIOnFrame(Mat inputFrame, int cameraIndex)
         {
-            Mat result = inputFrame.Clone();
+            // 由 GitHub Copilot 產生
+            // 修正: 只在需要修改時 Clone，並確保呼叫方知道要釋放
+            Mat result = inputFrame.Clone(); // 必須 Clone 因為要在上面繪製
 
             try
             {
@@ -448,7 +529,7 @@ namespace peilin
                 lbAdd("ROI 繪製失敗", "error", ex.Message);
             }
 
-            return result;
+            return result; // 呼叫方必須釋放
         }
 
         // 從數據庫或配置中讀取 ROI 參數 (保持原有方法不變)
@@ -499,10 +580,52 @@ namespace peilin
         }        // 表單關閉事件
         private void Parameter_info_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // 由 GitHub Copilot 產生
+            // 修正: 確保所有資源正確釋放並重置調機模式
             try
             {
-                // 先停止相機
+                // 1. 先停止相機和計時器（這會清除 app.isAdjustmentMode 旗標）
                 StopCamera();
+
+                // 2. 關閉放大視圖（如果存在）
+                if (enlargedForm != null && !enlargedForm.IsDisposed)
+                {
+                    // 先停止放大視圖的更新
+                    if (enlargedUpdateTimer != null)
+                    {
+                        enlargedUpdateTimer.Stop();
+                        enlargedUpdateTimer.Dispose();
+                        enlargedUpdateTimer = null;
+                    }
+                    
+                    isEnlargedViewActive = false;
+                    enlargedForm.Close();
+                    enlargedForm = null;
+                }
+
+                // 3. 確保主要計時器完全停止
+                if (updateTimer != null)
+                {
+                    updateTimer.Stop();
+                    updateTimer.Dispose();
+                    updateTimer = null;
+                }
+
+                // 4. 釋放顯示的圖像
+                if (cherngerPictureBox1.Image != null)
+                {
+                    cherngerPictureBox1.Image.Dispose();
+                    cherngerPictureBox1.Image = null;
+                }
+
+                // 5. 清空所有臨時參數
+                tempROIParams.Clear();
+
+                // 6. 等待一小段時間確保所有非同步操作完成
+                System.Threading.Thread.Sleep(200);
+
+                lbAdd("調機介面已安全關閉，系統可切換回檢測模式", "info", "");
+
                 /*
                 // 然後更新數據庫參數
                 using (var db = new MydbDB())
@@ -1094,8 +1217,9 @@ namespace peilin
             };
 
             // 創建和啟動實時更新計時器
+            // 由 GitHub Copilot 產生 - 修正: 降低更新頻率以減少記憶體壓力
             enlargedUpdateTimer = new System.Windows.Forms.Timer();
-            enlargedUpdateTimer.Interval = 30; // 更新頻率提高，更流暢
+            enlargedUpdateTimer.Interval = 100; // 從 30ms 改為 100ms（10fps），減少記憶體壓力
             enlargedUpdateTimer.Tick += EnlargedUpdateTimer_Tick;
 
             // 顯示窗體
@@ -1121,21 +1245,19 @@ namespace peilin
         {
             if (enlargedPictureBox == null || !isEnlargedViewActive) return;
 
+            // 由 GitHub Copilot 產生
+            // 修正: 完整的 using 鏈 + Bitmap 追蹤
             try
             {
-                // 獲取當前相機的影像
                 using (Mat frame = GetLatestFrame(currentCameraIndex))
                 {
                     if (frame == null || frame.Empty()) return;
 
-                    // 處理影像 (繪製 ROI)
                     using (Mat processedFrame = DrawROIOnFrame(frame, currentCameraIndex))
                     {
-                        // 釋放舊影像資源
-                        enlargedPictureBox.Image?.Dispose();
-
-                        // 設置新圖像
+                        Bitmap oldBitmap = enlargedPictureBox.Image as Bitmap;
                         enlargedPictureBox.Image = processedFrame.ToBitmap();
+                        oldBitmap?.Dispose();
                     }
                 }
             }
@@ -1146,6 +1268,8 @@ namespace peilin
         }
         private void ShowEnlargedImage(Mat image)
         {
+            // 由 GitHub Copilot 產生
+            // 修正: 確保 Bitmap 在窗體關閉時釋放
             // 創建一個新窗體用於顯示放大的圖像
             Form enlargedForm = new Form();
             enlargedForm.Text = $"放大圖像 - 相機 {currentCameraIndex + 1}";
@@ -1161,13 +1285,19 @@ namespace peilin
             enlargedPictureBox.BackColor = Color.Black;
 
             // 顯示圖像
-            enlargedPictureBox.Image = image.ToBitmap();
+            Bitmap displayBitmap = image.ToBitmap();
+            enlargedPictureBox.Image = displayBitmap;
 
             // 按ESC關閉窗體的處理
             enlargedForm.KeyPreview = true;
             enlargedForm.KeyDown += (s, e) => {
                 if (e.KeyCode == Keys.Escape)
                     enlargedForm.Close();
+            };
+
+            // 窗體關閉時釋放 Bitmap
+            enlargedForm.FormClosed += (s, e) => {
+                enlargedPictureBox.Image?.Dispose();
             };
 
             // 添加PictureBox到窗體
@@ -1205,6 +1335,8 @@ namespace peilin
                 return;
             }
 
+            // 由 GitHub Copilot 產生
+            // 修正: 確保 Mat 物件正確釋放
             try
             {
                 // 獲取原始影像（不包含輔助線）
@@ -1221,13 +1353,14 @@ namespace peilin
                     {
                         saveDialog.Filter = "JPEG 圖片|*.jpg|PNG 圖片|*.png|BMP 圖片|*.bmp|所有檔案|*.*";
                         saveDialog.FilterIndex = 1;
-                        saveDialog.FileName = $"{DateTime.Now:yyyyMMdd_HHmmss}-{currentCameraIndex + 1}";
+                        saveDialog.FileName = $"Camera{currentCameraIndex + 1}_{DateTime.Now:yyyyMMdd_HHmmss}";
                         saveDialog.Title = "儲存取像圖片";
 
                         if (saveDialog.ShowDialog() == DialogResult.OK)
                         {
                             // 儲存原始影像
                             Cv2.ImWrite(saveDialog.FileName, originalFrame);
+                            lbAdd($"取像成功 - 相機{currentCameraIndex + 1}", "info", saveDialog.FileName);
                             MessageBox.Show($"取像成功！\n儲存位置：{saveDialog.FileName}", "成功",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
@@ -1236,6 +1369,7 @@ namespace peilin
             }
             catch (Exception ex)
             {
+                lbAdd("取像失敗", "error", ex.Message);
                 MessageBox.Show($"取像失敗：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
