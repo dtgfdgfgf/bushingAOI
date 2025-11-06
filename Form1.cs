@@ -725,7 +725,6 @@ namespace peilin
                             #endregion
 
                             clonedMat = Src.Clone();
-                            int SAMPLE_ID = 0;
 
                             #region 記憶體監控
                             /*
@@ -973,8 +972,8 @@ namespace peilin
 
                                 //Log.Debug($"樣品 {input.count} 第1站處理開始時間: {DateTime.Now.ToString("HH:mm:ss.fff")}");
 
-                                #region 是否為有效取像（白比率）啟用
-
+                                #region 是否為有效取像（白比率）停用
+                                /*
                                 // 檢查白色像素占比 (NULL)
                                 Mat whiteCheckImage = null;
                                 try
@@ -1010,6 +1009,7 @@ namespace peilin
                                 {
                                     whiteCheckImage?.Dispose();
                                 }
+                                */
                                 #endregion
 
                                 #region 是否變形，無效取像也有可能在這裡檢出，因為使用固定座標
@@ -1603,8 +1603,8 @@ namespace peilin
                                 }
                                 //Log.Debug($"樣品 {input.count} 第2站處理開始時間: {DateTime.Now.ToString("HH:mm:ss.fff")}");
 
-                                #region 是否為有效取像（白比率）啟用
-
+                                #region 是否為有效取像（白比率）停用
+                                /*
                                 // 檢查白色像素占比 (NULL)
                                 Mat whiteCheckImage = null;
 
@@ -1641,6 +1641,7 @@ namespace peilin
                                 {
                                     whiteCheckImage?.Dispose();
                                 }
+                                */
                                 #endregion
 
                                 #region 是否為有效取像（物體位置），只在這裡做!
@@ -2221,8 +2222,8 @@ namespace peilin
                                 PerformanceProfiler.StartMeasure($"{input.count}_getmat3");
                             }
                                 //Log.Debug($"樣品 {input.count} 第3站處理開始時間: {DateTime.Now.ToString("HH:mm:ss.fff")}");
-                            #region 是否為有效取像（白比率）啟用
-
+                            #region 是否為有效取像（白比率）停用
+                            /*
                             // 檢查白色像素占比 (NULL)
                             Mat whiteCheckImage = null;
                             try
@@ -2258,6 +2259,7 @@ namespace peilin
                             {
                                 whiteCheckImage?.Dispose();
                             }
+                            */
                             #endregion
 
                             #region 是否為有效取像 只在第二站做
@@ -2943,8 +2945,8 @@ namespace peilin
                                 PerformanceProfiler.StartMeasure($"{input.count}_getmat4");
                             }
 
-                            #region 是否為有效取像（白比率）啟用
-
+                            #region 是否為有效取像（白比率）停用
+                            /*
                             // 檢查白色像素占比 (NULL)
                             Mat whiteCheckImage = null;
                             try
@@ -2980,6 +2982,7 @@ namespace peilin
                             {
                                 whiteCheckImage?.Dispose();
                             }
+                            */
                                 #endregion
 
                             #region 找開口不做
@@ -4710,7 +4713,7 @@ namespace peilin
                     {
                         foreach (var c in q)
                         {
-                            label39.Text = c.Num.ToString();
+                            //label39.Text = c.Num.ToString();
                         }
                     }
                 }
@@ -7054,8 +7057,6 @@ namespace peilin
                                         Invoke(new Action(() => label35.Text = c.UserName + "(工程師)"));
                                         lbAdd(app.username + "已登入，權限為:工程師", "inf", "");
 
-                                        button24.Visible = true;
-                                        button25.Visible = true;
                                         button26.Visible = true;
                                         label52.Visible = true;
                                     }
@@ -7110,8 +7111,6 @@ namespace peilin
             管理使用者ToolStripMenuItem.Enabled = false;
             設定ToolStripMenuItem.Enabled = false;
 
-            button24.Visible = false;
-            button25.Visible = false;
             label52.Visible = false;
         }
         #endregion
@@ -8578,11 +8577,11 @@ namespace peilin
                                             var nullCount = d809;
 
                                             Dictionary<string, int> generalCounts = new Dictionary<string, int>
-                                        {
-                                            { "OK", okCount },
-                                            { "NG", ngCount },
-                                            { "NULL", nullCount }
-                                        };
+                                            {
+                                                { "OK", okCount },
+                                                { "NG", ngCount },
+                                                { "NULL", nullCount }
+                                            };
 
                                             // 使用 DefectCountManager 寫入數據
                                             bool writeSuccess = DefectCountManager.WriteAllDefectCounts(
@@ -11771,119 +11770,6 @@ namespace peilin
             save2excel(comboBox3.Text, comboBox6.Text, DateTime.FromOADate(dateTimePicker1.Value.AddMinutes(-1).ToOADate()), DateTime.FromOADate(dateTimePicker2.Value.AddMinutes(-1).ToOADate()), true);
         }
 
-        private void button24_Click(object sender, EventArgs e) // 待刪
-        {
-            if (!app.detect_result.ContainsKey(0))
-            {
-                app.detect_result.TryAdd(0, "OK");
-                app.detect_result_check.TryAdd(0, new bool[4] { false, false, false, false });
-            }
-            app.dc = new ConcurrentDictionary<string, int>();
-            using (var db = new MydbDB())
-            {
-                var q0 =
-                   from c in db.DefectChecks
-                   where c.Type == app.produce_No && c.Yn == 1
-                   select c;
-                if (q0.Count() > 0)
-                {
-                    foreach (var c in q0)
-                    {
-                        app.dc.TryAdd(c.Name, 0); //要檢測的瑕疵名稱
-                    }
-                }
-
-                var q =
-                    from c in db.DefectCounts
-                    where c.Type == label32.Text && c.LotId == textBox1.Text
-                    orderby c.Name, c.Time
-                    select c;
-                if (q.Count() > 0)
-                {
-                    foreach (var c in q)
-                    {
-                        if (c.Name != "OK" && c.Name != "NG" && c.Name != "NULL")
-                        {
-                            // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 保證執行緒安全，只更新較大的值
-                            app.dc.AddOrUpdate(c.Name, c.Count, (key, oldValue) => Math.Max(oldValue, c.Count));
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (var item in app.dc)
-                    {
-                        db.DefectCounts
-                         .Value(p => p.Type, label32.Text)
-                         .Value(p => p.Name, item.Key)
-                         .Value(p => p.Count, 0)
-                         .Value(p => p.LotId, textBox1.Text)
-                         .Value(p => p.Time, DateTime.Now)
-                         .Insert();
-                    }
-                    db.DefectCounts
-                         .Value(p => p.Type, label32.Text)
-                         .Value(p => p.Name, "OK")
-                         .Value(p => p.Count, 0)
-                         .Value(p => p.LotId, textBox1.Text)
-                         .Value(p => p.Time, DateTime.Now)
-                         .Insert();
-                    db.DefectCounts
-                         .Value(p => p.Type, label32.Text)
-                         .Value(p => p.Name, "NG")
-                         .Value(p => p.Count, 0)
-                         .Value(p => p.LotId, textBox1.Text)
-                         .Value(p => p.Time, DateTime.Now)
-                         .Insert();
-                    db.DefectCounts
-                         .Value(p => p.Type, label32.Text)
-                         .Value(p => p.Name, "NULL")
-                         .Value(p => p.Count, 0)
-                         .Value(p => p.LotId, textBox1.Text)
-                         .Value(p => p.Time, DateTime.Now)
-                         .Insert();
-                }
-            }
-            app.status = true;
-
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            string path = System.IO.Directory.GetCurrentDirectory();
-            //openFileDialog.InitialDirectory = path;
-            openFileDialog.RestoreDirectory = true;
-            openFileDialog.Title = "讀取設定檔";
-            openFileDialog.Filter = "所有文件(*.*)|*.*";
-            if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && openFileDialog.FileName != null)
-            {
-                app.Queue_Bitmap1.Enqueue(new ImagePosition(Cv2.ImRead(openFileDialog.FileName, ImreadModes.Color), virtual_ipt_cnt));
-                app._wh1.Set();
-                //app.Queue_Bitmap4.Enqueue(new ImagePosition(Cv2.ImRead(openFileDialog.FileName, ImreadModes.Color), virtual_ipt_cnt));
-                //app._wh4.Set();
-
-                //result_process(0, "0,0,0,100,100,0.7,1", Cv2.ImRead(openFileDialog.FileName, ImreadModes.Color), 1);
-                //result_process(0, "0,", Cv2.ImRead(openFileDialog.FileName, ImreadModes.Color), 2);
-                //result_process(0, "0,", Cv2.ImRead(openFileDialog.FileName, ImreadModes.Color), 3);
-                //result_process(0, "0,", Cv2.ImRead(openFileDialog.FileName, ImreadModes.Color), 4);
-            }
-        }
-        int virtual_ipt_cnt = 0;
-        private void button25_Click(object sender, EventArgs e) // 待刪
-        {
-            //if (!app.status)
-            //{
-            //    Console.WriteLine("ON");
-            //    app.status = true;
-            //    app._reader.Set();
-            //}
-            //else
-            //{
-            //    Console.WriteLine("OFF");
-            //    app.status = false;
-            //}
-            //MessageBox.Show(app.param["empty_th0"].ToString());
-
-
-        }
-
         private void button26_Click(object sender, EventArgs e) 
         {
             if (button26.Text == "ON") //關OK1
@@ -11942,79 +11828,6 @@ namespace peilin
                     PLC_SetM(22, true);
                 }
             }
-        }
-
-        private void button30_Click(object sender, EventArgs e)
-        {
-            app.status = true;
-            PLC_SetM(0, true);
-            PLC_SetM(2, true);
-            PLC_SetM(5, true);
-            /*
-            try
-            {
-                // 1. 先停止所有相機擷取
-                if (cam != null)
-                {
-                    cam.Stop();
-                    Thread.Sleep(200); // 給足夠時間停止
-                }
-
-                // 2. 記錄當前狀態
-                File.AppendAllText("camera_trigger.log", $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} - Button30 開始設置 PLC" + Environment.NewLine);
-
-                // 3. 設置PLC參數，但先不啟動相機
-                app.status = true;
-                PLC_SetM(0, true);
-                PLC_SetM(2, true);
-                PLC_SetM(5, true);
-                PLC_SetM(30, true); //燈具
-                app._reader.Set();
-
-                // 4. 等待PLC信號穩定
-                Thread.Sleep(300);
-
-                // 5. 重新設置相機為硬體觸發模式，包含更完整的設置
-                if (cam != null)
-                {
-                    // 更完整的硬體觸發設置
-                    for (int i = 0; i < 4; i++)
-                    {
-                        try
-                        {
-                            File.AppendAllText("camera_trigger.log", $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} - 重設相機 {i} 為硬體觸發模式" + Environment.NewLine);
-
-                            // 相機相關設置...可能需要調用特定方法
-
-                            // 添加防抖動參數，具體值需要根據實際情況調整
-                            // camera.Parameters[PLCamera.LineDebouncerTime].SetValue(50000); 
-                        }
-                        catch (Exception ex)
-                        {
-                            File.AppendAllText("camera_error.log", $"{DateTime.Now} - Camera {i} 設置錯誤: {ex.Message}" + Environment.NewLine);
-                        }
-                    }
-
-                    // 最後啟動相機
-                    File.AppendAllText("camera_trigger.log", $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} - 啟動所有相機" + Environment.NewLine);
-                    cam.Start();
-                }
-            }
-            catch (Exception ex)
-            {
-                File.AppendAllText("error.log", $"{DateTime.Now} - Button30 錯誤: {ex.Message}" + Environment.NewLine);
-                MessageBox.Show($"設置出錯: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            */
-        }
-
-
-        private void button31_Click(object sender, EventArgs e)
-        {
-            app.status = false;
-            PLC_SetM(0, false);
-            PLC_SetM(2, false);
-            PLC_SetM(5, false);
         }
 
         private void button32_Click(object sender, EventArgs e)
@@ -12611,6 +12424,12 @@ namespace peilin
 
         private async void button37_Click(object sender, EventArgs e)
         {
+            if (!app.offline)
+            {
+                PLC_SetD(801, 0);
+                PLC_SetD(807, 0);
+                PLC_SetD(809, 0);
+            }
             // 使用資料夾選擇對話框
             _systemInitialized = true;
             var folderDialog = new FolderBrowserDialog
@@ -14060,30 +13879,18 @@ namespace peilin
 
                 // 由 GitHub Copilot 產生 - 使用安全的參數讀取方式
                 // 從參數中讀取標準值
+                double tolerance = GetDoubleParam(app.param, $"whiteTolerance_{stop}", 3);
                 double standardRatio;
                 string whiteParamKey = $"white_{stop}";
                 if (app.param != null && app.param.TryGetValue(whiteParamKey, out string whiteValue) &&
                     double.TryParse(whiteValue, out standardRatio))
                 {
-                    // 設定允許的誤差範圍 (±2%)
-                    //double lowerBound = standardRatio - 2.0;
-                    //double upperBound = standardRatio + 2.0;
-                    bool a = true;
-                    bool b = true;
-                    bool isValid = true;
-                    // 判斷是否在允許範圍內
-                    if (stop == 1 || stop == 2)
-                    {
-                        a = ratio < standardRatio + 1.5;
-                        b = ratio > standardRatio - 1.5;
-                        isValid = (a && b);
-                    }
-                    else if (stop == 3 || stop == 4)
-                    {
-                        a = ratio < standardRatio + 3;
-                        b = ratio > standardRatio - 3;
-                        isValid = (a && b);
-                    }
+                    // 設定允許的誤差範圍 
+
+                    bool a = ratio < standardRatio + tolerance;
+                    bool b = ratio > standardRatio - tolerance;
+                    bool isValid = isValid = (a && b);
+
                     // 記錄日誌
                     //lbAdd($"站點 {stop} 白色像素占比: {ratio:F2}%, 標準值: {standardRatio}%, 允許範圍: [{lowerBound:F2}%, {upperBound:F2}%], 有效性: {(isValid ? "有效" : "無效")}", "inf", "PixelRatioCheck");
                     //Console.WriteLine($"站點 {stop} 白色像素占比: {ratio:F2}%, 標準值: {standardRatio}%, 有效性: {(isValid ? "有效" : "無效")}", "inf", "PixelRatioCheck");
@@ -16921,6 +16728,7 @@ namespace peilin
                 Console.WriteLine("false");
             }
         }
+
     }
     /// <summary>
     /// 管理瑕疵計數的寫入、讀取和更新
@@ -17138,7 +16946,7 @@ namespace peilin
         {
             if (items == null || items.Count == 0)
             {
-                Console.WriteLine($"寫入 DefectCount 失敗: items == null || items.Count == 0 ");
+                Log.Warning("WriteDefectCounts: items 為 null 或空，無法寫入");
                 return false;
             }
 
@@ -17146,12 +16954,23 @@ namespace peilin
             {
                 DateTime now = DateTime.Now;
 
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄寫入開始
+                Log.Information("===== WriteDefectCounts 開始 =====");
+                Log.Information($"準備寫入 {items.Count} 筆資料，forceWrite={forceWrite}");
+
                 lock (_dbLock)
                 {
                     using (var db = new MydbDB())
                     {
+                        int insertedCount = 0;
+                        int skippedCount = 0;
+
                         foreach (var item in items)
                         {
+                            // 由 GitHub Copilot 產生
+                            Log.Debug($"處理項目: Type='{item.Type}', Name='{item.Name}', Count={item.Count}, LotId='{item.LotId}'");
+
                             if (forceWrite)
                             {
                                 // 強制寫入模式（停止時使用）：直接寫入，不檢查重複
@@ -17162,12 +16981,13 @@ namespace peilin
                                   .Value(p => p.Time, now)
                                   .Value(p => p.LotId, item.LotId)
                                   .Insert();
-                                Log.Debug($"強制寫入: Type={item.Type}, Name={item.Name}, Count={item.Count}");
+
+                                insertedCount++;
+                                Log.Information($"  [強制寫入] {item.Name} = {item.Count}");
                             }
                             else
                             {
                                 // 【修正】檢查是否已存在相同 Type, Name, LotId 且時間在 10 秒內的記錄
-                                // 避免每分紀錄時重複寫入
                                 var existingCount = db.DefectCounts
                                     .Count(p => p.Type == item.Type &&
                                                p.Name == item.Name &&
@@ -17184,21 +17004,30 @@ namespace peilin
                                       .Value(p => p.Time, now)
                                       .Value(p => p.LotId, item.LotId)
                                       .Insert();
+
+                                    insertedCount++;
+                                    Log.Information($"  [新增] {item.Name} = {item.Count}");
                                 }
                                 else
                                 {
-                                    Log.Debug($"跳過重複寫入: Type={item.Type}, Name={item.Name}, LotId={item.LotId}");
+                                    skippedCount++;
+                                    Log.Debug($"  [跳過] {item.Name} = {item.Count} (10秒內已存在 {existingCount} 筆相同記錄)");
                                 }
                             }
                         }
+
+                        // 由 GitHub Copilot 產生
+                        // 診斷：記錄寫入統計
+                        Log.Information($"寫入完成: 新增 {insertedCount} 筆, 跳過 {skippedCount} 筆");
+                        Log.Information("===== WriteDefectCounts 結束 =====");
                     }
                 }
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Error] 批量寫入 DefectCount 失敗: {ex.Message}");
                 Log.Error($"[Error] 批量寫入 DefectCount 失敗: {ex.Message}");
+                Log.Error($"例外堆疊: {ex.StackTrace}");
                 return false;
             }
         }
@@ -17213,23 +17042,55 @@ namespace peilin
         /// <param name="forceWrite">是否強制寫入（不檢查重複），用於停止時的最終寫入</param>
         /// <returns>寫入是否成功</returns>
         public static bool WriteAllDefectCounts(string type, string lotId,
-            IDictionary<string, int> defectCounts,
-            IDictionary<string, int> generalCounts = null,
-            bool forceWrite = false)
+    IDictionary<string, int> defectCounts,
+    IDictionary<string, int> generalCounts = null,
+    bool forceWrite = false)
         {
             try
             {
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄函數呼叫參數
+                Log.Information("===== WriteAllDefectCounts 開始 =====");
+                Log.Information($"參數: type='{type}', lotId='{lotId}', forceWrite={forceWrite}");
+
                 var itemsToWrite = new List<(string Type, string Name, int Count, string LotId)>();
 
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄瑕疵計數處理
+                Log.Information($"處理 defectCounts (共 {defectCounts?.Count ?? 0} 筆)：");
+
                 // 加入各類瑕疵計數（排除 SAMPLE_ID，因為會單獨處理）
-                foreach (var item in defectCounts)
+                if (defectCounts != null)
                 {
-                    // 【修正】跳過 SAMPLE_ID，避免重複寫入
-                    if (item.Key != "SAMPLE_ID")
+                    foreach (var item in defectCounts)
                     {
-                        itemsToWrite.Add((type, item.Key, item.Value, lotId));
+                        // 【修正】跳過 SAMPLE_ID，避免重複寫入
+                        if (item.Key != "SAMPLE_ID")
+                        {
+                            // 由 GitHub Copilot 產生
+                            // 診斷：檢查是否誤將 OK/NG/NULL 加入 app.dc
+                            if (item.Key == "OK" || item.Key == "NG" || item.Key == "NULL")
+                            {
+                                Log.Warning($"  [警告] 在 defectCounts 中發現一般計數項目: '{item.Key}' = {item.Value}");
+                                Log.Warning($"  [警告] 此項目應該在 generalCounts 中，而非 defectCounts (app.dc)");
+                                // 由 GitHub Copilot 產生
+                                // 決策：跳過此項目，不寫入（因為會在 generalCounts 處理）
+                                continue;
+                            }
+
+                            itemsToWrite.Add((type, item.Key, item.Value, lotId));
+                            Log.Information($"  加入瑕疵: '{item.Key}' = {item.Value}");
+                        }
+                        else
+                        {
+                            Log.Debug($"  跳過 SAMPLE_ID (單獨處理)");
+                        }
                     }
                 }
+
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄一般計數處理
+                Log.Information($"處理 generalCounts (共 {generalCounts?.Count ?? 0} 筆)：");
 
                 // 如果有一般計數，也加入
                 if (generalCounts != null)
@@ -17239,15 +17100,30 @@ namespace peilin
                         if (item.Key == "OK" || item.Key == "NG" || item.Key == "NULL")
                         {
                             itemsToWrite.Add((type, item.Key, item.Value, lotId));
+                            Log.Information($"  加入一般計數: '{item.Key}' = {item.Value}");
+                        }
+                        else
+                        {
+                            Log.Warning($"  [警告] generalCounts 中發現非一般計數項目: '{item.Key}' = {item.Value}");
                         }
                     }
                 }
 
-                return WriteDefectCounts(itemsToWrite, forceWrite);
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄最終要寫入的項目
+                Log.Information($"準備寫入 {itemsToWrite.Count} 筆資料到資料庫");
+
+                bool result = WriteDefectCounts(itemsToWrite, forceWrite);
+
+                Log.Information($"WriteDefectCounts 執行結果: {(result ? "成功" : "失敗")}");
+                Log.Information("===== WriteAllDefectCounts 結束 =====");
+
+                return result;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Error] 寫入所有 DefectCount 失敗: {ex.Message}");
+                Log.Error($"[Error] 批量寫入 DefectCount 失敗: {ex.Message}");
+                Log.Error($"例外堆疊: {ex.StackTrace}");
                 return false;
             }
         }
@@ -17300,74 +17176,97 @@ namespace peilin
         /// </summary>
         /// <param name="forceWrite">是否強制寫入（按停止時使用）</param>
         /// <returns>寫入是否成功</returns>
-        public static bool PerformPeriodicWrite(bool forceWrite = false) //按停止鈕時寫入
+        public static bool PerformPeriodicWrite(bool forceWrite = false)
         {
-            /*
-            // 檢查是否在寫入中
-            if ((DateTime.Now - app.rec_time).TotalSeconds < 0.5)
-            {
-                return true; // 跳過寫入，視為成功
-            }
-            */
             try
             {
-                if (app.dc == null || app.dc.Count == 0 || string.IsNullOrEmpty(app.produce_No))
-                    return false;
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄 app.dc 的完整內容
+                Log.Information("===== PerformPeriodicWrite 開始 =====");
+                Log.Information($"forceWrite = {forceWrite}");
+                Log.Information($"app.produce_No = {app.produce_No}");
+                Log.Information($"app.LotID = {app.LotID}");
 
-                // 直接從PLC讀取相關計數
-                
+                if (app.dc == null)
+                {
+                    Log.Warning("app.dc 為 null，無法寫入");
+                    return false;
+                }
+
+                if (app.dc.Count == 0)
+                {
+                    Log.Warning("app.dc 為空，無法寫入");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(app.produce_No))
+                {
+                    Log.Warning("app.produce_No 為空，無法寫入");
+                    return false;
+                }
+
+                // 由 GitHub Copilot 產生
+                // 診斷：逐項列出 app.dc 的內容
+                Log.Information($"app.dc 共有 {app.dc.Count} 筆資料：");
+                foreach (var item in app.dc.OrderBy(x => x.Key))
+                {
+                    Log.Information($"  瑕疵名稱: '{item.Key}', 數量: {item.Value}");
+                }
+
+                // 從 PLC 讀取計數
                 int ngCount = Form1.PLC_CheckD(801);
                 int okCount = Form1.PLC_CheckD(807);
                 int nullCount = Form1.PLC_CheckD(809);
 
-                /*
-                var handle1 = new ManualResetEvent(false);
-                PLC_ModBus.CheckValue(1, ValueUnit.D, 801, 14, false, handle1);
-                handle1.WaitOne();
-                var d801 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 801);
-                var d803 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 803);
-                var d805 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 805);
-                var d807 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 807);
-                var d809 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 809);
-                //var d809 = PLC_CheckD(809);
-                var d811 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 811);
-                //var d811 = PLC_CheckD(811);
-                var d813 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 813);
-                */
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄從 PLC 讀取的數值
+                Log.Information($"從 PLC 讀取的計數：");
+                Log.Information($"  D801 (NG) = {ngCount}");
+                Log.Information($"  D807 (OK原始) = {okCount}");
+                Log.Information($"  D809 (NULL) = {nullCount}");
 
                 // 修正：將 OK 數量取整到 50 的倍數（向下取整）
                 int q = okCount / 50;
-                okCount = q * 50;  // 正確：例如 d807=123 -> q=2 -> d807=100
+                int adjustedOkCount = q * 50;
 
-                /*
-                var ngCount = d801;
-                var okCount = d807;
-                var nullCount = d809;
-                */
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄 OK 數量調整
+                if (okCount != adjustedOkCount)
+                {
+                    Log.Information($"OK 數量調整: {okCount} -> {adjustedOkCount} (取整到50的倍數)");
+                }
 
                 // 準備一般計數字典(OK/NG/NULL)
                 Dictionary<string, int> generalCounts = new Dictionary<string, int>
                 {
-                    { "OK", okCount },
+                    { "OK", adjustedOkCount },
                     { "NG", ngCount },
                     { "NULL", nullCount }
                 };
+
+                // 由 GitHub Copilot 產生
+                // 診斷：記錄 generalCounts 內容
+                Log.Information($"generalCounts 內容：");
+                foreach (var item in generalCounts)
+                {
+                    Log.Information($"  {item.Key} = {item.Value}");
+                }
 
                 // 【新增】寫入最終 SAMPLE_ID（停止時）
                 if (forceWrite)
                 {
                     Log.Information("執行強制寫入 (停止時)");
 
-                    // 從 ResultManager.counter 取得當前 SAMPLE_ID
                     int currentSampleId = 0;
                     if (ResultManager.counter.TryGetValue("SAMPLE_ID", out currentSampleId))
                     {
+                        // 由 GitHub Copilot 產生
+                        Log.Information($"當前 SAMPLE_ID = {currentSampleId}");
+
                         try
                         {
                             using (var db = new MydbDB())
                             {
-                                // 由 GitHub Copilot 產生
-                                // 使用 upsert 模式：先嘗試更新，若無記錄則插入
                                 int updatedRows = db.DefectCounts
                                     .Where(p => p.Type == app.produce_No &&
                                                p.Name == "SAMPLE_ID" &&
@@ -17376,7 +17275,6 @@ namespace peilin
                                     .Set(p => p.Time, DateTime.Now)
                                     .Update();
 
-                                // 若無更新記錄則插入新記錄
                                 if (updatedRows == 0)
                                 {
                                     db.DefectCounts
@@ -17391,7 +17289,7 @@ namespace peilin
                                 }
                                 else
                                 {
-                                    Log.Information($"停止時更新最終 SAMPLE_ID = {currentSampleId}");
+                                    Log.Information($"停止時更新最終 SAMPLE_ID = {currentSampleId} (更新了 {updatedRows} 筆)");
                                 }
                             }
                         }
@@ -17400,13 +17298,26 @@ namespace peilin
                             Log.Error($"寫入最終 SAMPLE_ID 失敗: {exSample.Message}");
                         }
                     }
+                    else
+                    {
+                        Log.Warning("無法從 ResultManager.counter 取得 SAMPLE_ID");
+                    }
                 }
 
-                return WriteAllDefectCounts(app.produce_No, app.LotID, app.dc, generalCounts, forceWrite);
+                // 由 GitHub Copilot 產生
+                // 呼叫寫入函數前記錄
+                Log.Information("準備呼叫 WriteAllDefectCounts...");
+                bool result = WriteAllDefectCounts(app.produce_No, app.LotID, app.dc, generalCounts, forceWrite);
+
+                Log.Information($"WriteAllDefectCounts 執行結果: {(result ? "成功" : "失敗")}");
+                Log.Information("===== PerformPeriodicWrite 結束 =====");
+
+                return result;
             }
             catch (Exception ex)
             {
                 Log.Error($"[Error] 定期寫入 DefectCount 失敗: {ex.Message}");
+                Log.Error($"例外堆疊: {ex.StackTrace}");
                 return false;
             }
         }
@@ -18443,11 +18354,21 @@ public class ResultManager
                         totalNG = avgNG;
                     }
                 }
-
+                if (!app.offline)
+                {
+                    int ng = Form1.PLC_CheckD(801);
+                    int ok = Form1.PLC_CheckD(807);
+                    if (ok != 0 && ng != 0)
+                    {
+                        totalOK = ok;
+                        totalNG = ng;
+                        totalSamples = ok + ng;
+                    }
+                }
                 // 由 GitHub Copilot 產生 - 計算 OK 率和不良率
                 double okPercentage = totalSamples > 0 ? (totalOK * 100.0 / totalSamples) : 0;
                 double ngPercentage = totalSamples > 0 ? (totalNG * 100.0 / totalSamples) : 0;
-
+                
                 writer.WriteLine($"總樣品數,{totalSamples}");
                 writer.WriteLine($"OK數量,{totalOK},OK率(%),{okPercentage:F2}");
                 writer.WriteLine($"NG數量,{totalNG},不良率(%),{ngPercentage:F2}");

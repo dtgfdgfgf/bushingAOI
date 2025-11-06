@@ -137,27 +137,19 @@ namespace peilin
             this.label51 = new System.Windows.Forms.Label();
             this.testchamfer = new System.Windows.Forms.Button();
             this.button37 = new System.Windows.Forms.Button();
-            this.testIoU = new System.Windows.Forms.Button();
             this.button34 = new System.Windows.Forms.Button();
             this.button36 = new System.Windows.Forms.Button();
             this.button35 = new System.Windows.Forms.Button();
             this.button33 = new System.Windows.Forms.Button();
             this.button32 = new System.Windows.Forms.Button();
-            this.button31 = new System.Windows.Forms.Button();
-            this.button30 = new System.Windows.Forms.Button();
-            this.button29 = new System.Windows.Forms.Button();
-            this.button28 = new System.Windows.Forms.Button();
             this.button27 = new System.Windows.Forms.Button();
             this.label53 = new System.Windows.Forms.Label();
             this.button26 = new System.Windows.Forms.Button();
             this.label52 = new System.Windows.Forms.Label();
-            this.button25 = new System.Windows.Forms.Button();
-            this.button24 = new System.Windows.Forms.Button();
             this.label50 = new System.Windows.Forms.Label();
             this.button8 = new System.Windows.Forms.Button();
             this.label20 = new System.Windows.Forms.Label();
             this.cherngerPictureBox3 = new CherngerControls.CherngerPictureBox(this.components);
-            this.label39 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.button17 = new System.Windows.Forms.Button();
             this.label37 = new System.Windows.Forms.Label();
@@ -668,27 +660,19 @@ namespace peilin
             this.tabPage1.Controls.Add(this.label51);
             this.tabPage1.Controls.Add(this.testchamfer);
             this.tabPage1.Controls.Add(this.button37);
-            this.tabPage1.Controls.Add(this.testIoU);
             this.tabPage1.Controls.Add(this.button34);
             this.tabPage1.Controls.Add(this.button36);
             this.tabPage1.Controls.Add(this.button35);
             this.tabPage1.Controls.Add(this.button33);
             this.tabPage1.Controls.Add(this.button32);
-            this.tabPage1.Controls.Add(this.button31);
-            this.tabPage1.Controls.Add(this.button30);
-            this.tabPage1.Controls.Add(this.button29);
-            this.tabPage1.Controls.Add(this.button28);
             this.tabPage1.Controls.Add(this.button27);
             this.tabPage1.Controls.Add(this.label53);
             this.tabPage1.Controls.Add(this.button26);
             this.tabPage1.Controls.Add(this.label52);
-            this.tabPage1.Controls.Add(this.button25);
-            this.tabPage1.Controls.Add(this.button24);
             this.tabPage1.Controls.Add(this.label50);
             this.tabPage1.Controls.Add(this.button8);
             this.tabPage1.Controls.Add(this.label20);
             this.tabPage1.Controls.Add(this.cherngerPictureBox3);
-            this.tabPage1.Controls.Add(this.label39);
             this.tabPage1.Controls.Add(this.panel1);
             this.tabPage1.Controls.Add(this.label21);
             this.tabPage1.Controls.Add(this.label8);
@@ -770,7 +754,7 @@ namespace peilin
             // button46
             // 
             this.button46.Font = new System.Drawing.Font("微軟正黑體", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button46.Location = new System.Drawing.Point(357, 352);
+            this.button46.Location = new System.Drawing.Point(358, 456);
             this.button46.Name = "button46";
             this.button46.Size = new System.Drawing.Size(76, 23);
             this.button46.TabIndex = 461;
@@ -902,7 +886,7 @@ namespace peilin
             // btnSelectFolder
             // 
             this.btnSelectFolder.Font = new System.Drawing.Font("微軟正黑體", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.btnSelectFolder.Location = new System.Drawing.Point(1791, 518);
+            this.btnSelectFolder.Location = new System.Drawing.Point(1782, 485);
             this.btnSelectFolder.Name = "btnSelectFolder";
             this.btnSelectFolder.Size = new System.Drawing.Size(136, 45);
             this.btnSelectFolder.TabIndex = 400;
@@ -1323,13 +1307,6 @@ namespace peilin
             this.button37.UseVisualStyleBackColor = true;
             this.button37.Click += new System.EventHandler(this.button37_Click);
             // 
-            // testIoU
-            // 
-            this.testIoU.Location = new System.Drawing.Point(0, 0);
-            this.testIoU.Name = "testIoU";
-            this.testIoU.Size = new System.Drawing.Size(75, 23);
-            this.testIoU.TabIndex = 430;
-            // 
             // button34
             // 
             this.button34.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
@@ -1366,7 +1343,7 @@ namespace peilin
             // button33
             // 
             this.button33.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button33.Location = new System.Drawing.Point(533, 660);
+            this.button33.Location = new System.Drawing.Point(358, 665);
             this.button33.Name = "button33";
             this.button33.Size = new System.Drawing.Size(82, 37);
             this.button33.TabIndex = 423;
@@ -1378,7 +1355,7 @@ namespace peilin
             // button32
             // 
             this.button32.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button32.Location = new System.Drawing.Point(602, 662);
+            this.button32.Location = new System.Drawing.Point(437, 665);
             this.button32.Name = "button32";
             this.button32.Size = new System.Drawing.Size(82, 37);
             this.button32.TabIndex = 422;
@@ -1386,44 +1363,6 @@ namespace peilin
             this.button32.UseVisualStyleBackColor = true;
             this.button32.Visible = false;
             this.button32.Click += new System.EventHandler(this.button32_Click);
-            // 
-            // button31
-            // 
-            this.button31.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button31.Location = new System.Drawing.Point(445, 673);
-            this.button31.Name = "button31";
-            this.button31.Size = new System.Drawing.Size(82, 29);
-            this.button31.TabIndex = 421;
-            this.button31.Text = "停止測試PLC";
-            this.button31.UseVisualStyleBackColor = true;
-            this.button31.Visible = false;
-            this.button31.Click += new System.EventHandler(this.button31_Click);
-            // 
-            // button30
-            // 
-            this.button30.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button30.Location = new System.Drawing.Point(357, 670);
-            this.button30.Name = "button30";
-            this.button30.Size = new System.Drawing.Size(82, 27);
-            this.button30.TabIndex = 420;
-            this.button30.Text = "測試PLC";
-            this.button30.UseVisualStyleBackColor = true;
-            this.button30.Visible = false;
-            this.button30.Click += new System.EventHandler(this.button30_Click);
-            // 
-            // button29
-            // 
-            this.button29.Location = new System.Drawing.Point(0, 0);
-            this.button29.Name = "button29";
-            this.button29.Size = new System.Drawing.Size(75, 23);
-            this.button29.TabIndex = 431;
-            // 
-            // button28
-            // 
-            this.button28.Location = new System.Drawing.Point(0, 0);
-            this.button28.Name = "button28";
-            this.button28.Size = new System.Drawing.Size(75, 23);
-            this.button28.TabIndex = 432;
             // 
             // button27
             // 
@@ -1471,30 +1410,6 @@ namespace peilin
             this.label52.Text = "OK1擋板";
             this.label52.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // button25
-            // 
-            this.button25.Font = new System.Drawing.Font("新細明體", 26.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button25.Location = new System.Drawing.Point(1792, 528);
-            this.button25.Name = "button25";
-            this.button25.Size = new System.Drawing.Size(135, 50);
-            this.button25.TabIndex = 407;
-            this.button25.Text = "設定";
-            this.button25.UseVisualStyleBackColor = true;
-            this.button25.Visible = false;
-            this.button25.Click += new System.EventHandler(this.button25_Click);
-            // 
-            // button24
-            // 
-            this.button24.Font = new System.Drawing.Font("新細明體", 26.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button24.Location = new System.Drawing.Point(1792, 634);
-            this.button24.Name = "button24";
-            this.button24.Size = new System.Drawing.Size(135, 50);
-            this.button24.TabIndex = 406;
-            this.button24.Text = "設定";
-            this.button24.UseVisualStyleBackColor = true;
-            this.button24.Visible = false;
-            this.button24.Click += new System.EventHandler(this.button24_Click);
-            // 
             // label50
             // 
             this.label50.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
@@ -1539,18 +1454,6 @@ namespace peilin
             this.cherngerPictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.cherngerPictureBox3.TabIndex = 390;
             this.cherngerPictureBox3.TabStop = false;
-            // 
-            // label39
-            // 
-            this.label39.Font = new System.Drawing.Font("新細明體", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.label39.ForeColor = System.Drawing.Color.Black;
-            this.label39.Location = new System.Drawing.Point(1882, 566);
-            this.label39.Name = "label39";
-            this.label39.Size = new System.Drawing.Size(36, 53);
-            this.label39.TabIndex = 398;
-            this.label39.Text = "0";
-            this.label39.TextAlign = System.Drawing.ContentAlignment.BottomRight;
-            this.label39.Visible = false;
             // 
             // panel1
             // 
@@ -2381,24 +2284,17 @@ namespace peilin
         private System.Windows.Forms.Button button23;
         private System.Windows.Forms.Label label51;
         private System.Windows.Forms.Label label50;
-        private System.Windows.Forms.Button button24;
-        private System.Windows.Forms.Button button25;
         private System.Windows.Forms.Button button26;
         private System.Windows.Forms.ToolStripMenuItem 蜂鳴器ToolStripMenuItem;
         private System.Windows.Forms.Label label52;
         private System.Windows.Forms.Button button27;
         private System.Windows.Forms.Label label53;
         private System.Windows.Forms.Button btnSelectFolder;
-        private System.Windows.Forms.Button button28;
-        private System.Windows.Forms.Button button29;
-        private System.Windows.Forms.Button button30;
-        private System.Windows.Forms.Button button31;
         private System.Windows.Forms.Button button32;
         private System.Windows.Forms.Button button33;
         private System.Windows.Forms.Button button35;
         private System.Windows.Forms.Button button36;
         private System.Windows.Forms.Button button34;
-        private System.Windows.Forms.Button testIoU;
         private System.Windows.Forms.Button button37;
         private System.Windows.Forms.Button testchamfer;
         private System.Windows.Forms.Label label54;
@@ -2424,7 +2320,6 @@ namespace peilin
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Label label39;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label19;
