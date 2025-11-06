@@ -2,6 +2,27 @@
 
 此文件為 GitHub Copilot 和 AI 程式碼助手提供程式碼審查和產生指引。
 
+## 相關文件
+
+### Code Review 指引
+本文件專注於**程式碼生成規範**。若需進行完整的 **Code Review**，請參考：
+- **`code-review.md`**（英文版）：完整的 AI Code Review 原則與流程
+- **`code-review-zh-tw.md`**（繁體中文版）：code-review.md 的完整中文翻譯
+
+**文件關係：**
+```
+copilot-instructions.md → 如何寫程式碼（編碼指引）
+code-review.md          → 如何審查程式碼（審查指引）
+CLAUDE.md               → 專案架構與完整開發規範
+```
+
+**何時使用哪個文件：**
+- **撰寫程式碼時** → 遵循 `copilot-instructions.md` 的檢查清單
+- **審查程式碼時** → 使用 `code-review.md` 的分層審查框架
+- **理解專案時** → 閱讀 `CLAUDE.md` 的架構與工作流程
+
+---
+
 ## 核心原則
 
 1. **所有註解和文件必須使用繁體中文**
