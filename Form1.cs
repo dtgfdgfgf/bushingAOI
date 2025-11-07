@@ -6668,6 +6668,7 @@ namespace peilin
                                                     {
                                                         // **新增：狀態變更為運行中**
                                                         app.currentState = app.SystemState.Running;
+                                                        app.offlinetest = false;
                                                         switchButton(false);
 
                                                         // **新增：更新UI狀態**
@@ -8569,8 +8570,8 @@ namespace peilin
                                             var d813 = PLC_ModBus.GetValue_32bit(ValueUnit_32bt.D, 813);
 
                                             // 修正：將 OK 數量取整到 50 的倍數（向下取整）
-                                            int q = d807 / 50;
-                                            d807 = q * 50;  // 正確：例如 d807=123 -> q=2 -> d807=100
+                                            int q = d807 / app.pack;
+                                            d807 = q * app.pack;  // 正確：例如 d807=123 -> q=2 -> d807=100
 
                                             var ngCount = d801;
                                             var okCount = d807;
@@ -12424,6 +12425,7 @@ namespace peilin
 
         private async void button37_Click(object sender, EventArgs e)
         {
+            app.offlinetest = true;
             if (!app.offline)
             {
                 PLC_SetD(801, 0);
@@ -12615,7 +12617,7 @@ namespace peilin
                                          app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
 
                     // 由 GitHub Copilot 產生 - 優化：提高基礎延遲，確保每張圖都有足夠處理時間
-                    int delay = 200; // 基礎延遲提高到 200ms，防止 OK 樣品被判定為 NULL
+                    int delay = 400; // 基礎延遲提高到 200ms，防止 OK 樣品被判定為 NULL
                     
                     if (totalQueueCount > 60)
                     {
@@ -12629,12 +12631,12 @@ namespace peilin
                     else if (totalQueueCount > 40)
                     {
                         // 佇列超過 40 張，適度減速
-                        delay = 400;
+                        delay = 500;
                     }
                     else if (totalQueueCount > 20)
                     {
                         // 佇列超過 20 張，微調減速
-                        delay = 250;
+                        delay = 450;
                     }
 
                     await Task.Delay(delay);
@@ -12666,7 +12668,7 @@ namespace peilin
                       timeout < maxTimeout && app.status)
                 {
                     // 由 GitHub Copilot 產生 - 優化：將等待間隔從 300ms 減少到 150ms，加快反應速度
-                    await Task.Delay(150);
+                    await Task.Delay(300);
                     timeout++;
 
                     int currentQueueCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
@@ -17225,9 +17227,9 @@ namespace peilin
                 Log.Information($"  D807 (OK原始) = {okCount}");
                 Log.Information($"  D809 (NULL) = {nullCount}");
 
-                // 修正：將 OK 數量取整到 50 的倍數（向下取整）
-                int q = okCount / 50;
-                int adjustedOkCount = q * 50;
+                // 修正：將 OK 數量取整到 app.pack 的倍數（向下取整）
+                int q = okCount / app.pack;
+                int adjustedOkCount = q * app.pack;
 
                 // 由 GitHub Copilot 產生
                 // 診斷：記錄 OK 數量調整
@@ -18354,7 +18356,7 @@ public class ResultManager
                         totalNG = avgNG;
                     }
                 }
-                if (!app.offline)
+                if (!app.offlinetest)
                 {
                     int ng = Form1.PLC_CheckD(801);
                     int ok = Form1.PLC_CheckD(807);
@@ -19094,6 +19096,7 @@ public class app
     public static int lastD98Accepted = -1;
     public static int ProductiveTimeoutSec = 10;
 
+    public static bool offlinetest = false;
     public static bool testc = false;
     public static bool testd = false;
     public static bool test = true;
