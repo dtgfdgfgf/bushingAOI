@@ -4301,8 +4301,49 @@ namespace peilin
                 bool hasStation1Model = File.Exists(station1_ModelPath);
                 bool hasStation2Model = File.Exists(station2_ModelPath);
 
-                //Console.WriteLine(innerModelName);
-                //Console.WriteLine(hasInnerModel);
+                // 由 GitHub Copilot 產生 - 計算需要開啟的模型數量
+                int totalModelsToLoad = 0;
+                if (hasInnerModel) totalModelsToLoad++;
+                if (hasOuterModel) totalModelsToLoad++;
+                if (app.has_NROI_InnerModel) totalModelsToLoad++;
+                if (app.has_NROI_OuterModel) totalModelsToLoad++;
+                if (haschamferModel) totalModelsToLoad++;
+                if (hasStation1Model) totalModelsToLoad++;
+                if (hasStation2Model) totalModelsToLoad++;
+
+                // 由 GitHub Copilot 產生 - 顯示開始載入提示
+                if (totalModelsToLoad > 0)
+                {
+                    BeginInvoke(new Action(() =>
+                    {
+                        CustomMessageBox.Show(
+                            $"料號 {app.produce_No} 需要開啟 {totalModelsToLoad} 個 AI 模型\n\n請稍候...",
+                            "AI 模型載入中",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information,
+                            new System.Drawing.Font("微軟正黑體", 14F, System.Drawing.FontStyle.Bold)
+                        );
+                    }));
+                }
+                else
+                {
+                    BeginInvoke(new Action(() =>
+                    {
+                        CustomMessageBox.Show(
+                            $"料號 {app.produce_No} 在 ./models 資料夾中找不到任何 AI 模型檔案",
+                            "無 AI 模型",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning,
+                            new System.Drawing.Font("微軟正黑體", 14F, System.Drawing.FontStyle.Bold)
+                        );
+                    }));
+                    return;
+                }
+
+                // 由 GitHub Copilot 產生 - 追蹤成功/失敗數量
+                int successCount = 0;
+                int failCount = 0;
+
                 // 確保已經初始化YOLO檢測器
                 if (_yoloDetection == null)
                 {
@@ -4331,15 +4372,18 @@ namespace peilin
                             ResultManager.totalStations += 2;
 
                             await WarmUpYoloModel(_yoloDetection, innerServerUrl, 2448, 2048); // 依你的模型輸入尺寸
+                            successCount++; // 由 GitHub Copilot 產生
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入內環模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到內環伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4369,15 +4413,18 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入外環模型: {outerModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, outerServerUrl, 2448, 2048); // 依你的模型輸入尺寸
+                            successCount++; // 由 GitHub Copilot 產生
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入外環模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到外環伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4401,16 +4448,19 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入內環非ROI模型: {inner_NROI_ModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, inner_NROI_ServerUrl, 2448, 2048); // 依你的模型輸入尺寸
+                            successCount++; // 由 GitHub Copilot 產生
 
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入內環非ROI模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到內環非ROI伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4435,16 +4485,18 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入外環非ROI模型: {outer_NROI_ModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, outer_NROI_ServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-
+                            successCount++; // 由 GitHub Copilot 產生
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入外環非ROI模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到外環非ROI伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4468,16 +4520,18 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入倒角模型: {chamfer_ModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, chamfer_ServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-
+                            successCount++; // 由 GitHub Copilot 產生
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入倒角模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到倒角伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4503,15 +4557,18 @@ namespace peilin
                             ResultManager.totalStations += 1;
 
                             await WarmUpYoloModel(_yoloDetection, station1_ServerUrl, 2448, 2048);
+                            successCount++; // 由 GitHub Copilot 產生
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入站1模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到站1伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4537,15 +4594,18 @@ namespace peilin
                             ResultManager.totalStations += 1;
 
                             await WarmUpYoloModel(_yoloDetection, station2_ServerUrl, 2448, 2048);
+                            successCount++; // 由 GitHub Copilot 產生
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入站2模型失敗: {loadResult.error}", "err", "");
+                            failCount++; // 由 GitHub Copilot 產生
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到站2伺服器，請檢查設定。", "err", "");
+                        failCount++; // 由 GitHub Copilot 產生
                     }
                 }
                 else
@@ -4553,11 +4613,50 @@ namespace peilin
                     lbAdd($"[setNet] 找不到站2模型文件: {station2_ModelPath}", "war", "");
                 }
 
-                Console.WriteLine($"[setNet] 已經為 {app.produce_No} 完成模型初始化");
-                Console.WriteLine($"目前設置的總站台數： {ResultManager.totalStations}");
                 lbAdd($"目前設置的總站台數： {ResultManager.totalStations}", "inf", "");
 
-                Console.WriteLine("開始執行預熱功能");
+                // 由 GitHub Copilot 產生 - 顯示最終結果視窗
+                string resultMessage;
+                MessageBoxIcon resultIcon;
+
+                if (failCount == 0)
+                {
+                    resultMessage = $"料號 {app.produce_No} AI 模型載入完成\n\n" +
+                                  $"應開啟：{totalModelsToLoad} 個\n" +
+                                  $"已開啟：{successCount} 個\n\n" +
+                                  $"開啟成功";
+                    resultIcon = MessageBoxIcon.Information;
+                }
+                else if (successCount == 0)
+                {
+                    resultMessage = $"料號 {app.produce_No} AI 模型載入失敗\n\n" +
+                                  $"應開啟：{totalModelsToLoad} 個\n" +
+                                  $"已開啟：{successCount} 個\n" +
+                                  $"失敗：{failCount} 個\n\n" +
+                                  $" 開啟失敗\n\n請檢查日誌了解詳細錯誤";
+                    resultIcon = MessageBoxIcon.Error;
+                }
+                else
+                {
+                    resultMessage = $"料號 {app.produce_No} AI 模型部分載入\n\n" +
+                                  $"應開啟：{totalModelsToLoad} 個\n" +
+                                  $"已開啟：{successCount} 個\n" +
+                                  $"失敗：{failCount} 個\n\n" +
+                                  $"部分成功\n\n請檢查日誌了解失敗模型";
+                    resultIcon = MessageBoxIcon.Warning;
+                }
+
+                BeginInvoke(new Action(() =>
+                {
+                    CustomMessageBox.Show(
+                        resultMessage,
+                        "AI 模型載入結果",
+                        MessageBoxButtons.OK,
+                        resultIcon,
+                        new System.Drawing.Font("微軟正黑體", 14F, System.Drawing.FontStyle.Bold)
+                    );
+                }));
+
                 // 在所有模型載入完成後，啟動持續預熱
                 if (hasInnerModel && !string.IsNullOrEmpty(app.produce_innerServerUrl))
                 {
@@ -4601,6 +4700,17 @@ namespace peilin
             catch (Exception e1)
             {
                 lbAdd("AI Model載入失敗", "err", e1.ToString());
+                // 由 GitHub Copilot 產生 - 異常時也顯示結果視窗
+                BeginInvoke(new Action(() =>
+                {
+                    CustomMessageBox.Show(
+                        $"AI 模型載入發生異常\n\n{e1.Message}\n\n請檢查日誌了解詳細錯誤",
+                        "AI 模型載入錯誤",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error,
+                        new System.Drawing.Font("微軟正黑體", 14F, System.Drawing.FontStyle.Bold)
+                    );
+                }));
             }   
             
         }
