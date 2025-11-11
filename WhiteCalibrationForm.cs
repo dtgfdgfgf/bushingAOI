@@ -219,7 +219,7 @@ namespace peilin
             // 說明標籤
             var lblDescription = new Label
             {
-                Text = "📋 請選擇多張照片分析白色像素占比，系統將計算統計數據並提供推薦的 white 參數值",
+                Text = " 請選擇多張照片分析白色像素占比，系統將計算統計數據並提供推薦的 white 參數值",
                 Location = new System.Drawing.Point(10, 10),
                 Size = new System.Drawing.Size(1160, 40),
                 Font = new Font("Microsoft JhengHei", 10),
@@ -250,7 +250,7 @@ namespace peilin
             // 選擇正常樣品照片按鈕
             var btnSelectImages = new Button
             {
-                Text = "📂 選擇正常照片",
+                Text = " 選擇正常照片",
                 Location = new System.Drawing.Point(210, 55),
                 Size = new System.Drawing.Size(130, 30),
                 BackColor = Color.LightBlue
@@ -260,7 +260,7 @@ namespace peilin
             // 選擇誤觸樣品照片按鈕
             btnSelectFalseImagesControl = new Button
             {
-                Text = "📂 選擇誤觸照片",
+                Text = " 選擇誤觸照片",
                 Location = new System.Drawing.Point(350, 55),
                 Size = new System.Drawing.Size(130, 30),
                 BackColor = Color.LightCoral
@@ -302,7 +302,7 @@ namespace peilin
             // 開始分析按鈕
             btnAnalyzeControl = new Button
             {
-                Text = "🔍 開始分析",
+                Text = "開始分析",
                 Location = new System.Drawing.Point(580, 90),
                 Size = new System.Drawing.Size(180, 30),
                 BackColor = Color.LightGreen,
@@ -332,7 +332,7 @@ namespace peilin
             // 統計資訊面板
             grpStatisticsControl = new GroupBox
             {
-                Text = "📊 統計分析結果",
+                Text = "統計分析結果",
                 Location = new System.Drawing.Point(600, 140),
                 Size = new System.Drawing.Size(760, 285) // 由 GitHub Copilot 產生 - 增加高度以容納完整的雙組統計資訊
             };
@@ -368,7 +368,7 @@ namespace peilin
             // 正常樣品預覽區域
             var grpNormalPreview = new GroupBox
             {
-                Text = "📷 正常樣品預覽",
+                Text = "正常樣品預覽",
                 Location = new System.Drawing.Point(10, 595), // 由 GitHub Copilot 產生 - 調整位置配合折線圖高度增加（原510）
                 Size = new System.Drawing.Size(670, 300),
                 ForeColor = Color.Blue
@@ -413,7 +413,7 @@ namespace peilin
             // 正常樣品導航按鈕
             btnPreviousControl = new Button
             {
-                Text = "◀ 上一張",
+                Text = "上一張",
                 Location = new System.Drawing.Point(590, 30),
                 Size = new System.Drawing.Size(70, 30),
                 Enabled = false
@@ -422,7 +422,7 @@ namespace peilin
 
             btnNextControl = new Button
             {
-                Text = "下一張 ▶",
+                Text = "下一張",
                 Location = new System.Drawing.Point(590, 70),
                 Size = new System.Drawing.Size(70, 30),
                 Enabled = false
@@ -432,7 +432,7 @@ namespace peilin
             // 全螢幕預覽按鈕
             var btnFullScreen = new Button
             {
-                Text = "🔍 全螢幕",
+                Text = " 全螢幕",
                 Location = new System.Drawing.Point(590, 110),
                 Size = new System.Drawing.Size(70, 30),
                 BackColor = Color.LightBlue
@@ -464,7 +464,7 @@ namespace peilin
             // 誤觸樣品預覽區域
             var grpFalsePreview = new GroupBox
             {
-                Text = "📷 誤觸樣品預覽",
+                Text = "誤觸樣品預覽",
                 Location = new System.Drawing.Point(690, 595), // 由 GitHub Copilot 產生 - 調整位置配合折線圖高度增加（原510）
                 Size = new System.Drawing.Size(670, 300),
                 ForeColor = Color.Red
@@ -509,7 +509,7 @@ namespace peilin
             // 誤觸樣品導航按鈕
             btnFalsePreviousControl = new Button
             {
-                Text = "◀ 上一張",
+                Text = "上一張",
                 Location = new System.Drawing.Point(590, 30),
                 Size = new System.Drawing.Size(70, 30),
                 Enabled = false
@@ -518,7 +518,7 @@ namespace peilin
 
             btnFalseNextControl = new Button
             {
-                Text = "下一張 ▶",
+                Text = "下一張",
                 Location = new System.Drawing.Point(590, 70),
                 Size = new System.Drawing.Size(70, 30),
                 Enabled = false
@@ -550,7 +550,7 @@ namespace peilin
             // 建議值顯示
             lblRecommendationControl = new Label
             {
-                Text = "💡 推薦的參數值將在分析完成後顯示",
+                Text = " 推薦的參數值將在分析完成後顯示",
                 Location = new System.Drawing.Point(10, 905), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原835）
                 Size = new System.Drawing.Size(700, 50),
                 Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold),
@@ -560,7 +560,7 @@ namespace peilin
             // 套用按鈕
             btnApplyControl = new Button
             {
-                Text = "✅ 套用推薦值",
+                Text = "套用推薦值",
                 Location = new System.Drawing.Point(720, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
                 Size = new System.Drawing.Size(120, 40),
                 BackColor = Color.Orange,
@@ -572,7 +572,7 @@ namespace peilin
             // 取消按鈕
             var btnCancel = new Button
             {
-                Text = "❌ 取消",
+                Text = "取消",
                 Location = new System.Drawing.Point(850, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
                 Size = new System.Drawing.Size(80, 40),
                 Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
@@ -582,7 +582,7 @@ namespace peilin
             // 匯出數據按鈕
             var btnExport = new Button
             {
-                Text = "📊 匯出數據",
+                Text = "匯出數據",
                 Location = new System.Drawing.Point(940, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
                 Size = new System.Drawing.Size(100, 40),
                 BackColor = Color.LightCyan
@@ -592,7 +592,7 @@ namespace peilin
             // 清除結果按鈕
             var btnClearResults = new Button
             {
-                Text = "🗑️ 清除結果",
+                Text = "清除結果",
                 Location = new System.Drawing.Point(1050, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
                 Size = new System.Drawing.Size(100, 40),
                 BackColor = System.Drawing.Color.LightPink
@@ -628,7 +628,7 @@ namespace peilin
                 // 重置UI狀態
                 dgvResultsControl.DataSource = null;
                 lblImageInfoControl.Text = "尚未分析圖片";
-                lblRecommendationControl.Text = "💡 推薦的 white 參數值將在分析完成後顯示";
+                lblRecommendationControl.Text = "推薦的 white 參數值將在分析完成後顯示";
                 lblRecommendationControl.ForeColor = Color.DarkGreen;
                 
                 // 由 GitHub Copilot 產生 - 隱藏警告標籤
@@ -647,7 +647,7 @@ namespace peilin
 
                 // 重置按鈕狀態
                 btnApplyControl.Enabled = false;
-                btnApplyControl.Text = "✅ 套用推薦值";
+                btnApplyControl.Text = "套用推薦值";
                 btnApplyControl.BackColor = System.Drawing.Color.Orange;
                 btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
                 UpdateNavigationButtons();
@@ -882,7 +882,7 @@ namespace peilin
                                 if (whitePixelResults.Count > 0)
                                 {
                                     // 提示使用者需要重新分析
-                                    lblRecommendationControl.Text = $"⚠️ 閾值已變更為 {trackBarThreshold.Value}，請重新分析以更新結果";
+                                    lblRecommendationControl.Text = $" 閾值已變更為 {trackBarThreshold.Value}，請重新分析以更新結果";
                                     lblRecommendationControl.ForeColor = Color.OrangeRed;
                                 }
                             }));
@@ -924,7 +924,7 @@ namespace peilin
             // 推薦值出來後才會再啟用套用；此處只重置
             if (recommendedWhiteValue > 0)
             {
-                btnApplyControl.Text = "✅ 套用推薦值";
+                btnApplyControl.Text = "套用推薦值";
                 btnApplyControl.BackColor = System.Drawing.Color.Orange;
             }
         }
@@ -984,11 +984,11 @@ namespace peilin
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
                     if (btnAnalyzeControl.Enabled)
                     {
-                        btnAnalyzeControl.Text = $"🔍 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                        btnAnalyzeControl.Text = $" 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                     }
                     else if (selectedImagePaths.Count > 0)
                     {
-                        btnAnalyzeControl.Text = $"🔍 開始分析 (需選擇誤觸照片)";
+                        btnAnalyzeControl.Text = $" 開始分析 (需選擇誤觸照片)";
                     }
                 }
             }
@@ -1022,7 +1022,7 @@ namespace peilin
 
             isAnalyzing = true;
             btnAnalyzeControl.Enabled = false;
-            btnAnalyzeControl.Text = "🔄 分析中...";
+            btnAnalyzeControl.Text = "分析中...";
 
             try
             {
@@ -1048,11 +1048,8 @@ namespace peilin
                 // 由 GitHub Copilot 產生 - 先計算推薦參數，再顯示結果（避免顯示時 recommendedTolerance 尚未計算）
                 CalculateRecommendedParameters();
 
-                Console.WriteLine("000");
                 DisplayAnalysisResults();
-                Console.WriteLine("111");
                 UpdateChart();
-                Console.WriteLine("222");
                 MessageBox.Show($"白色像素占比分析完成！\n\n" +
                                $"正常樣品：{whitePixelResults.Count} 張 (推薦值: {recommendedWhiteValue:F1}%)\n" +
                                $"誤觸樣品：{falsePixelResults.Count} 張 (基準值: {recommendedWhiteNullValue:F1}%)\n" +
@@ -1070,7 +1067,7 @@ namespace peilin
             {
                 isAnalyzing = false;
                 btnAnalyzeControl.Enabled = true;
-                btnAnalyzeControl.Text = $"🔍 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                btnAnalyzeControl.Text = $" 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                 progressBarControl.Visible = false;
             }
         }
@@ -1244,7 +1241,7 @@ namespace peilin
                 btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
 
                 // 可選：更新按鈕文字提示已套用
-                btnApplyControl.Text = "✅ 已套用 (可重新套用)";
+                btnApplyControl.Text = "已套用 (可重新套用)";
                 btnApplyControl.BackColor = System.Drawing.Color.LightGreen;
 
                 // 重置提示訊息顏色
@@ -1386,12 +1383,12 @@ namespace peilin
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
 
-                    btnSelectFalseImagesControl.Text = $"📂 誤觸照片 ({selectedFalseImagePaths.Count})";
+                    btnSelectFalseImagesControl.Text = $"誤觸照片 ({selectedFalseImagePaths.Count})";
                     
                     // 由 GitHub Copilot 產生 - 更新誤觸樣品預覽區域提示文字
                     if (lblFalseImageInfoControl != null)
                     {
-                        lblFalseImageInfoControl.Text = $"已選擇 {selectedFalseImagePaths.Count} 張誤觸樣品照片，點擊「🔍 開始分析」進行分析";
+                        lblFalseImageInfoControl.Text = $"已選擇 {selectedFalseImagePaths.Count} 張誤觸樣品照片，點擊「開始分析」進行分析";
                         lblFalseImageInfoControl.ForeColor = Color.Blue;
                     }
                     
@@ -1399,11 +1396,11 @@ namespace peilin
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
                     if (btnAnalyzeControl.Enabled)
                     {
-                        btnAnalyzeControl.Text = $"🔍 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                        btnAnalyzeControl.Text = $"分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                     }
                     else if (selectedFalseImagePaths.Count > 0)
                     {
-                        btnAnalyzeControl.Text = $"🔍 開始分析 (需選擇正常照片)";
+                        btnAnalyzeControl.Text = $"開始分析 (需選擇正常照片)";
                     }
                 }
             }
@@ -1512,7 +1509,7 @@ namespace peilin
                         {
                             progressBarControl.Value += 1;
                             string typeText = sampleType == SampleType.Normal ? "正常" : "誤觸";
-                            btnAnalyzeControl.Text = $"🔄 處理{typeText}樣品 {i + 1}/{imagePaths.Count}";
+                            btnAnalyzeControl.Text = $"處理{typeText}樣品 {i + 1}/{imagePaths.Count}";
                         }));
 
                         var result = ProcessSingleImage(imagePath);
@@ -1735,7 +1732,7 @@ namespace peilin
             System.Diagnostics.Debug.WriteLine($"誤觸樣品中位數：{median_false:F2}%，3σ範圍：{std_false * 3.0:F2}%，IQR：{iqr_false:F2}%");
             System.Diagnostics.Debug.WriteLine($"兩組距離：{distance:F2}%");
             System.Diagnostics.Debug.WriteLine($"檢測閾值：{(normal_range + false_range):F2}%");
-            System.Diagnostics.Debug.WriteLine($"組間交叉檢測：{(enableCrossCheck ? "✅ 啟用（分布接近）" : "❌ 停用（分離良好）")}");
+            System.Diagnostics.Debug.WriteLine($"組間交叉檢測：{(enableCrossCheck ? "啟用（分布接近）" : "❌ 停用（分離良好）")}");
 
             // 檢測正常樣品
             foreach (var sample in validNormal)
@@ -1845,7 +1842,7 @@ namespace peilin
 
             if (warnings.Count > 0)
             {
-                return "⚠️ 發現疑似問題：" + string.Join(" | ", warnings);
+                return "發現疑似問題：" + string.Join(" | ", warnings);
             }
 
             return "";
@@ -1939,7 +1936,7 @@ namespace peilin
                 float overlap_end = Math.Min(normal_upper, null_upper);
                 float overlap_range = overlap_end - overlap_start;
 
-                warningMessage = $"⚠️ 警告：正常與誤觸樣品的判定區間重疊 {overlap_range:F2}%\n\n" +
+                warningMessage = $"警告：正常與誤觸樣品的判定區間重疊 {overlap_range:F2}%\n\n" +
                                $"正常判定區間：[{normal_lower:F2}%, {normal_upper:F2}%]\n" +
                                $"誤觸判定區間：[{null_lower:F2}%, {null_upper:F2}%]\n" +
                                $"重疊區間：[{overlap_start:F2}%, {overlap_end:F2}%]\n\n" +
@@ -1970,7 +1967,7 @@ namespace peilin
                     safety_distance = null_lower - normal_upper;
                 }
 
-                string successMessage = $"✅ 區分度良好：兩組樣品的判定區間未重疊\n\n" +
+                string successMessage = $"區分度良好：兩組樣品的判定區間未重疊\n\n" +
                                       $"正常判定區間：[{normal_lower:F2}%, {normal_upper:F2}%]\n" +
                                       $"誤觸判定區間：[{null_lower:F2}%, {null_upper:F2}%]\n" +
                                       $"安全距離：{safety_distance:F2}%\n\n" +
@@ -2088,14 +2085,14 @@ namespace peilin
             if (!result.IsValid) return "無效";
             
             // 由 GitHub Copilot 產生 - 優先顯示混合檢測的嚴重程度
-            if (result.Severity == OutlierSeverity.CrossSample) return "🔴 疑似誤放";
-            if (result.Severity == OutlierSeverity.GroupOutlier) return "🟠 組內離群";
+            if (result.Severity == OutlierSeverity.CrossSample) return "疑似誤放";
+            if (result.Severity == OutlierSeverity.GroupOutlier) return "組內離群";
             
             // 原有的 σ 檢測標記（輕微異常不額外警告）
-            if (result.IsOutlier2Sigma) return "🔴 2σ異常";
-            if (result.IsOutlier1Sigma) return "🟡 1σ異常";
+            if (result.IsOutlier2Sigma) return " 2σ異常";
+            if (result.IsOutlier1Sigma) return " 1σ異常";
             
-            return "✅ 正常";
+            return " 正常";
         }
 
         // 由 GitHub Copilot 產生
@@ -2218,7 +2215,7 @@ namespace peilin
                     float overlap_end = Math.Min(normal_upper, null_upper);
                     float overlap_range = overlap_end - overlap_start;
                     
-                    safetyInfo = $"\n⚠️ 警告：判定區間重疊 {overlap_range:F2}%！" +
+                    safetyInfo = $"\n警告：判定區間重疊 {overlap_range:F2}%！" +
                                $"\n正常區間：[{normal_lower:F2}%, {normal_upper:F2}%]" +
                                $"\n誤觸區間：[{null_lower:F2}%, {null_upper:F2}%]";
                 }
@@ -2235,13 +2232,13 @@ namespace peilin
                         safety_distance = null_lower - normal_upper;
                     }
                     
-                    safetyInfo = $"\n✅ 安全距離：{safety_distance:F2}%" +
+                    safetyInfo = $"\n安全距離：{safety_distance:F2}%" +
                                $"\n正常區間：[{normal_lower:F2}%, {normal_upper:F2}%]" +
                                $"\n誤觸區間：[{null_lower:F2}%, {null_upper:F2}%]";
                 }
             }
 
-            lblRecommendationControl.Text = $"💡 推薦參數：\n" +
+            lblRecommendationControl.Text = $"推薦參數：\n" +
                 $"white_{targetStation} = {recommendedWhiteValue:F1}%  |  " +
                 $"whiteNULL_{targetStation} = {recommendedWhiteNullValue:F1}%  |  " +
                 $"whiteTolerance_{targetStation} = {recommendedTolerance:F1}%  |  " +
@@ -2250,7 +2247,7 @@ namespace peilin
 
             // 重置套用按鈕為未套用狀態
             btnApplyControl.Enabled = true;
-            btnApplyControl.Text = "✅ 套用推薦值";
+            btnApplyControl.Text = "套用推薦值";
             btnApplyControl.BackColor = System.Drawing.Color.Orange;
         }
 
@@ -2384,24 +2381,24 @@ namespace peilin
 
         private void UpdateImageInfo(WhitePixelResult currentResult)
         {
-            string info = $"📷 圖片 {currentImageIndex + 1}/{whitePixelResults.Count}: {currentResult.ImagePath}\r\n\r\n";
-            info += $"🔍 分析狀態: {(currentResult.IsValid ? "✅ 成功分析" : "❌ 分析失敗")}\r\n\r\n";
+            string info = $" 圖片 {currentImageIndex + 1}/{whitePixelResults.Count}: {currentResult.ImagePath}\r\n\r\n";
+            info += $" 分析狀態: {(currentResult.IsValid ? " 成功分析" : " 分析失敗")}\r\n\r\n";
 
             if (currentResult.IsValid)
             {
-                info += $"📊 白色像素數: {currentResult.WhitePixels:N0}\r\n";
-                info += $"📊 總像素數: {currentResult.TotalPixels:N0}\r\n";
-                info += $"📊 占比: {currentResult.WhitePixelRatio:F2}%\r\n\r\n";
+                info += $" 白色像素數: {currentResult.WhitePixels:N0}\r\n";
+                info += $" 總像素數: {currentResult.TotalPixels:N0}\r\n";
+                info += $" 占比: {currentResult.WhitePixelRatio:F2}%\r\n\r\n";
 
                 // 異常狀態
                 if (currentResult.IsOutlier2Sigma)
-                    info += "🔴 異常狀態: 超過2個標準差 (嚴重異常)\r\n";
+                    info += " 異常狀態: 超過2個標準差 (嚴重異常)\r\n";
                 else if (currentResult.IsOutlier1Sigma)
-                    info += "🟡 異常狀態: 超過1個標準差 (輕微異常)\r\n";
+                    info += " 異常狀態: 超過1個標準差 (輕微異常)\r\n";
                 else
-                    info += "✅ 異常狀態: 正常範圍內\r\n";
+                    info += " 異常狀態: 正常範圍內\r\n";
 
-                info += "\r\n💡 此圖片的白色像素占比：\r\n";
+                info += "\r\n 此圖片的白色像素占比：\r\n";
                 if (currentResult.WhitePixelRatio < 5.0f)
                     info += "• 偏低 - 可能光線不足或物體較暗";
                 else if (currentResult.WhitePixelRatio > 30.0f)
@@ -2411,7 +2408,7 @@ namespace peilin
             }
             else
             {
-                info += $"❌ 錯誤原因: {currentResult.ErrorMessage ?? "未知錯誤"}";
+                info += $" 錯誤原因: {currentResult.ErrorMessage ?? "未知錯誤"}";
             }
 
             lblImageInfoControl.Text = info;
@@ -2512,24 +2509,24 @@ namespace peilin
 
         private void UpdateFalseImageInfo(WhitePixelResult currentResult)
         {
-            string info = $"📷 圖片 {currentFalseImageIndex + 1}/{falsePixelResults.Count}: {currentResult.ImagePath}\r\n\r\n";
-            info += $"🔍 分析狀態: {(currentResult.IsValid ? "✅ 成功分析" : "❌ 分析失敗")}\r\n\r\n";
+            string info = $" 圖片 {currentFalseImageIndex + 1}/{falsePixelResults.Count}: {currentResult.ImagePath}\r\n\r\n";
+            info += $" 分析狀態: {(currentResult.IsValid ? " 成功分析" : " 分析失敗")}\r\n\r\n";
 
             if (currentResult.IsValid)
             {
-                info += $"📊 白色像素數: {currentResult.WhitePixels:N0}\r\n";
-                info += $"📊 總像素數: {currentResult.TotalPixels:N0}\r\n";
-                info += $"📊 占比: {currentResult.WhitePixelRatio:F2}%\r\n\r\n";
+                info += $" 白色像素數: {currentResult.WhitePixels:N0}\r\n";
+                info += $" 總像素數: {currentResult.TotalPixels:N0}\r\n";
+                info += $" 占比: {currentResult.WhitePixelRatio:F2}%\r\n\r\n";
 
                 // 異常狀態
                 if (currentResult.IsOutlier2Sigma)
-                    info += "🔴 異常狀態: 超過2個標準差 (嚴重異常)\r\n";
+                    info += " 異常狀態: 超過2個標準差 (嚴重異常)\r\n";
                 else if (currentResult.IsOutlier1Sigma)
-                    info += "🟡 異常狀態: 超過1個標準差 (輕微異常)\r\n";
+                    info += " 異常狀態: 超過1個標準差 (輕微異常)\r\n";
                 else
-                    info += "✅ 異常狀態: 正常範圍內\r\n";
+                    info += " 異常狀態: 正常範圍內\r\n";
 
-                info += "\r\n💡 此圖片的白色像素占比：\r\n";
+                info += "\r\n 此圖片的白色像素占比：\r\n";
                 if (currentResult.WhitePixelRatio < 5.0f)
                     info += "• 偏低 - 可能光線不足或物體較暗";
                 else if (currentResult.WhitePixelRatio > 30.0f)
@@ -2539,7 +2536,7 @@ namespace peilin
             }
             else
             {
-                info += $"❌ 錯誤原因: {currentResult.ErrorMessage ?? "未知錯誤"}";
+                info += $" 錯誤原因: {currentResult.ErrorMessage ?? "未知錯誤"}";
             }
 
             lblFalseImageInfoControl.Text = info;
