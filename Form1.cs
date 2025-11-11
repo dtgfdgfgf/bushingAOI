@@ -235,6 +235,7 @@ namespace peilin
             站3ToolStripMenuItem.Enabled = false;
             站4ToolStripMenuItem.Enabled = false;
 
+            ConfigureLogTextBox();
 
             // 初始化 PLC 佇列監控
             StartPLCQueueMonitoring();
@@ -1058,7 +1059,58 @@ namespace peilin
                                 //List<Point> detectedGapPositions = gapPositions;
                                 #endregion
 
-                                
+                                #region 倒角
+                                // 由 GitHub Copilot 產生
+                                // 修正: 使用快取檢查是否需要倒角檢測,避免資料庫鎖定
+                                string chamferCacheKey = $"{app.produce_No}_{input.stop}";
+                                bool needChamferDetection = app.chamferDetectionCache.TryGetValue(chamferCacheKey, out bool cached)
+                                    ? cached
+                                    : false;
+
+                                // 如果不需要檢測倒角，則跳過此區塊
+                                if (needChamferDetection)
+                                {
+                                    // 檢查白色像素占比 (NULL)
+                                    Mat blueCheckImage = null;
+                                    bool isblue = false;
+                                    Mat resultimage = null;
+                                    try
+                                    {
+                                        blueCheckImage = input.image.Clone();
+                                        (isblue, resultimage) = CheckChamfer(blueCheckImage, input.stop);
+                                        if (isblue)
+                                        {
+                                            // 顯示檢測結果
+                                            showResultMat(resultimage, input.stop);
+
+                                            // 由 GitHub Copilot 產生
+                                            // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
+                                            // 建立檢測結果物件
+                                            StationResult chamferResult = new StationResult
+                                            {
+                                                Stop = input.stop,
+                                                IsNG = true,
+                                                OkNgScore = 0.0f,
+                                                FinalMap = resultimage.Clone(),  // 使用 Clone 避免 double-free
+                                                DefectName = "chamfer",
+                                                DefectScore = 1.0f,
+                                                OriName = input.name
+                                            };
+
+                                            // 添加結果到管理器
+                                            app.resultManager.AddResult(input.count, chamferResult);
+                                            //updateLabel();
+                                            continue;
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        blueCheckImage?.Dispose();
+                                    }
+                                }
+
+                                #endregion
+
                                 // 由 GitHub Copilot 產生
                                 // 根本解決方案: 傳遞 Clone 副本給 DetectAndExtractROI
                                 Mat roiInputImage = null;
@@ -1112,137 +1164,7 @@ namespace peilin
 
                                     #endregion
 
-                                    #region 倒角
-                                    // 由 GitHub Copilot 產生
-                                    // 修正: 使用快取檢查是否需要倒角檢測,避免資料庫鎖定
-                                    string chamferCacheKey = $"{app.produce_No}_{input.stop}";
-                                    bool needChamferDetection = app.chamferDetectionCache.TryGetValue(chamferCacheKey, out bool cached) 
-                                        ? cached 
-                                        : false;
-
-                                    // 如果不需要檢測倒角，則跳過此區塊
-                                    if (needChamferDetection)
-                                    {
-
-                                        //
-                                        // 由 GitHub Copilot 產生
-                                        // 修正 P1-1: 為 chamferRoi 加 using，確保釋放 (15-20 MB)
-                                        //檢查倒角
-                                        using (Mat chamferRoi = DetectAndExtractROI(roiInputImage, input.stop, input.count, true))
-                                        {
-                                            string chamferServerUrl = app.produce_chamferServerUrl;
-
-                                            if (app.enableProfiling && app.profilingStations.Contains(1))
-                                            {
-                                                PerformanceProfiler.StartMeasure($"{input.count}_yolo_chamferRoi1");
-                                            }
-                                            DetectionResponse chamferDetection = await _yoloDetection.PerformObjectDetection(chamferRoi.Clone(), $"{chamferServerUrl}/detect");
-                                            if (app.enableProfiling && app.profilingStations.Contains(1))
-                                            {
-                                                PerformanceProfiler.StopMeasure($"{input.count}_yolo_chamferRoi1");
-                                            }
-                                            if (chamferDetection.error != null)
-                                            {
-                                                lbAdd($"站點1檢測錯誤: {chamferDetection.error}", "err", "");
-                                                continue;
-                                            }
-
-                                            List<DetectionResult> chamferDefects = new List<DetectionResult>(); // 取檢測結果
-                                            if (chamferDetection.detections != null && chamferDetection.detections.Count > 0)
-                                            {
-                                                foreach (var defect in chamferDetection.detections)
-                                                {
-                                                    bool isOverlapping = false;
-                                                    if (performNonRoiDetection && nonRoiRects.Count > 0)
-                                                    {
-                                                        Rect defectRect = new Rect(defect.box[0], defect.box[1], defect.box[2] - defect.box[0], defect.box[3] - defect.box[1]);
-
-                                                        foreach (var nonRoiRect in nonRoiRects)
-                                                        {
-                                                            double iou = CalculateIoU(defectRect, nonRoiRect.rect);
-                                                            int expand_in = 0;
-                                                            int expand_out = 0;
-                                                            if (nonRoiRect.className == "cyg")
-                                                            {
-                                                                expand_in = GetIntParam(app.param, $"expandNROI_in_{input.stop}", 0);
-                                                                expand_out = GetIntParam(app.param, $"expandNROI_out_{input.stop}", 0);
-                                                            }
-                                                            else if (nonRoiRect.className == "mouth")
-                                                            {
-                                                                expand_in = GetIntParam(app.param, $"expandNROI_in_3", 0);
-                                                                expand_out = GetIntParam(app.param, $"expandNROI_out_4", 0);
-                                                            }
-
-                                                            bool inNonRoi = IsDefectInNonRoiRegion_in(defectRect, nonRoiRect.rect, input.stop, expand_in, expand_out);
-
-                                                            if (iou > GetDoubleParam(app.param, $"IOU_{input.stop}", 0.2) || inNonRoi)
-                                                            {
-                                                                isOverlapping = true;
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    if (!isOverlapping)
-                                                    {
-                                                        chamferDefects.Add(defect);
-                                                    }
-                                                }
-                                            }
-
-                                            if (chamferDefects.Count > 0) //若有檢到
-                                            {
-                                                bool has_chamfer_Defect = false;
-                                                string chamfer_defectName = "OK";
-                                                float chamfer_highestScore = 0;
-                                                float chamfer_threshold = 0.5f; // 默認閾值
-
-                                                var highestScoreDefect = chamferDefects
-                                                    .OrderByDescending(d => d.score)
-                                                    .FirstOrDefault();
-
-                                                if (highestScoreDefect != null)
-                                                {
-                                                    chamfer_highestScore = (float)highestScoreDefect.score;
-
-                                                    // 取得對應的閥值 在 defect_check
-                                                    if (app.param.TryGetValue(highestScoreDefect.class_name + "_threshold", out string thresholdStr))
-                                                    {
-                                                        float.TryParse(thresholdStr, out chamfer_threshold);
-                                                    }
-                                                    has_chamfer_Defect = true;
-                                                    chamfer_defectName = highestScoreDefect.class_name;
-
-                                                    if (chamfer_highestScore > chamfer_threshold) //若超過閥值
-                                                    {
-                                                        // 繪製檢測結果
-                                                        using (Mat chamfer_resultImage = _yoloDetection.DrawDetectionResults(roiInputImage, new DetectionResponse { detections = chamferDefects }, chamfer_threshold))
-                                                        {
-                                                            // 使用現有的 showResultMat 方法顯示結果
-                                                            showResultMat(chamfer_resultImage, 1);
-
-                                                            // 創建StationResult物件
-                                                            StationResult chamferResult = new StationResult
-                                                            {
-                                                                Stop = 1, // 站點1
-                                                                IsNG = true,
-                                                                OkNgScore = chamfer_highestScore > 0 ? (float?)chamfer_highestScore : 0.0f,
-                                                                FinalMap = chamfer_resultImage.Clone(), // ✅ P0-2 修正: Clone 避免 using 釋放後 FinalMap 無效
-                                                                DefectName = chamfer_defectName,
-                                                                DefectScore = has_chamfer_Defect ? (float?)chamfer_highestScore : 0.0f, // 只有NG才有瑕疵分數
-                                                                OriName = Path.GetFileName(input.name)
-                                                            };
-
-                                                            // 添加結果到結果管理器
-                                                            app.resultManager.AddResult(input.count, chamferResult);
-                                                        } // 結束 chamfer_resultImage 的 using 語句
-                                                        continue;
-                                                    }   
-                                                }
-                                            }
-                                        } // 由 GitHub Copilot 產生 - 結束 chamferRoi 的 using 語句
-                                    }
-                    
-                                    #endregion   #region 正常yolo
+                                    
 
                                     #region YOLO
                       
@@ -4179,7 +4101,37 @@ namespace peilin
 
         #endregion
         #region Listbox.Add
-        void lbAdd(string s, string logType, string err_message)    //  資訊欄&&LOG紀錄
+        // 在 Form1_Load 或設計器中設定 TextBox 屬性
+
+        private void ConfigureLogTextBox()
+        {
+            // 設定字體（如果 Designer 中未設定或需要動態調整）
+            //logTextBox.Font = new Font("微軟正黑體", 18F);
+
+            // 設定背景色（使日誌更易讀）
+            logTextBox.BackColor = System.Drawing.Color.White;
+
+            // 設定前景色
+            logTextBox.ForeColor = System.Drawing.Color.Black;
+
+            // 可選：設定為無邊框樣式
+            // logTextBox.BorderStyle = BorderStyle.FixedSingle;
+
+            // 確保啟用自動換行
+            logTextBox.WordWrap = true;
+
+            // 確保為多行模式
+            logTextBox.Multiline = true;
+
+            // 確保為唯讀
+            logTextBox.ReadOnly = true;
+
+            // 確保有垂直捲軸
+            logTextBox.ScrollBars = ScrollBars.Vertical;
+        }
+
+        // 修改 lbAdd 函式
+        void lbAdd(string s, string logType, string err_message)
         {
             if (logType == "inf")
             {
@@ -4187,8 +4139,16 @@ namespace peilin
             }
             else if (logType == "err")
             {
-                BeginInvoke(new Action(() => listBox1.Items.Add(DateTime.Now.ToString() + "---" + s)));
-                BeginInvoke(new Action(() => listBox1.TopIndex = listBox1.Items.Count - 1));
+                string logEntry = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " --- " + s;
+
+                BeginInvoke(new Action(() =>
+                {
+                    logTextBox.AppendText(logEntry + Environment.NewLine);
+                    // 自動捲動到最下方
+                    logTextBox.SelectionStart = logTextBox.Text.Length;
+                    logTextBox.ScrollToCaret();
+                }));
+
                 Log.Error(s);
                 Log.Error(err_message);
             }
@@ -12612,32 +12572,50 @@ namespace peilin
                     processedImageCount++;
                     successCount++;
 
-                    // 由 GitHub Copilot 產生 - 優化：動態調整延遲，確保系統穩定處理（防止 OK 進 NULL）
+                    // 由 GitHub Copilot 產生 - 智能流控系統：監控佇列深度 + 處理時間，防止超時 NULL
                     int totalQueueCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
                                          app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
 
-                    // 由 GitHub Copilot 產生 - 優化：提高基礎延遲，確保每張圖都有足夠處理時間
-                    int delay = 400; // 基礎延遲提高到 200ms，防止 OK 樣品被判定為 NULL
-                    
-                    if (totalQueueCount > 60)
+                    // 由 GitHub Copilot 產生 - 計算平均處理時間（估算）
+                    // 理論上：每站需處理時間 = AI推理(50-200ms) + ROI提取(20-50ms) + 其他(50ms) ≈ 120-300ms
+                    // 安全起見，我們假設每站平均需要 250ms 處理時間
+                    int estimatedProcessingTimePerStation = 250; // 每站估計處理時間(ms)
+
+                    // 由 GitHub Copilot 產生 - 根據佇列深度估算當前處理延遲
+                    // 佇列深度 × 每張處理時間 = 預估等待時間
+                    double estimatedDelay = totalQueueCount * estimatedProcessingTimePerStation / 4.0; // 除以4因為有4個站點並行處理
+
+                    // 由 GitHub Copilot 產生 - 智能延遲計算：確保 left > 200ms（安全餘量）
+                    // 假設 fourToOK_time_ms ≈ 3000ms, delay4 ≈ 50ms
+                    // 需確保 timeDifference < (fourToOK_time_ms - delay4 - 200) = 2750ms
+                    int baseDelay = 150; // 基礎延遲降低到 250ms（離線檢測可以快一點）
+                    int delay = baseDelay;
+
+                    if (estimatedDelay > 1500) // 預估處理延遲 > 1.5秒（危險區）
                     {
-                        // 佇列超過 60 張，大幅減速
-                        delay = 600;
-                        if (processedImageCount % 20 == 0)
+                        // 佇列堆積嚴重，大幅減速
+                        delay = Math.Max(baseDelay, (int)(estimatedDelay / 3)); // 至少等待處理延遲的 1/3
+                        if (processedImageCount % 10 == 0)
                         {
-                            lbAdd($"佇列積壓嚴重 {totalQueueCount} 張，減速處理中...", "war", "");
+                            lbAdd($"⚠️ 處理延遲過高 {estimatedDelay:F0}ms (佇列:{totalQueueCount})，減速至 {delay}ms", "war", "");
                         }
+                    }
+                    else if (totalQueueCount > 60)
+                    {
+                        // 佇列超過 60 張，適度減速
+                        delay = 500;
                     }
                     else if (totalQueueCount > 40)
                     {
-                        // 佇列超過 40 張，適度減速
-                        delay = 500;
+                        // 佇列超過 40 張，微調減速
+                        delay = 400;
                     }
                     else if (totalQueueCount > 20)
                     {
-                        // 佇列超過 20 張，微調減速
-                        delay = 450;
+                        // 佇列超過 20 張，輕微減速
+                        delay = 300;
                     }
+                    // 否則使用 baseDelay (250ms)
 
                     await Task.Delay(delay);
 
@@ -12713,14 +12691,15 @@ namespace peilin
 
                 // 由 GitHub Copilot 產生 - 完成測試，顯示詳細統計
                 totalTimer.Stop();
+
                 string resultMessage = $"離線測試完成\n" +
+                                      $"━━━━━━━━━━━━━━━━━━\n" +
                                       $"總圖片數: {sortedFiles.Length}\n" +
                                       $"成功送入: {successCount} 張\n" +
                                       $"讀取失敗: {failedCount} 張\n" +
                                       $"站號錯誤: {skippedCount} 張\n" +
                                       $"耗時: {totalTimer.ElapsedMilliseconds / 1000.0:F1} 秒";
-
-                lbAdd($"離線測試完成 - 總數:{sortedFiles.Length}, 成功:{successCount}, 失敗:{failedCount}, 跳過:{skippedCount}, 耗時:{totalTimer.ElapsedMilliseconds / 1000.0:F1}秒",
+                                      lbAdd($"離線測試完成 - 總數:{sortedFiles.Length}, 成功:{successCount}, 失敗:{failedCount}, 跳過:{skippedCount}, 耗時:{totalTimer.ElapsedMilliseconds / 1000.0:F1}秒",
                       "inf", "");
 
                 MessageBox.Show(resultMessage, "測試完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -14228,59 +14207,121 @@ namespace peilin
             }
         }
 
-        private bool CheckChamfer(Mat image, int stop) //倒角AOI
+        // 由 GitHub Copilot 產生
+
+        /// <summary>
+        /// 檢測倒角區域的藍色像素（五彩鋅電鍍檢測）
+        /// </summary>
+        /// <param name="image">輸入圖像</param>
+        /// <param name="stop">站點編號</param>
+        /// <returns>是否檢測到藍色瑕疵（true=NG，false=OK）以及結果圖像</returns>
+        private (bool hasBlueDefect, Mat resultImage) CheckChamfer(Mat image, int stop)
         {
-            // 轉換為灰階
-            Mat gray = new Mat();
-            Cv2.CvtColor(image, gray, ColorConversionCodes.BGR2GRAY);
-
-            // 二值化處理
-            Mat binary = new Mat();
-            Cv2.Threshold(gray, binary, 127, 255, ThresholdTypes.Binary);
-
-            // 獲取內圓中心和半徑參數
-            int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
-            int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
-            int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
-
-            // 創建掩碼，將外部區域填充為黑色
-            Mat mask = new Mat(binary.Size(), MatType.CV_8UC1, Scalar.Black);
-            Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY), knownInnerRadius, Scalar.White, -1);
-
-            // 應用掩碼，僅保留內部圓區域
-            Mat roi = new Mat();
-            Cv2.BitwiseAnd(binary, binary, roi, mask);
-
-            // 計算內部區域的白色像素數量
-            int whitePixelCount = Cv2.CountNonZero(roi);
-
-            // 計算內部區域的總像素數
-            int totalPixels = (int)(Math.PI * knownInnerRadius * knownInnerRadius);
-
-            // 計算白色像素占比
-            double ratio = (double)whitePixelCount / totalPixels;
-
-            double standardRatio;
-            if (double.TryParse(app.param[$"chamfer_{stop}"], out standardRatio))
+            try
             {
-                // 設定允許的誤差範圍 (±2%)
-                double lowerBound = standardRatio - 2.0;
-                double upperBound = standardRatio + 2.0;
+                // 1. 檢查必要參數是否存在
+                if (!app.param.ContainsKey($"known_inner_center_x_{stop}") ||
+                    !app.param.ContainsKey($"known_inner_center_y_{stop}") ||
+                    !app.param.ContainsKey($"known_inner_radius_{stop}") ||
+                    !app.param.ContainsKey($"known_chamfer_center_x_{stop}") ||
+                    !app.param.ContainsKey($"known_chamfer_center_y_{stop}") ||
+                    !app.param.ContainsKey($"known_chamfer_radius_{stop}"))
+                {
+                    Log.Warning($"站點 {stop} 缺少必要的圓形參數設定");
+                    return (false, image.Clone());
+                }
 
-                // 判斷是否在允許範圍內
-                bool isValid = (ratio >= lowerBound && ratio <= upperBound);
+                // 2. 讀取圓形參數
+                int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
+                int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
+                int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
 
-                // 記錄日誌
-                //lbAdd($"站點 {stop} 白色像素占比: {ratio:F2}%, 標準值: {standardRatio}%, 允許範圍: [{lowerBound:F2}%, {upperBound:F2}%], 有效性: {(isValid ? "有效" : "無效")}", "inf", "PixelRatioCheck");
-                Console.WriteLine($"站點 {stop} 白色像素占比: {ratio:F2}%, 標準值: {standardRatio}%, 允許範圍: [{lowerBound:F2}%, {upperBound:F2}%], 有效性: {(isValid ? "有效" : "無效")}", "inf", "PixelRatioCheck");
+                int knownChamferCenterX = int.Parse(app.param[$"known_chamfer_center_x_{stop}"]);
+                int knownChamferCenterY = int.Parse(app.param[$"known_chamfer_center_y_{stop}"]);
+                int knownChamferRadius = int.Parse(app.param[$"known_chamfer_radius_{stop}"]);
 
-                return isValid;
+                // 3. 讀取藍色像素閾值（可從參數設定，預設 5000）
+                int bluePixelThreshold = GetIntParam(app.param, $"chamferBlueThreshold_{stop}", 5000);
+
+                using (Mat processImage = image.Clone())
+                using (Mat blueMask = new Mat())
+                {
+                    // 4. 創建藍色遮罩 (BGR 順序: B≥150, G≤70, R≤70)
+                    Scalar lowerBlue = new Scalar(150, 0, 0);
+                    Scalar upperBlue = new Scalar(255, 70, 70);
+                    Cv2.InRange(processImage, lowerBlue, upperBlue, blueMask);
+
+                    // 5. 創建環形區域遮罩（倒角圓以外、內圓以內都是黑色）
+                    using (Mat mask = new Mat(blueMask.Size(), MatType.CV_8UC1, Scalar.Black))
+                    {
+                        // 繪製倒角圓（外圓）區域為白色
+                        Cv2.Circle(mask, new Point(knownChamferCenterX, knownChamferCenterY),
+                                  knownChamferRadius, Scalar.White, -1);
+
+                        // 繪製原始內圓區域為白色（保留中間環形區域）
+                        Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY),
+                                  knownInnerRadius, Scalar.White, -1);
+
+                        // 繪製縮小後的內圓區域為黑色（將最內部區域填黑）
+                        Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY),
+                                 knownInnerRadius, Scalar.Black, -1);
+
+                        // 6. 應用環形遮罩到藍色遮罩
+                        using (Mat roi = new Mat())
+                        {
+                            Cv2.BitwiseAnd(blueMask, blueMask, roi, mask);
+
+                            // 7. 計算藍色像素數量
+                            int bluePixelCount = Cv2.CountNonZero(roi);
+
+                            // 8. 判斷是否為 NG (藍色像素超過閾值)
+                            bool hasBlueDefect = (bluePixelCount > bluePixelThreshold);
+
+                            // 9. 根據檢測結果返回對應圖像
+                            if (hasBlueDefect)
+                            {
+                                // NG：找出藍色區域輪廓並繪製
+                                Point[][] contours;
+                                HierarchyIndex[] hierarchy;
+                                Cv2.FindContours(roi, out contours, out hierarchy,
+                                                RetrievalModes.External,
+                                                ContourApproximationModes.ApproxSimple);
+
+                                // 創建結果圖像（使用原始圖像）
+                                Mat resultImage = image.Clone();
+
+                                if (contours != null && contours.Length > 0)
+                                {
+                                    // 用黃色繪製所有藍色區域輪廓（線條粗細為 2）
+                                    Cv2.DrawContours(resultImage, contours, -1, new Scalar(0, 255, 255), 2);
+
+                                    // 可選：用半透明藍色填充藍色區域
+                                    using (Mat overlay = resultImage.Clone())
+                                    {
+                                        Cv2.DrawContours(overlay, contours, -1, new Scalar(255, 100, 0), -1);
+                                        Cv2.AddWeighted(overlay, 0.3, resultImage, 0.7, 0, resultImage);
+                                    }
+                                }
+
+                                // 記錄檢測結果
+                                Log.Debug($"站點 {stop} 倒角檢測: NG (藍色像素數={bluePixelCount}, 閾值={bluePixelThreshold}, 輪廓數={contours?.Length ?? 0})");
+
+                                return (true, resultImage);
+                            }
+                            else
+                            {
+                                // OK：返回原始圖像
+                                Log.Debug($"站點 {stop} 倒角檢測: OK (藍色像素數={bluePixelCount}, 閾值={bluePixelThreshold})");
+                                return (false, image.Clone());
+                            }
+                        }
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // 若參數不存在，默認為有效
-                lbAdd($"站點 {stop} 的白色像素占比參數未設定，默認視為有效圖像", "war", "PixelRatioParamMissing");
-                return true;
+                Log.Error($"CheckChamfer 錯誤 (站點 {stop}): {ex.Message}");
+                return (false, image.Clone());
             }
         }
         public double CalculateIoU(Rect rect1, Rect rect2)
@@ -14815,10 +14856,13 @@ namespace peilin
         /// </summary>
         #endregion
 
+        // 由 GitHub Copilot 產生
+        // 由 GitHub Copilot 產生
+        // 由 GitHub Copilot 產生
         private void testchamfer_Click(object sender, EventArgs e)
         {
-            // 此函數是測試倒角不均使用，採取白色像素計算，建議只能用在第四站
-            // 觀察效果尚可，但須先找到常態參數
+            // 此函數用於測試藍色區域檢測，建議用於第一站
+            // 檢測 RGB 值為 (R<70, G<70, B≥150) 的藍色像素
 
             // 創建資料夾選擇對話框
             using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
@@ -14833,7 +14877,7 @@ namespace peilin
                     string folderPath = folderDialog.SelectedPath;
 
                     // 選擇要檢查的站點
-                    int stop = 3; // 預設值
+                    int stop = 1; // 預設值
                     using (var stopSelectForm = new Form())
                     {
                         stopSelectForm.Text = "選擇站點";
@@ -14853,7 +14897,7 @@ namespace peilin
                         comboBox.Size = new System.Drawing.Size(100, 20);
                         comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
                         comboBox.Items.AddRange(new object[] { "1", "2", "3", "4" });
-                        comboBox.SelectedIndex = 2; // 預設選擇站點3
+                        comboBox.SelectedIndex = 0; // 預設選擇站點1
 
                         Button okButton = new Button();
                         okButton.Text = "確定";
@@ -14868,7 +14912,7 @@ namespace peilin
 
                         if (stopSelectForm.ShowDialog() == DialogResult.OK)
                         {
-                            stop = comboBox.SelectedIndex + 1;
+                            stop = comboBox.SelectedIndex+1;
                         }
                         else
                         {
@@ -14899,12 +14943,15 @@ namespace peilin
                             return;
                         }
 
-                        // 檢查必要參數是否存在
+                        // 檢查必要參數是否存在（包含倒角圓參數）
                         if (!app.param.ContainsKey($"known_inner_center_x_{stop}") ||
                             !app.param.ContainsKey($"known_inner_center_y_{stop}") ||
-                            !app.param.ContainsKey($"known_inner_radius_{stop}"))
+                            !app.param.ContainsKey($"known_inner_radius_{stop}") ||
+                            !app.param.ContainsKey($"known_chamfer_center_x_{stop}") ||
+                            !app.param.ContainsKey($"known_chamfer_center_y_{stop}") ||
+                            !app.param.ContainsKey($"known_chamfer_radius_{stop}"))
                         {
-                            MessageBox.Show($"站點 {stop} 缺少必要的內圓參數設定，請先設定參數！");
+                            MessageBox.Show($"站點 {stop} 缺少必要的圓形參數設定，請先設定參數！");
                             return;
                         }
 
@@ -14929,13 +14976,23 @@ namespace peilin
                             // 顯示進度表單但不阻塞主線程
                             progressForm.Show();
 
+                            // === 讀取完整的圓形參數 ===
+
                             // 獲取內圓參數
                             int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
                             int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
                             int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
 
-                            // 縮小40像素的內圓半徑
-                            int innerSmallRadius = Math.Max(knownInnerRadius - 40, 10); // 確保半徑不會小於10像素
+                            // 獲取倒角圓（外圓）參數
+                            int knownChamferCenterX = int.Parse(app.param[$"known_chamfer_center_x_{stop}"]);
+                            int knownChamferCenterY = int.Parse(app.param[$"known_chamfer_center_y_{stop}"]);
+                            int knownChamferRadius = int.Parse(app.param[$"known_chamfer_radius_{stop}"]);
+
+                            // 縮小內圓半徑 40 像素（檢測環形內側邊界）
+                            int innerSmallRadius = Math.Max(knownInnerRadius - 40, 10);
+
+                            // 固定藍色像素閾值 (可根據需求調整)
+                            int bluePixelThreshold = 5000; // 預設 5000 像素
 
                             // 處理每張圖片
                             foreach (string imagePath in imageFiles)
@@ -14948,66 +15005,97 @@ namespace peilin
                                     continue;
                                 }
 
-                                // 複製原始圖像以進行分析，保持原始圖像不變
+                                // 複製原始圖像以進行分析
                                 Mat processImage = originalImage.Clone();
 
-                                // 轉換為灰階
-                                Mat gray = new Mat();
-                                Cv2.CvtColor(processImage, gray, ColorConversionCodes.BGR2GRAY);
+                                // === 藍色像素檢測邏輯 ===
 
-                                // 二值化處理
-                                Mat binary = new Mat();
-                                Cv2.Threshold(gray, binary, 127, 255, ThresholdTypes.Binary);
+                                // 1. 創建藍色遮罩 (使用 InRange 方法)
+                                Mat blueMask = new Mat();
 
-                                // 創建掩碼，將外部區域填充為黑色
-                                Mat mask = new Mat(binary.Size(), MatType.CV_8UC1, Scalar.Black);
+                                // 定義藍色範圍 (BGR 順序: B≥150, G≥70, R≥70)
+                                Scalar lowerBlue = new Scalar(150, 0, 0);
+                                Scalar upperBlue = new Scalar(255, 70, 70);
 
-                                // 繪製內圓區域（原始內圓）
-                                Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY), knownInnerRadius, Scalar.White, -1);
+                                Cv2.InRange(processImage, lowerBlue, upperBlue, blueMask);
 
-                                // 繪製縮小後的內圓區域為黑色（將最內部區域填黑）
-                                Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY), innerSmallRadius, Scalar.Black, -1);
+                                // 2. 創建環形區域遮罩（倒角圓以外、內圓以內都是黑色）
+                                Mat mask = new Mat(blueMask.Size(), MatType.CV_8UC1, Scalar.Black);
 
-                                // 應用掩碼，僅保留環形區域
+                                // 2.1 繪製倒角圓（外圓）區域為白色
+                                Cv2.Circle(mask, new Point(knownChamferCenterX, knownChamferCenterY),
+                                          knownChamferRadius, Scalar.White, -1);
+
+                                // 2.2 繪製原始內圓區域為白色（保留中間環形區域）
+                                Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY),
+                                          knownInnerRadius, Scalar.White, -1);
+
+                                // 2.3 繪製縮小後的內圓區域為黑色（將最內部區域填黑）
+                                Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY),
+                                          innerSmallRadius, Scalar.Black, -1);
+
+                                // 3. 應用環形遮罩到藍色遮罩
                                 Mat roi = new Mat();
-                                Cv2.BitwiseAnd(binary, binary, roi, mask);
+                                Cv2.BitwiseAnd(blueMask, blueMask, roi, mask);
 
-                                // 計算環形區域的白色像素數量
-                                int whitePixelCount = Cv2.CountNonZero(roi);
+                                // 4. 計算藍色像素數量
+                                int bluePixelCount = Cv2.CountNonZero(roi);
 
-                                // 計算環形區域的總像素數
-                                int totalPixels = (int)(Math.PI * (Math.Pow(knownInnerRadius, 2) - Math.Pow(innerSmallRadius, 2)));
+                                // 5. 計算環形區域的總像素數（倒角圓到內圓之間的環形區域）
+                                int totalPixels = (int)(Math.PI * (Math.Pow(knownChamferRadius, 2) - Math.Pow(innerSmallRadius, 2)));
 
-                                // 計算白色像素占比
-                                double ratio = (double)whitePixelCount / totalPixels * 100; // 轉為百分比
+                                // 6. 判斷是否為 NG (藍色像素超過閾值)
+                                bool isNG = (bluePixelCount > bluePixelThreshold);
 
-                                // 獲取標準比例（如果有）
-                                double standardRatio = 0;
-                                if (app.param.ContainsKey($"chamfer_whiteLower_{stop}") && double.TryParse(app.param[$"chamfer_whiteLower_{stop}"], out standardRatio))
-                                {
-                                    // 有設定標準比例
-                                }
+                                // === 新增：使用 FindContours 找出藍色區域輪廓 ===
+                                Point[][] contours;
+                                HierarchyIndex[] hierarchy;
+                                Cv2.FindContours(roi, out contours, out hierarchy,
+                                                RetrievalModes.External,
+                                                ContourApproximationModes.ApproxSimple);
 
-                                // 保存處理後的圖像用於檢查
+                                // === 保存處理後的圖像用於檢查 ===
                                 string outputDir = Path.Combine(folderPath, "processed");
                                 Directory.CreateDirectory(outputDir);
 
-                                // 創建一個結果圖像（使用原始圖像）
+                                // 創建結果圖像（使用原始圖像）
                                 Mat resultImage = originalImage.Clone();
 
-                                // 在原始圖像上繪製檢測區域
-                                Cv2.Circle(resultImage, new Point(knownInnerCenterX, knownInnerCenterY), knownInnerRadius, new Scalar(0, 255, 0), 2);
-                                Cv2.Circle(resultImage, new Point(knownInnerCenterX, knownInnerCenterY), innerSmallRadius, new Scalar(0, 0, 255), 2);
+                                // === 在原始圖像上繪製完整的檢測區域 ===
+
+                                // 繪製倒角圓（外圓邊界）- 綠色
+                                Cv2.Circle(resultImage, new Point(knownChamferCenterX, knownChamferCenterY),
+                                          knownChamferRadius, new Scalar(0, 255, 0), 2);
+
+                                // 繪製內圓外邊界 - 黃色
+                                Cv2.Circle(resultImage, new Point(knownInnerCenterX, knownInnerCenterY),
+                                          knownInnerRadius, new Scalar(0, 255, 255), 2);
+
+                                // 繪製內圓內邊界（縮小後）- 紅色
+                                Cv2.Circle(resultImage, new Point(knownInnerCenterX, knownInnerCenterY),
+                                          innerSmallRadius, new Scalar(0, 0, 255), 2);
+
+                                // === 新增：繪製藍色區域的輪廓 ===
+                                if (contours != null && contours.Length > 0)
+                                {
+                                    // 用藍色繪製所有藍色區域輪廓（線條粗細為 2）
+                                    Cv2.DrawContours(resultImage, contours, -1, new Scalar(0, 255, 255), 2);
+
+                                    // 用半透明藍色填充藍色區域（可選）
+                                    Mat overlay = resultImage.Clone();
+                                    Cv2.DrawContours(overlay, contours, -1, new Scalar(255, 100, 0), -1);
+                                    Cv2.AddWeighted(overlay, 0.3, resultImage, 0.7, 0, resultImage);
+                                    overlay.Dispose();
+                                }
 
                                 // 在左上角添加檢測結果信息
-                                // 增加黑色底框以提高文字可讀性
-                                int infoBoxHeight = 130; // 根據顯示的行數調整
-                                int infoBoxWidth = 400; // 根據文字長度調整
+                                int infoBoxHeight = 180;
+                                int infoBoxWidth = 500;
 
                                 // 添加半透明背景
-                                Mat overlay = resultImage.Clone();
+                                Mat infoOverlay = resultImage.Clone();
                                 Cv2.Rectangle(
-                                    overlay,
+                                    infoOverlay,
                                     new Rect(10, 10, infoBoxWidth, infoBoxHeight),
                                     new Scalar(0, 0, 0),
                                     -1
@@ -15015,73 +15103,37 @@ namespace peilin
 
                                 // 應用半透明效果
                                 double alpha = 0.7;
-                                Cv2.AddWeighted(overlay, alpha, resultImage, 1 - alpha, 0, resultImage);
+                                Cv2.AddWeighted(infoOverlay, alpha, resultImage, 1 - alpha, 0, resultImage);
 
-                                // 1. 檔名
-                                string fileName = Path.GetFileName(imagePath);
-                                Cv2.PutText(
-                                    resultImage,
-                                    $"文件: {fileName}",
-                                    new Point(20, 30),
-                                    HersheyFonts.HersheyDuplex,
-                                    0.7,
-                                    new Scalar(255, 255, 255),
-                                    1,
-                                    LineTypes.AntiAlias
-                                );
+                                // 顯示檢測資訊
+                                Cv2.PutText(resultImage, $"file: {Path.GetFileName(imagePath)}",
+                                           new Point(20, 30), HersheyFonts.HersheyDuplex, 0.6,
+                                           new Scalar(255, 255, 255), 1, LineTypes.AntiAlias);
 
-                                // 2. 白色像素占比
-                                Cv2.PutText(
-                                    resultImage,
-                                    $"白色像素占比: {ratio:F2}%",
-                                    new Point(20, 60),
-                                    HersheyFonts.HersheyDuplex,
-                                    0.7,
-                                    new Scalar(255, 255, 255),
-                                    1,
-                                    LineTypes.AntiAlias
-                                );
+                                Cv2.PutText(resultImage, $"chamfer: center({knownChamferCenterX}, {knownChamferCenterY}), radius={knownChamferRadius}",
+                                           new Point(20, 60), HersheyFonts.HersheyDuplex, 0.5,
+                                           new Scalar(0, 255, 0), 1, LineTypes.AntiAlias);
 
-                                // 3. 標準比例及差異（如果有）
-                                if (standardRatio > 0)
-                                {
-                                    // 設定顏色基於比例差異
-                                    Scalar textColor;
-                                    double diff = Math.Abs(ratio - standardRatio);
-                                    if (diff <= 2.0)
-                                    {
-                                        textColor = new Scalar(0, 255, 0); // 綠色 - 在允許範圍內
-                                    }
-                                    else
-                                    {
-                                        textColor = new Scalar(0, 0, 255); // 紅色 - 超出允許範圍
-                                    }
+                                Cv2.PutText(resultImage, $"inner: center({knownInnerCenterX}, {knownInnerCenterY}), radius={knownInnerRadius}",
+                                           new Point(20, 85), HersheyFonts.HersheyDuplex, 0.5,
+                                           new Scalar(0, 255, 255), 1, LineTypes.AntiAlias);
 
-                                    Cv2.PutText(
-                                        resultImage,
-                                        $"標準比例: {standardRatio:F2}% (差異: {diff:F2}%)",
-                                        new Point(20, 90),
-                                        HersheyFonts.HersheyDuplex,
-                                        0.7,
-                                        textColor,
-                                        1,
-                                        LineTypes.AntiAlias
-                                    );
-                                }
+                                Cv2.PutText(resultImage, $"bluePixelCount: {bluePixelCount} px",
+                                           new Point(20, 115), HersheyFonts.HersheyDuplex, 0.7,
+                                           new Scalar(255, 255, 255), 1, LineTypes.AntiAlias);
 
-                                // 4. 生成時間
-                                Cv2.PutText(
-                                    resultImage,
-                                    $"生成時間: {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}",
-                                    new Point(20, 120),
-                                    HersheyFonts.HersheyDuplex,
-                                    0.7,
-                                    new Scalar(255, 255, 255),
-                                    1,
-                                    LineTypes.AntiAlias
-                                );
+                                Cv2.PutText(resultImage, $"contours: {contours.Length} ",
+                                           new Point(20, 145), HersheyFonts.HersheyDuplex, 0.7,
+                                           new Scalar(255, 255, 255), 1, LineTypes.AntiAlias);
 
-                                // 保存處理後的圖像（原始圖像+檢測結果）
+                                // 判定結果
+                                Scalar statusColor = isNG ? new Scalar(0, 0, 255) : new Scalar(0, 255, 0);
+                                string statusText = isNG ? "NG" : "OK";
+                                Cv2.PutText(resultImage, $"result: {statusText}",
+                                           new Point(20, 175), HersheyFonts.HersheyDuplex, 0.8,
+                                           statusColor, 2, LineTypes.AntiAlias);
+
+                                // 保存處理後的圖像（原始圖像+檢測結果+輪廓）
                                 string outputPath = Path.Combine(outputDir, Path.GetFileName(imagePath));
                                 Cv2.ImWrite(outputPath, resultImage);
 
@@ -15089,9 +15141,9 @@ namespace peilin
                                 statistics.Add(new ChamferStatistic
                                 {
                                     FileName = Path.GetFileName(imagePath),
-                                    WhitePixelCount = whitePixelCount,
+                                    WhitePixelCount = bluePixelCount,
                                     TotalPixels = totalPixels,
-                                    Ratio = ratio
+                                    Ratio = 0
                                 });
 
                                 // 更新進度條
@@ -15101,12 +15153,11 @@ namespace peilin
                                 // 釋放資源
                                 originalImage.Dispose();
                                 processImage.Dispose();
-                                gray.Dispose();
-                                binary.Dispose();
+                                blueMask.Dispose();
                                 mask.Dispose();
                                 roi.Dispose();
                                 resultImage.Dispose();
-                                if (overlay != null) overlay.Dispose();
+                                infoOverlay.Dispose();
                             }
 
                             progressForm.Close();
@@ -15116,78 +15167,79 @@ namespace peilin
                         if (statistics.Count > 0)
                         {
                             // 計算統計值
-                            List<double> ratioValues = statistics.Select(s => s.Ratio).ToList();
-                            ratioValues.Sort(); // 排序以計算中位數
+                            List<double> pixelCountValues = statistics.Select(s => (double)s.WhitePixelCount).ToList();
+                            pixelCountValues.Sort();
 
-                            double minRatio = ratioValues.Min();
-                            double maxRatio = ratioValues.Max();
-                            double avgRatio = ratioValues.Average();
-                            double stdDev = Math.Sqrt(ratioValues.Average(val => Math.Pow(val - avgRatio, 2)));
+                            double minPixels = pixelCountValues.Min();
+                            double maxPixels = pixelCountValues.Max();
+                            double avgPixels = pixelCountValues.Average();
+                            double stdDev = Math.Sqrt(pixelCountValues.Average(val => Math.Pow(val - avgPixels, 2)));
 
-                            // 計算中位數
-                            double medianRatio;
-                            int middleIndex = ratioValues.Count / 2;
-                            if (ratioValues.Count % 2 == 0)
+                            double medianPixels;
+                            int middleIndex = pixelCountValues.Count / 2;
+                            if (pixelCountValues.Count % 2 == 0)
                             {
-                                medianRatio = (ratioValues[middleIndex - 1] + ratioValues[middleIndex]) / 2;
+                                medianPixels = (pixelCountValues[middleIndex - 1] + pixelCountValues[middleIndex]) / 2;
                             }
                             else
                             {
-                                medianRatio = ratioValues[middleIndex];
+                                medianPixels = pixelCountValues[middleIndex];
                             }
 
-                            // 創建直方圖
-                            CreateHistogram(ratioValues, folderPath, stop);
+                            CreateHistogram(pixelCountValues, folderPath, stop);
 
-                            // 建立CSV儲存對話框
                             using (SaveFileDialog saveDialog = new SaveFileDialog())
                             {
                                 saveDialog.Filter = "CSV檔案|*.csv";
                                 saveDialog.Title = "儲存統計結果";
-                                saveDialog.FileName = $"Chamfer_Statistics_Station{stop}_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.csv";
+                                saveDialog.FileName = $"BluePixel_Statistics_Station{stop}_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.csv";
 
                                 if (saveDialog.ShowDialog() == DialogResult.OK)
                                 {
                                     using (StreamWriter writer = new StreamWriter(saveDialog.FileName, false, Encoding.UTF8))
                                     {
-                                        // 寫入表頭
-                                        writer.WriteLine("檔案名稱,白色像素數量,總像素數量,白色像素占比(%)");
+                                        writer.WriteLine("檔案名稱,藍色像素數量,總像素數量,閾值,判定結果");
 
-                                        // 寫入每張圖片的數據
+                                        int bluePixelThreshold = 5000;
+
                                         foreach (var stat in statistics)
                                         {
-                                            writer.WriteLine($"{stat.FileName},{stat.WhitePixelCount},{stat.TotalPixels},{stat.Ratio:F2}");
+                                            string result = stat.WhitePixelCount > bluePixelThreshold ? "NG" : "OK";
+                                            writer.WriteLine($"{stat.FileName},{stat.WhitePixelCount},{stat.TotalPixels},{bluePixelThreshold},{result}");
                                         }
 
-                                        // 寫入統計摘要
                                         writer.WriteLine();
                                         writer.WriteLine("統計摘要");
-                                        writer.WriteLine($"最小值(%),{minRatio:F2}");
-                                        writer.WriteLine($"最大值(%),{maxRatio:F2}");
-                                        writer.WriteLine($"平均值(%),{avgRatio:F2}");
-                                        writer.WriteLine($"中位數(%),{medianRatio:F2}");
-                                        writer.WriteLine($"標準差(%),{stdDev:F2}");
+                                        writer.WriteLine($"最小值(像素),{minPixels:F0}");
+                                        writer.WriteLine($"最大值(像素),{maxPixels:F0}");
+                                        writer.WriteLine($"平均值(像素),{avgPixels:F2}");
+                                        writer.WriteLine($"中位數(像素),{medianPixels:F2}");
+                                        writer.WriteLine($"標準差(像素),{stdDev:F2}");
+                                        writer.WriteLine($"閾值(像素),{bluePixelThreshold}");
+                                        writer.WriteLine($"NG數量,{statistics.Count(s => s.WhitePixelCount > bluePixelThreshold)}");
+                                        writer.WriteLine($"OK數量,{statistics.Count(s => s.WhitePixelCount <= bluePixelThreshold)}");
                                     }
 
                                     MessageBox.Show($"已成功處理 {statistics.Count} 張站點 {stop} 的圖片並儲存統計結果!\n" +
-                                                   $"平均白色像素占比: {avgRatio:F2}%\n" +
-                                                   $"中位數: {medianRatio:F2}%\n" +
-                                                   $"標準差: {stdDev:F2}%\n" +
+                                                   $"平均藍色像素數量: {avgPixels:F2}\n" +
+                                                   $"中位數: {medianPixels:F2}\n" +
+                                                   $"標準差: {stdDev:F2}\n" +
                                                    $"直方圖已儲存在 {folderPath} 資料夾\n" +
-                                                   $"處理後的圖像已保存在 {Path.Combine(folderPath, "processed")} 資料夾",
+                                                   $"處理後的圖像（含輪廓）已保存在 {Path.Combine(folderPath, "processed")} 資料夾",
                                                    "處理完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 }
                             }
                         }
                         else
                         {
-                            MessageBox.Show($"未找到站點 {stop} 的有效圖片，請確認檔名格式是否為 \"x-{stop}\"", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show($"未找到站點 {stop} 的有效圖片，請確認檔名格式是否為 \"x-{stop}\"",
+                                           "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show($"處理過程中發生錯誤:\n{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        lbAdd($"處理Chamfer檢測時發生錯誤: {ex.Message}", "err", "ChamferProcessError");
+                        lbAdd($"處理藍色像素檢測時發生錯誤: {ex.Message}", "err", "BluePixelProcessError");
                     }
                 }
             }
@@ -17796,10 +17848,20 @@ public class ResultManager
                 left = (double.Parse(app.param["fourToNG_time_ms_4"]) - double.Parse(app.param["delay4"])) - timeDifference.TotalMilliseconds;
                 expectedPushTime = photoTime.AddMilliseconds(double.Parse(app.param["fourToNG_time_ms_4"]) - double.Parse(app.param["delay4"]));
             }
-            if (left < 150)
+
+            // 由 GitHub Copilot 產生 - 離線檢測模式：放寬超時閾值（沒有實際推料壓力）
+            int timeoutThreshold = app.offlinetest ? -5000 : 150;  // 離線模式允許延遲最多5秒，線上模式維持150ms
+
+            if (left < timeoutThreshold)
             {
                 isNull = true;
-                timeout = true;                
+                timeout = true;
+
+                // 由 GitHub Copilot 產生 - 記錄超時資訊以便診斷
+                if (app.offlinetest && sampleId % 50 == 0)  // 每50個樣品記錄一次
+                {
+                    Log.Warning($"[離線檢測] 樣品 {sampleId} 處理延遲 {timeDifference.TotalMilliseconds:F0}ms (left={left:F0}ms)，但允許繼續處理");
+                }
             }
 
 

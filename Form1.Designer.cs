@@ -151,9 +151,9 @@ namespace peilin
             this.label20 = new System.Windows.Forms.Label();
             this.cherngerPictureBox3 = new CherngerControls.CherngerPictureBox(this.components);
             this.panel1 = new System.Windows.Forms.Panel();
+            this.logTextBox = new System.Windows.Forms.TextBox();
             this.button17 = new System.Windows.Forms.Button();
             this.label37 = new System.Windows.Forms.Label();
-            this.listBox1 = new System.Windows.Forms.ListBox();
             this.label21 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
@@ -710,7 +710,7 @@ namespace peilin
             // button49
             // 
             this.button49.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button49.Location = new System.Drawing.Point(358, 253);
+            this.button49.Location = new System.Drawing.Point(357, 253);
             this.button49.Name = "button49";
             this.button49.Size = new System.Drawing.Size(82, 33);
             this.button49.TabIndex = 465;
@@ -731,6 +731,7 @@ namespace peilin
             // 
             // button22
             // 
+            this.button22.Font = new System.Drawing.Font("微軟正黑體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.button22.Location = new System.Drawing.Point(358, 485);
             this.button22.Name = "button22";
             this.button22.Size = new System.Drawing.Size(75, 23);
@@ -1287,7 +1288,8 @@ namespace peilin
             // 
             // testchamfer
             // 
-            this.testchamfer.Location = new System.Drawing.Point(357, 551);
+            this.testchamfer.Font = new System.Drawing.Font("微軟正黑體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.testchamfer.Location = new System.Drawing.Point(357, 427);
             this.testchamfer.Name = "testchamfer";
             this.testchamfer.Size = new System.Drawing.Size(75, 23);
             this.testchamfer.TabIndex = 429;
@@ -1321,7 +1323,7 @@ namespace peilin
             // button36
             // 
             this.button36.Font = new System.Drawing.Font("微軟正黑體", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button36.Location = new System.Drawing.Point(358, 132);
+            this.button36.Location = new System.Drawing.Point(357, 132);
             this.button36.Name = "button36";
             this.button36.Size = new System.Drawing.Size(75, 42);
             this.button36.TabIndex = 426;
@@ -1457,13 +1459,25 @@ namespace peilin
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.logTextBox);
             this.panel1.Controls.Add(this.button17);
             this.panel1.Controls.Add(this.label37);
-            this.panel1.Controls.Add(this.listBox1);
             this.panel1.Location = new System.Drawing.Point(716, 684);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1207, 350);
             this.panel1.TabIndex = 397;
+            // 
+            // logTextBox
+            // 
+            this.logTextBox.BackColor = System.Drawing.SystemColors.Control;
+            this.logTextBox.Font = new System.Drawing.Font("微軟正黑體", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.logTextBox.Location = new System.Drawing.Point(0, 66);
+            this.logTextBox.Multiline = true;
+            this.logTextBox.Name = "logTextBox";
+            this.logTextBox.ReadOnly = true;
+            this.logTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.logTextBox.Size = new System.Drawing.Size(1207, 279);
+            this.logTextBox.TabIndex = 349;
             // 
             // button17
             // 
@@ -1482,7 +1496,7 @@ namespace peilin
             // 
             this.label37.BackColor = System.Drawing.Color.Silver;
             this.label37.Dock = System.Windows.Forms.DockStyle.Top;
-            this.label37.Font = new System.Drawing.Font("新細明體", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.label37.Font = new System.Drawing.Font("微軟正黑體", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.label37.ForeColor = System.Drawing.Color.Red;
             this.label37.Location = new System.Drawing.Point(0, 0);
             this.label37.Name = "label37";
@@ -1490,19 +1504,6 @@ namespace peilin
             this.label37.TabIndex = 348;
             this.label37.Text = "異常訊息";
             this.label37.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // listBox1
-            // 
-            this.listBox1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.listBox1.Font = new System.Drawing.Font("微軟正黑體", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.HorizontalScrollbar = true;
-            this.listBox1.ItemHeight = 40;
-            this.listBox1.Location = new System.Drawing.Point(0, 66);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.ScrollAlwaysVisible = true;
-            this.listBox1.Size = new System.Drawing.Size(1207, 284);
-            this.listBox1.TabIndex = 347;
             // 
             // label21
             // 
@@ -1522,7 +1523,7 @@ namespace peilin
             this.label8.BackColor = System.Drawing.Color.White;
             this.label8.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.label8.ForeColor = System.Drawing.Color.Black;
-            this.label8.Location = new System.Drawing.Point(140, 354);
+            this.label8.Location = new System.Drawing.Point(143, 354);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(208, 31);
             this.label8.TabIndex = 394;
@@ -2161,6 +2162,7 @@ namespace peilin
             this.groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.cherngerPictureBox3)).EndInit();
             this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cherngerPictureBox4)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cherngerPictureBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cherngerPictureBox1)).EndInit();
@@ -2240,7 +2242,6 @@ namespace peilin
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button button17;
         private System.Windows.Forms.Label label37;
-        private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.Label label20;
         private System.Windows.Forms.Label label8;
@@ -2348,6 +2349,7 @@ namespace peilin
         private System.Windows.Forms.Button button22;
         private System.Windows.Forms.Button button48;
         private System.Windows.Forms.Button button49;
+        private System.Windows.Forms.TextBox logTextBox;
     }
 }
 
