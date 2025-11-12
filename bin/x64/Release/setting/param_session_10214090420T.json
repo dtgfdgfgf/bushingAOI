@@ -1,0 +1,1934 @@
+{
+  "SessionId": "20251112_10214090420T",
+  "CreatedTime": "2025-11-12T15:20:00.1066133+08:00",
+  "SourceType": "10214090420T",
+  "TargetType": "10214090420T",
+  "Parameters": [
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "800",
+      "Stop": 1,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 2,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 3,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "150",
+      "Stop": 4,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 1,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "5",
+      "Stop": 2,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "10",
+      "Stop": 3,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 4,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "440",
+      "Stop": 1,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "435",
+      "Stop": 2,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "437",
+      "Stop": 3,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "548",
+      "Stop": 4,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0215",
+      "Stop": 1,
+      "ChineseName": "檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0262",
+      "Stop": 2,
+      "ChineseName": "檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "40",
+      "Stop": 1,
+      "ChineseName": "調整對比度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "15",
+      "Stop": 2,
+      "ChineseName": "調整對比度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "-10",
+      "Stop": 1,
+      "ChineseName": "調整亮度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "-20",
+      "Stop": 2,
+      "ChineseName": "調整亮度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "20",
+      "Stop": 3,
+      "ChineseName": "調整亮度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "20",
+      "Stop": 4,
+      "ChineseName": "調整亮度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "50",
+      "Stop": 3,
+      "ChineseName": "調整對比度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "50",
+      "Stop": 4,
+      "ChineseName": "調整對比度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1182",
+      "Stop": 1,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1000",
+      "Stop": 1,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "797",
+      "Stop": 1,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "420",
+      "Stop": 1,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1207",
+      "Stop": 1,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "994",
+      "Stop": 1,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToNG_time_ms",
+      "Value": "4600",
+      "Stop": 4,
+      "ChineseName": "站4到NG出料",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToOK1_time_ms",
+      "Value": "1250",
+      "Stop": 4,
+      "ChineseName": "站4到OK1出料",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToOK2_time_ms",
+      "Value": "1900",
+      "Stop": 4,
+      "ChineseName": "站4到OK2出料",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1194",
+      "Stop": 2,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1005",
+      "Stop": 2,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "364",
+      "Stop": 2,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1195",
+      "Stop": 2,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "1030",
+      "Stop": 2,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "655",
+      "Stop": 2,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1227",
+      "Stop": 3,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1011",
+      "Stop": 3,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "360",
+      "Stop": 3,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1224",
+      "Stop": 3,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "1014",
+      "Stop": 3,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "618",
+      "Stop": 3,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1206",
+      "Stop": 4,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1043",
+      "Stop": 4,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "447",
+      "Stop": 4,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1224",
+      "Stop": 4,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "1002",
+      "Stop": 4,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "677",
+      "Stop": 4,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 1,
+      "ChineseName": "找油溝",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 2,
+      "ChineseName": "找油溝",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 3,
+      "ChineseName": "找開口",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 4,
+      "ChineseName": "找開口",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "找開口",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "245",
+      "Stop": 2,
+      "ChineseName": "找開口",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "215",
+      "Stop": 3,
+      "ChineseName": "找開口",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "200",
+      "Stop": 4,
+      "ChineseName": "找開口",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0305",
+      "Stop": 3,
+      "ChineseName": "檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0297",
+      "Stop": 4,
+      "ChineseName": "檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "20",
+      "Stop": 1,
+      "ChineseName": "油溝擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "40",
+      "Stop": 1,
+      "ChineseName": "油溝擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "20",
+      "Stop": 2,
+      "ChineseName": "油溝擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "40",
+      "Stop": 2,
+      "ChineseName": "油溝擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "4",
+      "Stop": 3,
+      "ChineseName": "縫隙擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "4",
+      "Stop": 3,
+      "ChineseName": "縫隙擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "4",
+      "Stop": 4,
+      "ChineseName": "縫隙擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "4",
+      "Stop": 4,
+      "ChineseName": "縫隙擴展",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "47.3",
+      "Stop": 1,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "8.5",
+      "Stop": 2,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "10.5",
+      "Stop": 3,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "5.4",
+      "Stop": 4,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToNULL_time_ms",
+      "Value": "5000",
+      "Stop": 4,
+      "ChineseName": "站4到NULL出料",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1134",
+      "Stop": 1,
+      "ChineseName": "最外中心X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_y",
+      "Value": "995",
+      "Stop": 1,
+      "ChineseName": "最外中心Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_radius",
+      "Value": "867",
+      "Stop": 1,
+      "ChineseName": "最外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1195",
+      "Stop": 2,
+      "ChineseName": "最外中心X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_y",
+      "Value": "1025",
+      "Stop": 2,
+      "ChineseName": "最外中心Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_radius",
+      "Value": "708",
+      "Stop": 2,
+      "ChineseName": "最外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "objBias_x",
+      "Value": "-30",
+      "Stop": 2,
+      "ChineseName": "物體位置中心偏移X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "objBias_y",
+      "Value": "-12",
+      "Stop": 2,
+      "ChineseName": "物體位置中心偏移Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "彩色ROI",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "彩色ROI",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscAspectRatio",
+      "Value": "4.0",
+      "Stop": 3,
+      "ChineseName": "金屬面刮痕長寬比門檻",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscAspectRatio",
+      "Value": "4.0",
+      "Stop": 4,
+      "ChineseName": "金屬面刮痕長寬比門檻",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLongerSide",
+      "Value": "100",
+      "Stop": 3,
+      "ChineseName": "金屬面刮痕長邊長度門檻",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLongerSide",
+      "Value": "100",
+      "Stop": 4,
+      "ChineseName": "金屬面刮痕長邊長度門檻",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscArea",
+      "Value": "5000",
+      "Stop": 3,
+      "ChineseName": "金屬面刮痕面積門檻",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscArea",
+      "Value": "5000",
+      "Stop": 4,
+      "ChineseName": "金屬面刮痕面積門檻",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "objTolerance",
+      "Value": "50",
+      "Stop": 2,
+      "ChineseName": "物體偏移容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 1,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 2,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 3,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 4,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 1,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 2,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 3,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 4,
+      "ChineseName": "白比率容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "16.5",
+      "Stop": 1,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "26.7",
+      "Stop": 2,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "27.0",
+      "Stop": 3,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "22.4",
+      "Stop": 4,
+      "ChineseName": "無樣品白比率",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "100",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "205",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "200",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "200",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLen",
+      "Value": "800",
+      "Stop": 3,
+      "ChineseName": "外環刮痕長度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLen",
+      "Value": "800",
+      "Stop": 4,
+      "ChineseName": "外環刮痕長度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "800",
+      "Stop": 1,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 2,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 3,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "exposure",
+      "Value": "150",
+      "Stop": 4,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 1,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "5",
+      "Stop": 2,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "10",
+      "Stop": 3,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 4,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "440",
+      "Stop": 1,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "435",
+      "Stop": 2,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "437",
+      "Stop": 3,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "delay",
+      "Value": "548",
+      "Stop": 4,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0215",
+      "Stop": 1,
+      "ChineseName": "檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0262",
+      "Stop": 2,
+      "ChineseName": "檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "40",
+      "Stop": 1,
+      "ChineseName": "調整對比度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "15",
+      "Stop": 2,
+      "ChineseName": "調整對比度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "-10",
+      "Stop": 1,
+      "ChineseName": "調整亮度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "-20",
+      "Stop": 2,
+      "ChineseName": "調整亮度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "20",
+      "Stop": 3,
+      "ChineseName": "調整亮度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenBrightness",
+      "Value": "20",
+      "Stop": 4,
+      "ChineseName": "調整亮度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "50",
+      "Stop": 3,
+      "ChineseName": "調整對比度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "deepenContrast",
+      "Value": "50",
+      "Stop": 4,
+      "ChineseName": "調整對比度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1182",
+      "Stop": 1,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1000",
+      "Stop": 1,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "797",
+      "Stop": 1,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "420",
+      "Stop": 1,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1207",
+      "Stop": 1,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "994",
+      "Stop": 1,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToNG_time_ms",
+      "Value": "4600",
+      "Stop": 4,
+      "ChineseName": "站4到NG出料",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToOK1_time_ms",
+      "Value": "1250",
+      "Stop": 4,
+      "ChineseName": "站4到OK1出料",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToOK2_time_ms",
+      "Value": "1900",
+      "Stop": 4,
+      "ChineseName": "站4到OK2出料",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1194",
+      "Stop": 2,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1005",
+      "Stop": 2,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "364",
+      "Stop": 2,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1195",
+      "Stop": 2,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "1030",
+      "Stop": 2,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "655",
+      "Stop": 2,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1227",
+      "Stop": 3,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1011",
+      "Stop": 3,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "360",
+      "Stop": 3,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1224",
+      "Stop": 3,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "1014",
+      "Stop": 3,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "618",
+      "Stop": 3,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_x",
+      "Value": "1206",
+      "Stop": 4,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_center_y",
+      "Value": "1043",
+      "Stop": 4,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_inner_radius",
+      "Value": "447",
+      "Stop": 4,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_x",
+      "Value": "1224",
+      "Stop": 4,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_center_y",
+      "Value": "1002",
+      "Stop": 4,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_outer_radius",
+      "Value": "677",
+      "Stop": 4,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 1,
+      "ChineseName": "找油溝",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 2,
+      "ChineseName": "找油溝",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 3,
+      "ChineseName": "找開口",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "find_NROI",
+      "Value": "1",
+      "Stop": 4,
+      "ChineseName": "找開口",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "找開口",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "245",
+      "Stop": 2,
+      "ChineseName": "找開口",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "215",
+      "Stop": 3,
+      "ChineseName": "找開口",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "gapThresh",
+      "Value": "200",
+      "Stop": 4,
+      "ChineseName": "找開口",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0305",
+      "Stop": 3,
+      "ChineseName": "檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "PixelToMM",
+      "Value": "0.0297",
+      "Stop": 4,
+      "ChineseName": "檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "20",
+      "Stop": 1,
+      "ChineseName": "油溝擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "40",
+      "Stop": 1,
+      "ChineseName": "油溝擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "20",
+      "Stop": 2,
+      "ChineseName": "油溝擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "40",
+      "Stop": 2,
+      "ChineseName": "油溝擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "4",
+      "Stop": 3,
+      "ChineseName": "縫隙擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "4",
+      "Stop": 3,
+      "ChineseName": "縫隙擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_in",
+      "Value": "4",
+      "Stop": 4,
+      "ChineseName": "縫隙擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "expandNROI_out",
+      "Value": "4",
+      "Stop": 4,
+      "ChineseName": "縫隙擴展",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "47.3",
+      "Stop": 1,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "8.5",
+      "Stop": 2,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "10.5",
+      "Stop": 3,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "white",
+      "Value": "5.4",
+      "Stop": 4,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "fourToNULL_time_ms",
+      "Value": "5000",
+      "Stop": 4,
+      "ChineseName": "站4到NULL出料",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1134",
+      "Stop": 1,
+      "ChineseName": "最外中心X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_y",
+      "Value": "995",
+      "Stop": 1,
+      "ChineseName": "最外中心Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_radius",
+      "Value": "867",
+      "Stop": 1,
+      "ChineseName": "最外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1195",
+      "Stop": 2,
+      "ChineseName": "最外中心X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_center_y",
+      "Value": "1025",
+      "Stop": 2,
+      "ChineseName": "最外中心Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "known_chamfer_radius",
+      "Value": "708",
+      "Stop": 2,
+      "ChineseName": "最外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "objBias_x",
+      "Value": "-30",
+      "Stop": 2,
+      "ChineseName": "物體位置中心偏移X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "objBias_y",
+      "Value": "-12",
+      "Stop": 2,
+      "ChineseName": "物體位置中心偏移Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "彩色ROI",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "彩色ROI",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscAspectRatio",
+      "Value": "4.0",
+      "Stop": 3,
+      "ChineseName": "金屬面刮痕長寬比門檻",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscAspectRatio",
+      "Value": "4.0",
+      "Stop": 4,
+      "ChineseName": "金屬面刮痕長寬比門檻",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLongerSide",
+      "Value": "100",
+      "Stop": 3,
+      "ChineseName": "金屬面刮痕長邊長度門檻",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLongerSide",
+      "Value": "100",
+      "Stop": 4,
+      "ChineseName": "金屬面刮痕長邊長度門檻",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscArea",
+      "Value": "5000",
+      "Stop": 3,
+      "ChineseName": "金屬面刮痕面積門檻",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscArea",
+      "Value": "5000",
+      "Stop": 4,
+      "ChineseName": "金屬面刮痕面積門檻",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "objTolerance",
+      "Value": "50",
+      "Stop": 2,
+      "ChineseName": "物體偏移容忍度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 1,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 2,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 3,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 4,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 1,
+      "ChineseName": "白比率容忍度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 2,
+      "ChineseName": "白比率容忍度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 3,
+      "ChineseName": "白比率容忍度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 4,
+      "ChineseName": "白比率容忍度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "16.5",
+      "Stop": 1,
+      "ChineseName": "無樣品白比率",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "26.7",
+      "Stop": 2,
+      "ChineseName": "無樣品白比率",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "27.0",
+      "Stop": 3,
+      "ChineseName": "無樣品白比率",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteNULL",
+      "Value": "22.4",
+      "Stop": 4,
+      "ChineseName": "無樣品白比率",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "100",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "205",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "200",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "whiteThresh",
+      "Value": "200",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLen",
+      "Value": "800",
+      "Stop": 3,
+      "ChineseName": "外環刮痕長度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10214090420T",
+      "Name": "outscLen",
+      "Value": "800",
+      "Stop": 4,
+      "ChineseName": "外環刮痕長度",
+      "Zone": 1,
+      "IsSelected": false
+    }
+  ]
+}
