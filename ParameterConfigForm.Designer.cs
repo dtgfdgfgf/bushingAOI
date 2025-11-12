@@ -115,7 +115,7 @@ namespace peilin
             this.tabMain.Controls.Add(this.tabPosition);
             this.tabMain.Controls.Add(this.tabDetection);
             this.tabMain.Controls.Add(this.tabTiming);
-            this.tabMain.Controls.Add(this.tabTesting);
+            //this.tabMain.Controls.Add(this.tabTesting);
             this.tabMain.Location = new System.Drawing.Point(9, 40);
             this.tabMain.Margin = new System.Windows.Forms.Padding(2);
             this.tabMain.Name = "tabMain";
