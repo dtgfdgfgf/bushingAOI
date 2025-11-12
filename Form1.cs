@@ -1090,7 +1090,7 @@ namespace peilin
                                             {
                                                 Stop = input.stop,
                                                 IsNG = true,
-                                                OkNgScore = 0.0f,
+                                                OkNgScore = 1.0f,
                                                 FinalMap = resultimage.Clone(),  // 使用 Clone 避免 double-free
                                                 DefectName = "chamfer",
                                                 DefectScore = 1.0f,
@@ -1209,8 +1209,8 @@ namespace peilin
                                         if (defectDetection.detections != null && defectDetection.detections.Count > 0)
                                         {
 
-                                            float minArea = 500.0f; // 預設閥值
-                                            if (app.param.TryGetValue("minArea" + input.stop.ToString() + "_threshold", out string thresholdStr))
+                                            float minArea = 0.0f; // 預設閥值 //若Yn=0 -> 不會寫入param -> minArea=0 -> 不設限 -> 符合Yn=0的概念
+                                            if (app.param.TryGetValue("minArea" + input.stop.ToString() + "_threshold", out string thresholdStr)) 
                                             {
                                                 float.TryParse(thresholdStr, out minArea);
                                             }    
@@ -1267,7 +1267,7 @@ namespace peilin
                                                 float aspectRatio = Math.Max(width, height) / (float)Math.Min(width, height);
 
                                                 // 如果長寬比小於等於2.5且面積小於500，跳過此瑕疵
-                                                if (aspectRatio <= 2.5f && area < minArea)
+                                                if (/*aspectRatio <= 2.5f && */area < minArea)
                                                 {
                                                     continue;
                                                 }
@@ -1703,125 +1703,6 @@ namespace peilin
                                     }
                                     #endregion
 
-                                    #region 倒角
-                                    // 由 GitHub Copilot 產生
-                                    // 修正: 使用快取檢查是否需要倒角檢測,避免資料庫鎖定
-                                    string chamferCacheKey = $"{app.produce_No}_{input.stop}";
-                                    bool needChamferDetection = app.chamferDetectionCache.TryGetValue(chamferCacheKey, out bool cached) 
-                                        ? cached 
-                                        : false;
-
-                                    // 如果不需要檢測倒角，則跳過此區塊
-                                    if (needChamferDetection)
-                                    {
-                                        //
-                                        // 由 GitHub Copilot 產生
-                                        // 修正 P1-2: 為 chamferRoi 加 using，確保釋放 (15-20 MB)
-                                        //檢查倒角
-                                        using (Mat chamferRoi = DetectAndExtractROI(roiInputImage, input.stop, input.count, true))
-                                        {
-                                        string chamferServerUrl = app.produce_chamferServerUrl;
-                                        if (app.enableProfiling && app.profilingStations.Contains(2))
-                                        {
-                                            PerformanceProfiler.StartMeasure($"{input.count}_yolo_chamferRoi2");
-                                        }
-                                        DetectionResponse chamferDetection = await _yoloDetection.PerformObjectDetection(chamferRoi.Clone(), $"{chamferServerUrl}/detect");
-                                        if (app.enableProfiling && app.profilingStations.Contains(2))
-                                        {
-                                            PerformanceProfiler.StopMeasure($"{input.count}_yolo_chamferRoi2");
-                                        }
-                                        if (chamferDetection.error != null)
-                                        {
-                                            lbAdd($"站點2檢測錯誤: {chamferDetection.error}", "err", "");
-                                            continue;
-                                        }
-
-                                        List<DetectionResult> chamferDefects = new List<DetectionResult>(); // 取檢測結果
-                                        if (chamferDetection.detections != null && chamferDetection.detections.Count > 0)
-                                        {
-                                            foreach (var defect in chamferDetection.detections)
-                                            {
-                                                bool isOverlapping = false;
-                                                if (performNonRoiDetection && nonRoiRects.Count > 0)
-                                                {
-                                                    Rect defectRect = new Rect(defect.box[0], defect.box[1], defect.box[2] - defect.box[0], defect.box[3] - defect.box[1]);
-
-                                                    foreach (var nonRoiRect in nonRoiRects)
-                                                    {
-                                                        double iou = CalculateIoU(defectRect, nonRoiRect);
-                                                        int expand_in = int.Parse(app.param[$"expandNROI_in_{input.stop}"]);
-                                                        int expand_out = int.Parse(app.param[$"expandNROI_out_{input.stop}"]);
-
-                                                        bool inNonRoi = IsDefectInNonRoiRegion_in(defectRect, nonRoiRect, input.stop, expand_in, expand_out);
-
-                                                        if (iou > GetDoubleParam(app.param, $"IOU_{input.stop}", 0.2) || inNonRoi)
-                                                        {
-                                                            isOverlapping = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                if (!isOverlapping)
-                                                {
-                                                    chamferDefects.Add(defect);
-                                                }
-                                            }
-                                        }
-
-                                        if (chamferDefects.Count > 0) //若有檢到
-                                        {
-                                            bool has_chamfer_Defect = false;
-                                            string chamfer_defectName = "OK";
-                                            float chamfer_highestScore = 0;
-                                            float chamfer_threshold = 0.5f; // 默認閾值
-
-                                            var highestScoreDefect = chamferDefects
-                                                .OrderByDescending(d => d.score)
-                                                .FirstOrDefault();
-
-                                            if (highestScoreDefect != null)
-                                            {
-                                                chamfer_highestScore = (float)highestScoreDefect.score;
-
-                                                // 取得對應的閥值 在 defect_check
-                                                if (app.param.TryGetValue(highestScoreDefect.class_name + "_threshold", out string thresholdStr))
-                                                {
-                                                    float.TryParse(thresholdStr, out chamfer_threshold);
-                                                }
-                                                has_chamfer_Defect = true;
-                                                chamfer_defectName = highestScoreDefect.class_name;
-
-                                                if (chamfer_highestScore > chamfer_threshold) //若超過閥值
-                                                {
-                                                    // 繪製檢測結果
-                                                    using (Mat chamfer_resultImage = _yoloDetection.DrawDetectionResults(roiInputImage, new DetectionResponse { detections = chamferDefects }, chamfer_threshold))
-                                                    {
-                                                        // 使用現有的 showResultMat 方法顯示結果
-                                                        showResultMat(chamfer_resultImage, input.stop);
-
-                                                        // 創建StationResult物件
-                                                        StationResult chamferResult = new StationResult
-                                                        {
-                                                            Stop = 1, // 站點1
-                                                            IsNG = true,
-                                                            OkNgScore = chamfer_highestScore > 0 ? (float?)chamfer_highestScore : 0.0f,
-                                                            FinalMap = chamfer_resultImage.Clone(), // ✅ P0-4 修正: Clone 避免 using 釋放後 FinalMap 無效
-                                                            DefectName = chamfer_defectName,
-                                                            DefectScore = has_chamfer_Defect ? (float?)chamfer_highestScore : 0.0f, // 只有NG才有瑕疵分數
-                                                            OriName = Path.GetFileName(input.name)
-                                                        };
-
-                                                        // 添加結果到結果管理器
-                                                        app.resultManager.AddResult(input.count, chamferResult);
-                                                    } // 結束 chamfer_resultImage 的 using 語句
-                                                    continue;
-                                                }
-                                            }
-                                        }
-                                        } // 由 GitHub Copilot 產生 - 結束 chamferRoi 的 using 語句
-                                    }
-                                    #endregion
-
                                     #region 正常yolo
                             
                                 
@@ -1865,19 +1746,20 @@ namespace peilin
                                         List<DetectionResult> validDefects = new List<DetectionResult>();
                                         if (defectDetection.detections != null && defectDetection.detections.Count > 0)
                                         {
-                                            float minArea = 500.0f; // 預設閥值
+                                            float minArea = 0.0f; // 預設閥值 //若Yn=0 -> 不會寫入param -> minArea=0 -> 不設限 -> 符合Yn=0的概念
                                             if (app.param.TryGetValue("minArea" + input.stop.ToString() + "_threshold", out string thresholdStr))
                                             {
-                                                    float.TryParse(thresholdStr, out minArea);
-                                                }
+                                                float.TryParse(thresholdStr, out minArea);
+                                            }
 
-                                                foreach (var defect in defectDetection.detections)
+                                            foreach (var defect in defectDetection.detections)
+                                            {
+                                                // 檢查這個瑕疵是否需要檢測
+                                                if (!defectsToDetect.Contains(defect.class_name))
                                                 {
-                                                    // 檢查這個瑕疵是否需要檢測
-                                                    if (!defectsToDetect.Contains(defect.class_name))
-                                                    {
-                                                        continue;  // 跳過不需要檢測的瑕疵
-                                                    }                                    Rect defectRect = new Rect(defect.box[0], defect.box[1], defect.box[2] - defect.box[0], defect.box[3] - defect.box[1]);
+                                                    continue;  // 跳過不需要檢測的瑕疵
+                                                }                                    
+                                                Rect defectRect = new Rect(defect.box[0], defect.box[1], defect.box[2] - defect.box[0], defect.box[3] - defect.box[1]);
 
                                                 // 計算瑕疵面積
                                                 int width = defect.box[2] - defect.box[0];
@@ -1886,13 +1768,14 @@ namespace peilin
                                                 float aspectRatio = Math.Max(width, height) / (float)Math.Min(width, height);
 
                                                 // 如果長寬比小於等於2.5且面積小於500，跳過此瑕疵
-                                                if (aspectRatio <= 2.5f && area < minArea)
+                                                if (/*aspectRatio <= 2.5f && */area < minArea)
                                                 {
                                                     continue;
                                                 }
 
-                                                if (defect.class_name == "bp") // 跳過鏡頭髒污
+                                                if (defect.class_name == "bp") // 跳過鏡頭髒污 delay time有調整 座標需變動 有需要再找
                                                 {
+                                                    /*
                                                     int centerX = defectRect.X + defectRect.Width / 2;
                                                     int centerY = defectRect.Y + defectRect.Height / 2;
                                                     int camarea = defectRect.Width * defectRect.Height;
@@ -1904,6 +1787,7 @@ namespace peilin
                                                         // 跳過這個瑕疵
                                                         continue;
                                                     }
+                                                    */
                                                 }
 
                                                 // 如果執行了非 ROI 區域檢測，則檢查與非 ROI 區域的 IoU
@@ -1948,8 +1832,7 @@ namespace peilin
                                                 {
                                                     //Console.WriteLine($"{input.count}_{defectRect.X}_{defectRect.Y}_{defectRect.Width * defectRect.Height}");
                                                     validDefects.Add(defect);
-                                                }
-                                    
+                                                }                                  
                                             }
                                         }
                             
@@ -2047,7 +1930,6 @@ namespace peilin
                                     #endregion
                                     if (app.enableProfiling && app.profilingStations.Contains(2))
                                     {
-
                                         PerformanceProfiler.StopMeasure($"{input.count}_getmat2");
                                     }
                                 //PerformanceProfiler.FlushToDisk();
@@ -2449,7 +2331,7 @@ namespace peilin
                                     List<DetectionResult> validDefects = new List<DetectionResult>();
                                     if (defectDetection.detections != null && defectDetection.detections.Count > 0)
                                     {
-                                        float minArea = 500.0f; // 預設閥值
+                                        float minArea = 0.0f; // 預設閥值 //若Yn=0 -> 不會寫入param -> minArea=0 -> 不設限 -> 符合Yn=0的概念
                                         if (app.param.TryGetValue("minArea" + input.stop.ToString() + "_threshold", out string thresholdStr))
                                         {
                                             float.TryParse(thresholdStr, out minArea);
@@ -2471,7 +2353,7 @@ namespace peilin
                                             float aspectRatio = Math.Max(width, height) / (float)Math.Min(width, height);
 
                                             // 如果長寬比小於等於2.5且面積小於500，跳過此瑕疵
-                                            if (aspectRatio <= 2.5f && area < minArea)
+                                            if (/*aspectRatio <= 2.5f && */area < minArea)
                                             {
                                                 //continue;
                                             }
@@ -2600,12 +2482,19 @@ namespace peilin
                                                 // 如果需要在結果圖像上顯示總面積信息
                                                 areaText = $"OTP Total Area: {totalOtpAreaPixels:F2} pixels ({verifiedOtpDefects.Count:F2} defects)";
                                                 ratioText = $"defectToRoiRatio: {defectToRoiRatio:F2}";
+                                                double otpRatioThreshold = 0.0;
+                                                if (app.param.TryGetValue("OTPratio" + input.stop.ToString() + "_threshold", out string thresholdStr))
+                                                {
+                                                    double.TryParse(thresholdStr, out otpRatioThreshold);
+                                                    isAreaNG = defectToRoiRatio > otpRatioThreshold;
+                                                }
+                                                /*
                                                 if (app.param.ContainsKey($"OTPratio_{input.stop}"))
                                                 {
-                                                    double otpRatioThreshold = 0.4; // 預設值
                                                     otpRatioThreshold = double.Parse(app.param[$"OTPratio_{input.stop}"]);
                                                     isAreaNG = defectToRoiRatio > otpRatioThreshold;
                                                 }
+                                                */
                                                 /*
                                                 if (resultImage != null)
                                                 {
@@ -3129,7 +3018,7 @@ namespace peilin
                                     List<DetectionResult> validDefects = new List<DetectionResult>();
                                     if (defectDetection.detections != null && defectDetection.detections.Count > 0)
                                     {
-                                        float minArea = 500.0f; // 預設閥值
+                                        float minArea = 0.0f; // 預設閥值 //若Yn=0 -> 不會寫入param -> minArea=0 -> 不設限 -> 符合Yn=0的概念
                                         if (app.param.TryGetValue("minArea" + input.stop.ToString() + "_threshold", out string thresholdStr))
                                         {
                                             float.TryParse(thresholdStr, out minArea);
@@ -3150,7 +3039,7 @@ namespace peilin
                                             float aspectRatio = Math.Max(width, height) / (float)Math.Min(width, height);
 
                                             // 如果長寬比小於等於2.5且面積小於500，跳過此瑕疵
-                                            if (aspectRatio <= 2.5f && area < minArea)
+                                            if (/*aspectRatio <= 2.5f && */area < minArea)
                                             {
                                                 //continue;
                                             }
@@ -4963,8 +4852,6 @@ namespace peilin
                         foreach (var c in q)
                         {
                             param.Add(c.Name + "_" + c.Stop.ToString(), c.Value);
-                            //Console.WriteLine(c.Name + "_" + c.Stop.ToString());
-                            //Console.WriteLine(c.Value);
                         }
                     }
                 }
@@ -4972,7 +4859,7 @@ namespace peilin
                 {
                     var q =
                         from c in db.DefectChecks
-                        where c.Type == app.produce_No
+                        where c.Type == app.produce_No && c.Yn == 1
                         orderby c.Type, c.Stop
                         select c;
                     if (q.Count() > 0)
@@ -4986,61 +4873,7 @@ namespace peilin
                 }
 
                 setNet();
-
-                /*
-                //待更改
-                app.defect_name.Clear();
-                app.ng_rec.Clear();
-                using (var db = new MydbDB())
-                {
-                    var q =
-                        from c in db.DefectChecks
-                        where c.Type == app.produce_No && c.Yn == 1
-                        orderby c.Name
-                        select c.Name;
-                    if (q.Count() > 0)
-                    {
-                        foreach (var c in q)
-                        {
-                            param.Add(c.Name, c.Yn.ToString());
-                            param.Add(c.Name + "_id", c.ClsId.ToString());
-                            param.Add(c.Name + "_stop", c.Stop.ToString());
-                            if (c.Yn == 1 && c.ClsId != -1)
-                            {
-                                app.defect_name.Add(c.Name);
-                                app.ng_rec.Add(false);
-                            }
-                        }
-                    }
-                }
-                */
-                using (var db = new MydbDB())
-                {
-                    var q =
-                        from c in db.DefectChecks
-                        where c.Type == app.produce_No && c.Yn == 1 && (c.Stop == 1 || c.Stop == 2)
-                        orderby c.Name
-                        select c.Name;
-                    if (q.Count() > 0)
-                    {
-                        app.defectLabels_in = q.Distinct().ToList();
-                    }
-                    Console.WriteLine($"已載入料號={app.produce_No} 內環鏡的瑕疵類別 {app.defectLabels_in.Count} 筆.");
-                }
-                using (var db = new MydbDB())
-                {
-                    var q =
-                        from c in db.DefectChecks
-                        where c.Type == app.produce_No && c.Yn == 1 && (c.Stop == 3 || c.Stop == 4)
-                        orderby c.Name
-                        select c.Name;
-                    if (q.Count() > 0)
-                    { 
-                        app.defectLabels_out = q.Distinct().ToList();
-                    }
-                    Console.WriteLine($"已載入料號={app.produce_No} 外環鏡的瑕疵類別 {app.defectLabels_out.Count} 筆.");
-                }
-                
+         
                 // 由 GitHub Copilot 產生
                 // 新增: 載入每個站點的瑕疵名稱快取,避免檢測時重複查詢資料庫
                 app.defectNamesPerStop.Clear();
@@ -9357,30 +9190,7 @@ namespace peilin
 
             return tensor;
         }
-        public string InferenceGetLabel(int clsIdx, int stop)
-        {
-            //Console.WriteLine(app.defectLabels.Count);
-            if (stop == 1 || stop == 2)
-            {
-                if (clsIdx < 0 || clsIdx >= app.defectLabels_in.Count)
-                {
-                    return "Unknown";
-                }
-                return app.defectLabels_in[clsIdx];
-            }
-            else if (stop == 3 || stop == 4)
-            {
-                if (clsIdx < 0 || clsIdx >= app.defectLabels_out.Count)
-                {
-                    return "Unknown";
-                }
-                return app.defectLabels_out[clsIdx];
-            }
-            else
-            {
-                return "Unknown";
-            }
-        }
+
         public (bool isNG, Mat img, List<Point> gapPositions) findGapWidth(Mat img, int stop/*, CircleSegment[] outerCircles, CircleSegment[] innerCircles*/)
         {
             // 無效站別的thresh會預設為0
@@ -9404,236 +9214,176 @@ namespace peilin
                 Cv2.CvtColor(visualImg, gray, ColorConversionCodes.BGR2GRAY);
                 Cv2.Threshold(gray, ringThresh, minthresh, 255, ThresholdTypes.Binary);
 
-            #region 不霍夫
-            /*
-            int centerTolerance = 80;
-            bool matched = false;
-            Mat roi_blurred = null;
-            CircleSegment? bestInner = null;
+                int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
+                int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
+                int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
+                int knownOuterCenterX = int.Parse(app.param[$"known_outer_center_x_{stop}"]);
+                int knownOuterCenterY = int.Parse(app.param[$"known_outer_center_y_{stop}"]);
+                int knownOuterRadius = int.Parse(app.param[$"known_outer_radius_{stop}"]);
 
-            // 1) 用霍夫圓找外圈+內圈 看是否匹配 匹配意義在於確認樣本沒有非常嚴重的變形
-            // 2) 沒有非常嚴重變形再去計算內彎和外擴
-            if (outerCircles.Length == 0) Console.WriteLine("外圈沒圓");
-            if (innerCircles.Length == 0) Console.WriteLine("內圈沒圓");
+                Point2f innerCenter = new Point2f(knownInnerCenterX, knownInnerCenterY);
+                double innerRadius = knownInnerRadius;
+                Point2f outerCenter = new Point2f(knownOuterCenterX, knownOuterCenterY);
+                double outerRadius = knownOuterRadius;
 
-            if (outerCircles.Length > 0 && innerCircles.Length > 0) //皆存在
-            {
-                foreach (var outer in outerCircles)
+                // 4) 對 ringThresh 執行極坐標掃描
+                double angleStep = 0.5;
+                int nSteps = (int)(360.0 / angleStep);
+
+                bool[] inner_isHole_outward = new bool[nSteps]; // 內圓向外擴掃描的結果
+                bool[] inner_isHole_inward = new bool[nSteps];  // 內圓向內彎掃描的結果
+
+                double pixeltomm = double.Parse(app.param[$"PixelToMM_{stop}"]);
+                double roiTolerance = (1 / pixeltomm) / (1 / 0.6) - 5; // 0.5mm, 基本落在15~23px
+                //double roiTolerance = 10;
+                // 向外擴掃描的半徑 (原來邏輯)
+                double outerScanRadius = innerRadius + roiTolerance;
+
+                // 向內彎掃描的半徑 (新增邏輯：內圓半徑向內縮小)
+                double inwardScanRadius = innerRadius - roiTolerance;
+
+                // =========== 向外擴掃描 (內圓向外) ===========
+                // 可视化: 在 src 上画点(绿=環, 红=hole)
+                for (int i = 0; i < nSteps; i++)
                 {
-                    foreach (var inner in innerCircles)
-                    {
-                        double radiusDistance = outer.Radius - inner.Radius;
-                        double centerDistance = Math.Sqrt(
-                            Math.Pow(outer.Center.X - inner.Center.X, 2) +
-                            Math.Pow(outer.Center.Y - inner.Center.Y, 2));
-                        if (centerDistance <= centerTolerance)
-                        {
-                            // 视为匹配
-                            bestInner = inner;
-                            // 建 mask
-                            Mat mask = new Mat(visualImg.Size(), MatType.CV_8UC1, Scalar.Black);
-                            // 外圈=white
-                            Cv2.Circle(mask, (Point)outer.Center, (int)outer.Radius, Scalar.White, -1);
-                            // 内圈=black
-                            Cv2.Circle(mask, (Point)inner.Center, (int)inner.Radius, Scalar.Black, -1);
+                    double angleDeg = i * angleStep;
+                    double rad = angleDeg * Math.PI / 180.0;
 
-                            Mat roi_full = new Mat();
-                            Cv2.BitwiseAnd(visualImg, visualImg, roi_full, mask);
+                    double rx = innerCenter.X + outerScanRadius * Math.Cos(rad);
+                    double ry = innerCenter.Y + outerScanRadius * Math.Sin(rad);
 
-                            // 转灰阶+模糊
-                            Mat roi_gray = new Mat();
-                            Cv2.CvtColor(roi_full, roi_gray, ColorConversionCodes.BGR2GRAY);
-                            roi_blurred = new Mat();
-                            Cv2.GaussianBlur(roi_gray, roi_blurred, new Size(5, 5), 0);
+                    int px = (int)Math.Round(rx);
+                    int py = (int)Math.Round(ry);
 
-                            Cv2.CvtColor(roi_blurred, roi_blurred, ColorConversionCodes.GRAY2BGR);
-
-                            matched = true;
-                            break;
-                        }
-                    }
-                    if (matched) break;
-                }
-            }
-
-            if (!matched || bestInner == null)
-            {
-                Console.WriteLine("內外圈未成功匹配, 判斷變形嚴重.");
-                return (true, visualImg);
-            }
-            */
-            #endregion
-
-            int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
-            int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
-            int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
-            int knownOuterCenterX = int.Parse(app.param[$"known_outer_center_x_{stop}"]);
-            int knownOuterCenterY = int.Parse(app.param[$"known_outer_center_y_{stop}"]);
-            int knownOuterRadius = int.Parse(app.param[$"known_outer_radius_{stop}"]);
-
-            Point2f innerCenter = new Point2f(knownInnerCenterX, knownInnerCenterY);
-            double innerRadius = knownInnerRadius;
-            Point2f outerCenter = new Point2f(knownOuterCenterX, knownOuterCenterY);
-            double outerRadius = knownOuterRadius;
-
-            // 4) 對 ringThresh 執行極坐標掃描
-            double angleStep = 0.5;
-            int nSteps = (int)(360.0 / angleStep);
-
-            bool[] inner_isHole_outward = new bool[nSteps]; // 內圓向外擴掃描的結果
-            bool[] inner_isHole_inward = new bool[nSteps];  // 內圓向內彎掃描的結果
-
-            double pixeltomm = double.Parse(app.param[$"PixelToMM_{stop}"]);
-            double roiTolerance = (1 / pixeltomm) / (1 / 0.6) - 5; // 0.5mm, 基本落在15~23px
-            //double roiTolerance = 10;
-            // 向外擴掃描的半徑 (原來邏輯)
-            double outerScanRadius = innerRadius + roiTolerance;
-
-            // 向內彎掃描的半徑 (新增邏輯：內圓半徑向內縮小)
-            double inwardScanRadius = innerRadius - roiTolerance;
-
-            // =========== 向外擴掃描 (內圓向外) ===========
-            // 可视化: 在 src 上画点(绿=環, 红=hole)
-            for (int i = 0; i < nSteps; i++)
-            {
-                double angleDeg = i * angleStep;
-                double rad = angleDeg * Math.PI / 180.0;
-
-                double rx = innerCenter.X + outerScanRadius * Math.Cos(rad);
-                double ry = innerCenter.Y + outerScanRadius * Math.Sin(rad);
-
-                int px = (int)Math.Round(rx);
-                int py = (int)Math.Round(ry);
-
-                if (px < 0 || px >= ringThresh.Cols || py < 0 || py >= ringThresh.Rows)
-                {
-                    // hole
-                    inner_isHole_outward[i] = true;
-                    Cv2.Circle(visualImg, new Point(px, py), 2, Scalar.Red, -1);
-                }
-                else
-                {
-                    byte val = ringThresh.Get<byte>(py, px);
-                    if (val < 127)
-                    {
-                        // ring
-                        inner_isHole_outward[i] = false;
-                        Cv2.Circle(visualImg, new Point(px, py), 1, Scalar.Green, -1);
-                    }
-                    else
+                    if (px < 0 || px >= ringThresh.Cols || py < 0 || py >= ringThresh.Rows)
                     {
                         // hole
                         inner_isHole_outward[i] = true;
                         Cv2.Circle(visualImg, new Point(px, py), 2, Scalar.Red, -1);
-
-                        // 新增：記錄開口位置
-                        gapPositions.Add(new Point(px, py));
-                    }
-                }
-            }
-
-            // =========== 向內彎掃描 (內圓向內) ===========
-            for (int i = 0; i < nSteps; i++)
-            {
-                double angleDeg = i * angleStep;
-                double rad = angleDeg * Math.PI / 180.0;
-
-                double rx = innerCenter.X + inwardScanRadius * Math.Cos(rad);
-                double ry = innerCenter.Y + inwardScanRadius * Math.Sin(rad);
-
-                int px = (int)Math.Round(rx);
-                int py = (int)Math.Round(ry);
-
-                if (px < 0 || px >= ringThresh.Cols || py < 0 || py >= ringThresh.Rows)
-                {
-                    // 超出圖像邊界，標記為hole
-                    inner_isHole_inward[i] = true;
-                    Cv2.Circle(visualImg, new Point(px, py), 2, Scalar.Blue, -1); // 藍色標記
-                }
-                else
-                {
-                    byte val = ringThresh.Get<byte>(py, px);
-                    if (val < 127)
-                    {
-                        // 檢測到環狀物體，說明內彎！這是異常情況
-                        inner_isHole_inward[i] = false; // 非hole代表檢測到內彎
-                        Cv2.Circle(visualImg, new Point(px, py), 1, Scalar.Yellow, -1); // 黃色標記
                     }
                     else
                     {
-                        // 正常情況，內側應該是空白的
+                        byte val = ringThresh.Get<byte>(py, px);
+                        if (val < 127)
+                        {
+                            // ring
+                            inner_isHole_outward[i] = false;
+                            Cv2.Circle(visualImg, new Point(px, py), 1, Scalar.Green, -1);
+                        }
+                        else
+                        {
+                            // hole
+                            inner_isHole_outward[i] = true;
+                            Cv2.Circle(visualImg, new Point(px, py), 2, Scalar.Red, -1);
+
+                            // 新增：記錄開口位置
+                            gapPositions.Add(new Point(px, py));
+                        }
+                    }
+                }
+
+                // =========== 向內彎掃描 (內圓向內) ===========
+                for (int i = 0; i < nSteps; i++)
+                {
+                    double angleDeg = i * angleStep;
+                    double rad = angleDeg * Math.PI / 180.0;
+
+                    double rx = innerCenter.X + inwardScanRadius * Math.Cos(rad);
+                    double ry = innerCenter.Y + inwardScanRadius * Math.Sin(rad);
+
+                    int px = (int)Math.Round(rx);
+                    int py = (int)Math.Round(ry);
+
+                    if (px < 0 || px >= ringThresh.Cols || py < 0 || py >= ringThresh.Rows)
+                    {
+                        // 超出圖像邊界，標記為hole
                         inner_isHole_inward[i] = true;
                         Cv2.Circle(visualImg, new Point(px, py), 2, Scalar.Blue, -1); // 藍色標記
                     }
-                }
-            }
-
-            // 5) 計算外擴尺寸 - 找最大連續缺口
-            double outerMaxGapAngleDeg = 0;
-            int outerStartIdx = -1;
-            for (int idx = 0; idx < nSteps * 2; idx++)
-            {
-                int realIdx = idx % nSteps;
-                if (inner_isHole_outward[realIdx])
-                {
-                    if (outerStartIdx < 0) outerStartIdx = idx;
-                }
-                else
-                {
-                    if (outerStartIdx >= 0)
+                    else
                     {
-                        int length = idx - outerStartIdx;
-                        double gapDeg = length * angleStep;
-                        if (gapDeg > outerMaxGapAngleDeg) outerMaxGapAngleDeg = gapDeg;
-                        outerStartIdx = -1;
+                        byte val = ringThresh.Get<byte>(py, px);
+                        if (val < 127)
+                        {
+                            // 檢測到環狀物體，說明內彎！這是異常情況
+                            inner_isHole_inward[i] = false; // 非hole代表檢測到內彎
+                            Cv2.Circle(visualImg, new Point(px, py), 1, Scalar.Yellow, -1); // 黃色標記
+                        }
+                        else
+                        {
+                            // 正常情況，內側應該是空白的
+                            inner_isHole_inward[i] = true;
+                            Cv2.Circle(visualImg, new Point(px, py), 2, Scalar.Blue, -1); // 藍色標記
+                        }
                     }
                 }
-            }
-            if (outerStartIdx >= 0)
-            {
-                int length = (nSteps * 2) - outerStartIdx;
-                double gapDeg = length * angleStep;
-                if (gapDeg > outerMaxGapAngleDeg) outerMaxGapAngleDeg = gapDeg;
-            }
 
-            // 6) 計算向內彎的尺寸 - 找連續檢測到"非空白"區域的長度
-            double inwardBendAngleDeg = 0;
-            int inwardStartIdx = -1;
-            for (int idx = 0; idx < nSteps * 2; idx++)
-            {
-                int realIdx = idx % nSteps;
-                // 如果檢測到非空白，即內彎
-                if (!inner_isHole_inward[realIdx])
+                // 5) 計算外擴尺寸 - 找最大連續缺口
+                double outerMaxGapAngleDeg = 0;
+                int outerStartIdx = -1;
+                for (int idx = 0; idx < nSteps * 2; idx++)
                 {
-                    if (inwardStartIdx < 0) inwardStartIdx = idx;
-                }
-                else
-                {
-                    if (inwardStartIdx >= 0)
+                    int realIdx = idx % nSteps;
+                    if (inner_isHole_outward[realIdx])
                     {
-                        int length = idx - inwardStartIdx;
-                        double bendDeg = length * angleStep;
-                        if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
-                        inwardStartIdx = -1;
+                        if (outerStartIdx < 0) outerStartIdx = idx;
+                    }
+                    else
+                    {
+                        if (outerStartIdx >= 0)
+                        {
+                            int length = idx - outerStartIdx;
+                            double gapDeg = length * angleStep;
+                            if (gapDeg > outerMaxGapAngleDeg) outerMaxGapAngleDeg = gapDeg;
+                            outerStartIdx = -1;
+                        }
                     }
                 }
-            }
-            if (inwardStartIdx >= 0)
-            {
-                int length = (nSteps * 2) - inwardStartIdx;
-                double bendDeg = length * angleStep;
-                if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
-            }
+                if (outerStartIdx >= 0)
+                {
+                    int length = (nSteps * 2) - outerStartIdx;
+                    double gapDeg = length * angleStep;
+                    if (gapDeg > outerMaxGapAngleDeg) outerMaxGapAngleDeg = gapDeg;
+                }
 
-            // 7) 將角度轉換為物理尺寸 (mm)
-            double outerGapArcPx = outerScanRadius * (outerMaxGapAngleDeg * Math.PI / 180.0);
-            double outerGapArcMm = outerGapArcPx * pixeltomm;
+                // 6) 計算向內彎的尺寸 - 找連續檢測到"非空白"區域的長度
+                double inwardBendAngleDeg = 0;
+                int inwardStartIdx = -1;
+                for (int idx = 0; idx < nSteps * 2; idx++)
+                {
+                    int realIdx = idx % nSteps;
+                    // 如果檢測到非空白，即內彎
+                    if (!inner_isHole_inward[realIdx])
+                    {
+                        if (inwardStartIdx < 0) inwardStartIdx = idx;
+                    }
+                    else
+                    {
+                        if (inwardStartIdx >= 0)
+                        {
+                            int length = idx - inwardStartIdx;
+                            double bendDeg = length * angleStep;
+                            if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
+                            inwardStartIdx = -1;
+                        }
+                    }
+                }
+                if (inwardStartIdx >= 0)
+                {
+                    int length = (nSteps * 2) - inwardStartIdx;
+                    double bendDeg = length * angleStep;
+                    if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
+                }
 
-            double inwardBendArcPx = inwardScanRadius * (inwardBendAngleDeg * Math.PI / 180.0);
-            double inwardBendArcMm = inwardBendArcPx * pixeltomm;
+                // 7) 將角度轉換為物理尺寸 (mm)
+                double outerGapArcPx = outerScanRadius * (outerMaxGapAngleDeg * Math.PI / 180.0);
+                double outerGapArcMm = outerGapArcPx * pixeltomm;
 
-            //Console.WriteLine($"外擴情況: 最大開口角度={outerMaxGapAngleDeg:F2} deg => 弧長={outerGapArcMm:F2} mm");
-            //Console.WriteLine($"內彎情況: 最大內彎角度={inwardBendAngleDeg:F2} deg => 弧長={inwardBendArcMm:F2} mm");
+                double inwardBendArcPx = inwardScanRadius * (inwardBendAngleDeg * Math.PI / 180.0);
+                double inwardBendArcMm = inwardBendArcPx * pixeltomm;
+
+                //Console.WriteLine($"外擴情況: 最大開口角度={outerMaxGapAngleDeg:F2} deg => 弧長={outerGapArcMm:F2} mm");
+                //Console.WriteLine($"內彎情況: 最大內彎角度={inwardBendAngleDeg:F2} deg => 弧長={inwardBendArcMm:F2} mm");
 
                 // 由 GitHub Copilot 產生
                 // 修正: 移除手動 Dispose（using 會自動處理）
@@ -10031,8 +9781,8 @@ namespace peilin
                 // 篩選面積大於150像素的輪廓
                 List<Point[]> validContours = new List<Point[]>();
 
-                float minArea = 150;
-                if (app.param.TryGetValue("blackDot" + stop.ToString() + "_threshold", out string thresholdStr))
+                float minArea = 0;
+                if (app.param.TryGetValue("blackDot" + stop.ToString() + "_threshold", out string thresholdStr)) //若Yn=0 -> 不會寫入param -> minArea=0 -> 不設限 -> 符合Yn=0的概念
                 {
                     float.TryParse(thresholdStr, out minArea);
                 }
@@ -10149,7 +9899,12 @@ namespace peilin
             List<DetectionResult> filteredOutscDefects = new List<DetectionResult>();
 
             // 從資料庫讀取站點的長邊閾值
-            double outscLongerSide = GetDoubleParam(app.param, $"outscLen_{stop}", 100.0);
+            float outscLongerSide = 0;
+            if (app.param.TryGetValue("outscLen" + stop.ToString() + "_threshold", out string thresholdStr)) //若Yn=0 -> 不會寫入param -> outscLongerSide=0 -> 不設限 -> 符合Yn=0的概念
+            {
+                float.TryParse(thresholdStr, out outscLongerSide);
+            }
+            //double outscLongerSide = GetDoubleParam(app.param, $"outscLen_{stop}", 100.0);
 
             if (outscDefects.Count >= 8)
             {
@@ -19207,8 +18962,6 @@ public class app
     // 由 GitHub Copilot 產生
     // 修改: 使用執行緒安全的 ConcurrentDictionary
     public static ConcurrentDictionary<int, DateTime> samplePhotoTimes = new ConcurrentDictionary<int, DateTime>();
-    public static List<string> defectLabels_in = new List<string>();
-    public static List<string> defectLabels_out = new List<string>();
     public static List<string> defect_name = new List<string>();
     // 由 GitHub Copilot 產生
     // 新增: 每個站點的瑕疵名稱快取,避免重複查詢資料庫

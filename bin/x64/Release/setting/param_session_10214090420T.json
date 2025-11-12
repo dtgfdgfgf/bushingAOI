@@ -1,6 +1,6 @@
 {
   "SessionId": "20251112_10214090420T",
-  "CreatedTime": "2025-11-12T15:20:00.1066133+08:00",
+  "CreatedTime": "2025-11-12T16:58:22.3508828+08:00",
   "SourceType": "10214090420T",
   "TargetType": "10214090420T",
   "Parameters": [
@@ -744,60 +744,6 @@
     },
     {
       "Type": "10214090420T",
-      "Name": "outscAspectRatio",
-      "Value": "4.0",
-      "Stop": 3,
-      "ChineseName": "金屬面刮痕長寬比門檻",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscAspectRatio",
-      "Value": "4.0",
-      "Stop": 4,
-      "ChineseName": "金屬面刮痕長寬比門檻",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLongerSide",
-      "Value": "100",
-      "Stop": 3,
-      "ChineseName": "金屬面刮痕長邊長度門檻",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLongerSide",
-      "Value": "100",
-      "Stop": 4,
-      "ChineseName": "金屬面刮痕長邊長度門檻",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscArea",
-      "Value": "5000",
-      "Stop": 3,
-      "ChineseName": "金屬面刮痕面積門檻",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscArea",
-      "Value": "5000",
-      "Stop": 4,
-      "ChineseName": "金屬面刮痕面積門檻",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
       "Name": "objTolerance",
       "Value": "50",
       "Stop": 2,
@@ -946,24 +892,6 @@
       "Value": "200",
       "Stop": 4,
       "ChineseName": "白色像素閾值",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLen",
-      "Value": "800",
-      "Stop": 3,
-      "ChineseName": "外環刮痕長度",
-      "Zone": 0,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLen",
-      "Value": "800",
-      "Stop": 4,
-      "ChineseName": "外環刮痕長度",
       "Zone": 0,
       "IsSelected": false
     },
@@ -1707,60 +1635,6 @@
     },
     {
       "Type": "10214090420T",
-      "Name": "outscAspectRatio",
-      "Value": "4.0",
-      "Stop": 3,
-      "ChineseName": "金屬面刮痕長寬比門檻",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscAspectRatio",
-      "Value": "4.0",
-      "Stop": 4,
-      "ChineseName": "金屬面刮痕長寬比門檻",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLongerSide",
-      "Value": "100",
-      "Stop": 3,
-      "ChineseName": "金屬面刮痕長邊長度門檻",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLongerSide",
-      "Value": "100",
-      "Stop": 4,
-      "ChineseName": "金屬面刮痕長邊長度門檻",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscArea",
-      "Value": "5000",
-      "Stop": 3,
-      "ChineseName": "金屬面刮痕面積門檻",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscArea",
-      "Value": "5000",
-      "Stop": 4,
-      "ChineseName": "金屬面刮痕面積門檻",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
       "Name": "objTolerance",
       "Value": "50",
       "Stop": 2,
@@ -1909,24 +1783,6 @@
       "Value": "200",
       "Stop": 4,
       "ChineseName": "白色像素閾值",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLen",
-      "Value": "800",
-      "Stop": 3,
-      "ChineseName": "外環刮痕長度",
-      "Zone": 1,
-      "IsSelected": false
-    },
-    {
-      "Type": "10214090420T",
-      "Name": "outscLen",
-      "Value": "800",
-      "Stop": 4,
-      "ChineseName": "外環刮痕長度",
       "Zone": 1,
       "IsSelected": false
     }
