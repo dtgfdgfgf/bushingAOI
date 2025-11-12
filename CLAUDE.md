@@ -98,6 +98,17 @@ Located at `.\setting\mydb.sqlite` with the following tables:
 
 ## Code Style Requirements
 
+### Communication Language
+**All AI assistant responses must be in Traditional Chinese (繁體中文) only.**
+- Every response, explanation, and communication with users must use Traditional Chinese
+- Do not use Simplified Chinese (简体中文) or English in responses
+- Technical terms may remain in English when no standard Chinese translation exists
+
+### No Emoji Usage
+**Do not use emoji in any responses.**
+- All communication must be text-only without emoji characters
+- Use clear textual descriptions instead of emoji for emphasis or emotion
+
 ### Language & Comments
 - **All comments must be in Traditional Chinese (繁體中文)**
 - Add comment at start of AI-generated code sections: `// 由 GitHub Copilot 產生`
