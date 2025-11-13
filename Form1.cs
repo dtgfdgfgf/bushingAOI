@@ -1089,7 +1089,7 @@ namespace peilin
                                             StationResult chamferResult = new StationResult
                                             {
                                                 Stop = input.stop,
-                                                IsNG = true,
+                                                IsNG = isblue,
                                                 OkNgScore = 1.0f,
                                                 FinalMap = resultimage.Clone(),  // 使用 Clone 避免 double-free
                                                 DefectName = "chamfer",
@@ -1301,6 +1301,7 @@ namespace peilin
 
                                                             if (iou > GetDoubleParam(app.param, $"IOU_{input.stop}", 0.2) || inNonRoi)
                                                             {
+                                                                //Log.Debug($"{defect.class_name}瑕疵位於開口位置附近，跳過檢測");
                                                                 isOverlapping = true;
                                                                 break;
                                                             }                                             
@@ -4902,7 +4903,7 @@ namespace peilin
                         
                         string cacheKey = $"{app.produce_No}_{stop}";
                         app.chamferDetectionCache[cacheKey] = (chamferCheck != null);
-                        Console.WriteLine($"已載入站點 {stop} 的倒角檢測設定: {(chamferCheck != null ? "需要" : "不需要")}");
+                        Log.Debug($"已載入站點 {stop} 的倒角檢測設定: {(chamferCheck != null ? "需要" : "不需要")}");
                     }
                 }
             }
@@ -14080,6 +14081,14 @@ namespace peilin
         /// <param name="image">輸入圖像</param>
         /// <param name="stop">站點編號</param>
         /// <returns>是否檢測到藍色瑕疵（true=NG，false=OK）以及結果圖像</returns>
+        // ...existing code...
+
+        /// <summary>
+        /// 檢測倒角區域的藍色像素（五彩鋅電鍍檢測）- 使用 HSV 色彩空間
+        /// </summary>
+        /// <param name="image">輸入圖像</param>
+        /// <param name="stop">站點編號</param>
+        /// <returns>是否檢測到藍色瑕疵（true=NG，false=OK）以及結果圖像</returns>
         private (bool hasBlueDefect, Mat resultImage) CheckChamfer(Mat image, int stop)
         {
             try
@@ -14109,14 +14118,32 @@ namespace peilin
                 int bluePixelThreshold = GetIntParam(app.param, $"chamferBlueThreshold_{stop}", 5000);
 
                 using (Mat processImage = image.Clone())
+                using (Mat hsvImage = new Mat())
                 using (Mat blueMask = new Mat())
                 {
-                    // 4. 創建藍色遮罩 (BGR 順序: B≥150, G≤70, R≤70)
-                    Scalar lowerBlue = new Scalar(150, 0, 0);
-                    Scalar upperBlue = new Scalar(255, 70, 70);
-                    Cv2.InRange(processImage, lowerBlue, upperBlue, blueMask);
+                    // 4. 轉換為 HSV 色彩空間
+                    Cv2.CvtColor(processImage, hsvImage, ColorConversionCodes.BGR2HSV);
 
-                    // 5. 創建環形區域遮罩（倒角圓以外、內圓以內都是黑色）
+                    // 5. 讀取 HSV 範圍參數（可從資料庫設定，提供預設值）
+                    int hMin = GetIntParam(app.param, $"chamferBlueHMin_{stop}", 95);
+                    int hMax = GetIntParam(app.param, $"chamferBlueHMax_{stop}", 135);
+                    int sMin = GetIntParam(app.param, $"chamferBlueSMin_{stop}", 120);
+                    int vMin = GetIntParam(app.param, $"chamferBlueVMin_{stop}", 120);
+
+                    // 6. 創建藍色遮罩 (HSV: H=100-130, S≥50, V≥50)
+                    Scalar lowerBlue = new Scalar(hMin, sMin, vMin);
+                    Scalar upperBlue = new Scalar(hMax, 255, 255);
+                    Cv2.InRange(hsvImage, lowerBlue, upperBlue, blueMask);
+
+                    // 7. 可選：形態學處理去除噪點
+                    
+                    using (Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(7, 7)))
+                    {
+                        Cv2.MorphologyEx(blueMask, blueMask, MorphTypes.Close, kernel);
+                        Cv2.MorphologyEx(blueMask, blueMask, MorphTypes.Open, kernel);
+                    }
+                    
+                    // 8. 創建環形區域遮罩（倒角圓以外、內圓以內都是黑色）
                     using (Mat mask = new Mat(blueMask.Size(), MatType.CV_8UC1, Scalar.Black))
                     {
                         // 繪製倒角圓（外圓）區域為白色
@@ -14131,25 +14158,25 @@ namespace peilin
                         Cv2.Circle(mask, new Point(knownInnerCenterX, knownInnerCenterY),
                                  knownInnerRadius, Scalar.Black, -1);
 
-                        // 6. 應用環形遮罩到藍色遮罩
+                        // 9. 應用環形遮罩到藍色遮罩
                         using (Mat roi = new Mat())
                         {
                             Cv2.BitwiseAnd(blueMask, blueMask, roi, mask);
 
-                            // 7. 計算藍色像素數量
+                            // 10. 計算藍色像素數量
                             int bluePixelCount = Cv2.CountNonZero(roi);
 
-                            // 8. 判斷是否為 NG (藍色像素超過閾值)
+                            // 11. 判斷是否為 NG (藍色像素超過閾值)
                             bool hasBlueDefect = (bluePixelCount > bluePixelThreshold);
 
-                            // 9. 根據檢測結果返回對應圖像
+                            // 12. 根據檢測結果返回對應圖像
                             if (hasBlueDefect)
                             {
                                 // NG：找出藍色區域輪廓並繪製
                                 Point[][] contours;
                                 HierarchyIndex[] hierarchy;
                                 Cv2.FindContours(roi, out contours, out hierarchy,
-                                                RetrievalModes.External,
+                                                RetrievalModes.List,
                                                 ContourApproximationModes.ApproxSimple);
 
                                 // 創建結果圖像（使用原始圖像）
@@ -14189,6 +14216,8 @@ namespace peilin
                 return (false, image.Clone());
             }
         }
+
+        // ...existing code...
         public double CalculateIoU(Rect rect1, Rect rect2)
         {
             // 計算交集矩形的左上角和右下角座標
