@@ -9362,9 +9362,16 @@ namespace peilin
                     {
                         if (inwardStartIdx >= 0)
                         {
-                            int length = idx - inwardStartIdx;
-                            double bendDeg = length * angleStep;
-                            if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
+                            int consecutiveCount = idx - inwardStartIdx;
+
+                            // 關鍵改動：只有連續5點以上才計入內彎
+                            if (consecutiveCount >= 5)
+                            {
+                                int length = idx - inwardStartIdx;
+                                double bendDeg = length * angleStep;
+                                if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
+                            }
+
                             inwardStartIdx = -1;
                         }
                     }
