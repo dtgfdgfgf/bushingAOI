@@ -209,6 +209,7 @@ namespace peilin
             this.label44 = new System.Windows.Forms.Label();
             this.label46 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.button24 = new System.Windows.Forms.Button();
             this.panel2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -634,6 +635,7 @@ namespace peilin
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.tabPage1.Controls.Add(this.button24);
             this.tabPage1.Controls.Add(this.button49);
             this.tabPage1.Controls.Add(this.button48);
             this.tabPage1.Controls.Add(this.button22);
@@ -2127,6 +2129,16 @@ namespace peilin
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
+            // button24
+            // 
+            this.button24.Location = new System.Drawing.Point(357, 361);
+            this.button24.Name = "button24";
+            this.button24.Size = new System.Drawing.Size(75, 23);
+            this.button24.TabIndex = 466;
+            this.button24.Text = "testbp1";
+            this.button24.UseVisualStyleBackColor = true;
+            this.button24.Click += new System.EventHandler(this.button24_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -2350,6 +2362,7 @@ namespace peilin
         private System.Windows.Forms.Button button48;
         private System.Windows.Forms.Button button49;
         private System.Windows.Forms.TextBox logTextBox;
+        private System.Windows.Forms.Button button24;
     }
 }
 
