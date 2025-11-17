@@ -16684,6 +16684,10 @@ namespace peilin
             }
         }
 
+        private void button24_Click(object sender, EventArgs e)
+        {
+
+        }
     }
     /// <summary>
     /// 管理瑕疵計數的寫入、讀取和更新
@@ -17411,6 +17415,14 @@ public class ResultManager
     {
         try
         {
+            int sampleId = sampleResult.SampleId;
+
+            // ✅ 新增：檢查此樣品是否已處理過
+            if (sampleResults.ContainsKey(sampleId))
+            {
+                Log.Warning($"樣品 {sampleId} 重複處理，跳過統計更新（保留第一次結果）");
+                //return; // ⚠️ 這裡直接 return，不執行後續邏輯
+            }
             // 儲存影像和紀錄 - 以下邏輯需要根據 NULL 狀態調整
 
             // 新增部分 - 將所有站點結果添加到統計管理器
