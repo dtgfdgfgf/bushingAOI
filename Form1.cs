@@ -1164,10 +1164,60 @@ namespace peilin
 
                                     #endregion
 
-                                    
+                                    #region 黑點AOI
+                                    // 由 GitHub Copilot 產生 - 黑點檢測
+                                    // 檢查是否啟用黑點檢測（從參數讀取）
+                                    bool performBlackSpotDetection = app.param.ContainsKey($"enable_BlackSpot_{input.stop}") && 
+                                                                     int.Parse(app.param[$"enable_BlackSpot_{input.stop}"]) == 1;
+
+                                    if (performBlackSpotDetection)
+                                    {
+                                        Mat roiWhite = null;
+                                        Mat blackSpotResult = null;
+                                        try
+                                        {
+                                            // 使用白色背景的 ROI 提取（避免黑色背景被誤判為黑點）
+                                            roiWhite = DetectAndExtractROI_W(roiInputImage, input.stop, input.count);
+
+                                            if (roiWhite != null && !roiWhite.IsDisposed && !roiWhite.Empty())
+                                            {
+                                                // 準備非ROI區域列表（只傳遞 Rect,不包含 className 和 score）
+                                                List<Rect> blackSpotNonRoiRects = null;
+                                                if (nonRoiRects != null && nonRoiRects.Count > 0)
+                                                {
+                                                    blackSpotNonRoiRects = nonRoiRects.Select(nr => nr.rect).ToList();
+                                                }
+
+                                                // 執行黑點檢測
+                                                (bool hasBlackSpot, Mat annotatedImage) = DetectBlackSpots(roiWhite, input.stop, input.count, input.name, blackSpotNonRoiRects);
+                                                blackSpotResult = annotatedImage;
+
+                                                if (hasBlackSpot)
+                                                {
+                                                    Log.Information($"站點{input.stop} 樣本{input.count} 檢出黑點瑕疵");
+                                                    // TODO: 根據需求決定是否將黑點檢測結果整合到 StationResult 中
+                                                    // 目前僅記錄日誌,可後續擴展為影響 OK/NG 判定
+                                                }
+                                            }
+                                            else
+                                            {
+                                                Log.Warning($"站點{input.stop} 樣本{input.count} 白色背景ROI提取失敗,跳過黑點檢測");
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Log.Error($"站點{input.stop} 樣本{input.count} 黑點檢測發生異常: {ex.Message}");
+                                        }
+                                        finally
+                                        {
+                                            roiWhite?.Dispose();
+                                            blackSpotResult?.Dispose();
+                                        }
+                                    }
+                                    #endregion
 
                                     #region YOLO
-                      
+
                                     using (Mat visualizationImage = input.image.Clone())
                                     {
                                         List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
@@ -10380,6 +10430,542 @@ namespace peilin
             public List<string> AnalysisDetails { get; set; } = new List<string>(); // 詳細分析
         }
 
+        #region 黑點檢測相關常數
+        // 由 GitHub Copilot 產生
+        // 黑點檢測參數 - 方便調整
+        private const int BLACKSPOT_THRESHOLD = 80;        // 二值化閾值
+        private const int BLACKSPOT_MIN_AREA = 400;        // 最小面積
+        private const int BLACKSPOT_MAX_AREA = 50000;      // 最大面積
+        private const double BLACKSPOT_MIN_CIRCULARITY = 0.5; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
+        private const int BLACKSPOT_CONTOUR_THICKNESS = 2; // 輪廓粗細
+        // private const int MORPH_KERNEL_SIZE = 3;         // 形態學核心大小（可選，方便註解）
+        private static readonly Scalar BLACKSPOT_CONTOUR_COLOR = Scalar.Yellow; // 輪廓顏色
+        #endregion
+
+        #region DetectAndExtractROI_W (白色遮罩版本)
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 與 DetectAndExtractROI 相同功能，但外環之外區域染成白色而非黑色
+        /// 用於黑點檢測，確保非 ROI 區域不會被誤判為黑點
+        /// </summary>
+        /// <param name="inputImage">輸入影像</param>
+        /// <param name="stop">站點編號 (1-4)</param>
+        /// <param name="count">樣本編號</param>
+        /// <param name="chamfer">是否為倒角檢測模式</param>
+        /// <returns>處理後的 ROI 影像（外環之外為白色）</returns>
+        private Mat DetectAndExtractROI_W(Mat inputImage, int stop, int count, bool chamfer = false)
+        {
+            // 由 GitHub Copilot 產生
+            Mat mask = null;
+            Mat roi_full = null;
+            Mat roi_final = null;
+            Mat whiteBackground = null;
+
+            try
+            {
+                DateTime st = DateTime.Now;
+
+                // 從資料庫讀取預設圓心和半徑
+                int knownOuterCenterX = int.Parse(app.param[$"known_outer_center_x_{stop}"]);
+                int knownOuterCenterY = int.Parse(app.param[$"known_outer_center_y_{stop}"]);
+                int knownOuterRadius = int.Parse(app.param[$"known_outer_radius_{stop}"]);
+                int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
+                int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
+                int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
+
+                Point knownOuterCenter = new Point(knownOuterCenterX, knownOuterCenterY);
+                Point knownInnerCenter = new Point(knownInnerCenterX, knownInnerCenterY);
+
+                // 建立黑色遮罩（與原函數相同）
+                mask = new Mat(inputImage.Size(), MatType.CV_8UC1, Scalar.Black);
+
+                // 根據站點繪製遮罩（與原函數相同邏輯）
+                if (stop == 1 || stop == 2)
+                {
+                    int chamferCenterX = int.Parse(app.param[$"known_chamfer_center_x_{stop}"]);
+                    int chamferCenterY = int.Parse(app.param[$"known_chamfer_center_y_{stop}"]);
+                    int chamferRadius = int.Parse(app.param[$"known_chamfer_radius_{stop}"]);
+                    Point chamferCenter = new Point(chamferCenterX, chamferCenterY);
+
+                    if (chamfer == false)
+                    {
+                        Cv2.Circle(mask, knownOuterCenter, knownOuterRadius, Scalar.White, -1);
+                        Cv2.Circle(mask, knownInnerCenter, knownInnerRadius, Scalar.White, -1);
+                    }
+                    else
+                    {
+                        Cv2.Circle(mask, chamferCenter, chamferRadius, Scalar.White, -1);
+                        Cv2.Circle(mask, knownInnerCenter, knownInnerRadius, Scalar.White, -1);
+                    }
+                }
+                else if (stop == 3 || stop == 4)
+                {
+                    if (chamfer == false)
+                    {
+                        Cv2.Circle(mask, knownOuterCenter, knownOuterRadius, Scalar.White, -1);
+                        Cv2.Circle(mask, knownInnerCenter, knownInnerRadius, Scalar.Black, -1);
+                    }
+                    else
+                    {
+                        Cv2.Circle(mask, knownInnerCenter, knownInnerRadius, Scalar.Black, -1);
+                    }
+                }
+
+                // 關鍵差異：建立白色背景而非黑色
+                whiteBackground = new Mat(inputImage.Size(), inputImage.Type(), Scalar.White);
+
+                // 先將 ROI 區域複製到白色背景上
+                roi_full = whiteBackground.Clone();
+                inputImage.CopyTo(roi_full, mask);
+
+                // 如果是第1、2站，將內環區域填充為白色
+                if (stop == 1 || stop == 2)
+                {
+                    Cv2.Circle(roi_full, knownInnerCenter, knownInnerRadius, Scalar.White, -1);
+                }
+
+                // 轉灰階
+                roi_final = new Mat();
+                if (!(app.param.ContainsKey($"color_{stop}") && app.param[$"color_{stop}"] == "1"))
+                {
+                    Cv2.CvtColor(roi_full, roi_final, ColorConversionCodes.BGR2GRAY);
+                }
+                else
+                {
+                    roi_final = roi_full.Clone();
+                }
+
+                // 站點 1、2 進行對比度增強
+                if (stop == 1 || stop == 2)
+                {
+                    int contrastOffset = app.param.ContainsKey($"deepenContrast_{stop}") ?
+                                        int.Parse(app.param[$"deepenContrast_{stop}"]) : 30;
+                    int brightnessOffset = app.param.ContainsKey($"deepenBrightness_{stop}") ?
+                                          int.Parse(app.param[$"deepenBrightness_{stop}"]) : 0;
+                    roi_final = ContrastAndClose(roi_final, contrastOffset, brightnessOffset, stop);
+                }
+
+                // 轉回 BGR 格式
+                if (!(app.param.ContainsKey($"color_{stop}") && app.param[$"color_{stop}"] == "1"))
+                {
+                    Cv2.CvtColor(roi_final, roi_final, ColorConversionCodes.GRAY2BGR);
+                }
+
+                // 儲存 ROI 影像（如果啟用）
+                bool shouldSaveROI = app.param.ContainsKey("saveROI") && app.param["saveROI"] == "true";
+                if (shouldSaveROI)
+                {
+                    string visImgPath = chamfer == false
+                        ? $@".\image\{st.ToString("yyyy-MM")}\{st.ToString("MMdd")}\{app.foldername}\ROI_{stop}\{count}_{stop}_roi_w.png"
+                        : $@".\image\{st.ToString("yyyy-MM")}\{st.ToString("MMdd")}\{app.foldername}\chamferROI_{stop}\{count}_{stop}_chamferRoi_w.png";
+                    app.Queue_Save.Enqueue(new ImageSave(roi_final.Clone(), visImgPath));
+                    app._sv.Set();
+                }
+
+                return roi_final;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"DetectAndExtractROI_W 發生錯誤 (站點 {stop}, 編號 {count}): {ex.Message}");
+                throw;
+            }
+            finally
+            {
+                // 由 GitHub Copilot 產生 - 記憶體管理
+                mask?.Dispose();
+                roi_full?.Dispose();
+                whiteBackground?.Dispose();
+                // roi_final 由呼叫者負責釋放
+            }
+        }
+        #endregion
+
+        #region 黑點檢測核心函數
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 黑點檢測演算法：二值化 → 輪廓檢測 → 面積過濾 → 圓度過濾 → 非ROI過濾 → 繪製標註
+        /// </summary>
+        /// <param name="roiImage">ROI 影像（外環之外已染白）</param>
+        /// <param name="stop">站點編號 (1-4)</param>
+        /// <param name="count">樣本編號</param>
+        /// <param name="originalFileName">原始檔名</param>
+        /// <param name="nonRoiRects">非ROI區域列表（可選,用於過濾位於非檢測區域的黑點）</param>
+        /// <returns>(hasDefect: 是否有黑點, annotatedImage: 標註後的圖)</returns>
+        private (bool hasDefect, Mat annotatedImage) DetectBlackSpots(Mat roiImage, int stop, int count, string originalFileName, List<Rect> nonRoiRects = null)
+        {
+            // 由 GitHub Copilot 產生
+            Mat grayImage = null;
+            Mat binaryImage = null;
+            Mat morphImage = null;
+            Mat annotatedImage = null;
+
+            try
+            {
+                // 轉灰階（如果尚未轉換）
+                if (roiImage.Channels() == 3)
+                {
+                    grayImage = new Mat();
+                    Cv2.CvtColor(roiImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                }
+                else
+                {
+                    grayImage = roiImage.Clone();
+                }
+
+                // 二值化：閾值以下為白色（黑點區域）
+                binaryImage = new Mat();
+                Cv2.Threshold(grayImage, binaryImage, BLACKSPOT_THRESHOLD, 255, ThresholdTypes.BinaryInv);
+
+                // 形態學處理（開運算去除雜訊）- 目前註解，方便調整
+                // morphImage = new Mat();
+                // Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(MORPH_KERNEL_SIZE, MORPH_KERNEL_SIZE));
+                // Cv2.MorphologyEx(binaryImage, morphImage, MorphTypes.Open, kernel);
+                // kernel.Dispose();
+
+                // 使用二值化結果進行輪廓檢測（若啟用形態學則用 morphImage）
+                Mat contourSource = binaryImage; // 或 morphImage
+
+                // 輪廓檢測
+                Point[][] contours;
+                HierarchyIndex[] hierarchy;
+                Cv2.FindContours(contourSource, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+
+                // 面積與圓度過濾
+                List<Point[]> validContours = new List<Point[]>();
+                foreach (var contour in contours)
+                {
+                    double area = Cv2.ContourArea(contour);
+                    if (area >= BLACKSPOT_MIN_AREA && area <= BLACKSPOT_MAX_AREA)
+                    {
+                        // 計算圓度：圓度 = 4π × 面積 / 周長²
+                        double perimeter = Cv2.ArcLength(contour, true);
+                        double circularity = 0;
+                        if (perimeter > 0)
+                        {
+                            circularity = (4 * Math.PI * area) / (perimeter * perimeter);
+                        }
+
+                        // 圓度檢測：只保留圓度 >= 0.35 的輪廓
+                        if (circularity >= BLACKSPOT_MIN_CIRCULARITY)
+                        {
+                            // 由 GitHub Copilot 產生 - 非ROI區域過濾
+                            bool shouldSkip = false;
+                            if (nonRoiRects != null && nonRoiRects.Count > 0)
+                            {
+                                // 計算輪廓的最小外接矩形
+                                Rect contourRect = Cv2.BoundingRect(contour);
+                                double iouThreshold = GetDoubleParam(app.param, $"IOU_{stop}", 0.2);
+
+                                // 與所有非ROI區域進行 IoU 檢測
+                                foreach (var nonRoiRect in nonRoiRects)
+                                {
+                                    double iou = CalculateIoU(contourRect, nonRoiRect);
+                                    if (iou > iouThreshold)
+                                    {
+                                        shouldSkip = true;
+                                        Log.Debug($"黑點輪廓被非ROI過濾 (站{stop}, 編號{count}, IoU={iou:F3}, 閾值={iouThreshold:F3})");
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // 只有未被非ROI過濾的輪廓才加入 validContours
+                            if (!shouldSkip)
+                            {
+                                validContours.Add(contour);
+                            }
+                        }
+                    }
+                }
+
+                // 建立標註圖（在彩色圖上繪製）
+                if (roiImage.Channels() == 1)
+                {
+                    annotatedImage = new Mat();
+                    Cv2.CvtColor(roiImage, annotatedImage, ColorConversionCodes.GRAY2BGR);
+                }
+                else
+                {
+                    annotatedImage = roiImage.Clone();
+                }
+
+                // 繪製有效輪廓並附加圓度和面積資訊
+                if (validContours.Count > 0)
+                {
+                    for (int i = 0; i < validContours.Count; i++)
+                    {
+                        // 繪製輪廓
+                        Cv2.DrawContours(annotatedImage, validContours, i, BLACKSPOT_CONTOUR_COLOR, BLACKSPOT_CONTOUR_THICKNESS);
+
+                        // 計算面積
+                        double area = Cv2.ContourArea(validContours[i]);
+
+                        // 計算圓度：圓度 = 4π × 面積 / 周長²，完美圓形 = 1.0
+                        double perimeter = Cv2.ArcLength(validContours[i], true);
+                        double circularity = 0;
+                        if (perimeter > 0)
+                        {
+                            circularity = (4 * Math.PI * area) / (perimeter * perimeter);
+                        }
+
+                        // 計算輪廓的邊界矩形，用於定位文字
+                        Rect boundingRect = Cv2.BoundingRect(validContours[i]);
+
+                        // 準備文字資訊
+                        string infoText1 = $"Area: {area:F0}";
+                        string infoText2 = $"Circ: {circularity:F3}";
+
+                        // 文字位置：在輪廓左上角附近
+                        Point textPos1 = new Point(boundingRect.X, boundingRect.Y - 10);
+                        Point textPos2 = new Point(boundingRect.X, boundingRect.Y - 30);
+
+                        // 確保文字不超出圖像邊界
+                        if (textPos2.Y < 0)
+                        {
+                            textPos1 = new Point(boundingRect.X, boundingRect.Y + boundingRect.Height + 20);
+                            textPos2 = new Point(boundingRect.X, boundingRect.Y + boundingRect.Height + 40);
+                        }
+
+                        // 繪製文字（黃色背景黑色字體以提高可讀性）
+                        // 先繪製黑色背景
+                        Cv2.PutText(annotatedImage, infoText2, textPos2, HersheyFonts.HersheySimplex, 0.5, Scalar.Black, 3);
+                        Cv2.PutText(annotatedImage, infoText1, textPos1, HersheyFonts.HersheySimplex, 0.5, Scalar.Black, 3);
+                        // 再繪製黃色文字
+                        Cv2.PutText(annotatedImage, infoText2, textPos2, HersheyFonts.HersheySimplex, 0.5, Scalar.Yellow, 1);
+                        Cv2.PutText(annotatedImage, infoText1, textPos1, HersheyFonts.HersheySimplex, 0.5, Scalar.Yellow, 1);
+                    }
+                }
+
+                bool hasDefect = validContours.Count > 0;
+
+                return (hasDefect, annotatedImage);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"DetectBlackSpots 發生錯誤 (編號 {count}, 檔案 {originalFileName}): {ex.Message}");
+                // 錯誤時返回原圖
+                Mat fallbackImage = roiImage.Clone();
+                return (false, fallbackImage);
+            }
+            finally
+            {
+                // 由 GitHub Copilot 產生 - 記憶體管理
+                grayImage?.Dispose();
+                binaryImage?.Dispose();
+                morphImage?.Dispose();
+                // annotatedImage 由呼叫者負責釋放
+            }
+        }
+        #endregion
+
+        #region button24_Click 事件處理器
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 黑點 AOI 批次檢測：選擇資料夾 → 載入 a-1.jpg 圖檔 → ROI 提取 → 黑點檢測 → 統計報告
+        /// </summary>
+        private void button24_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 使用 WindowsAPICodePack 選擇資料夾
+                using (var dialog = new CommonOpenFileDialog())
+                {
+                    dialog.IsFolderPicker = true;
+                    dialog.Title = "選擇包含 a-1.jpg 圖檔的資料夾";
+
+                    if (dialog.ShowDialog() != CommonFileDialogResult.Ok)
+                    {
+                        return; // 使用者取消
+                    }
+
+                    string selectedFolder = dialog.FileName;
+
+                    // 搜尋符合 *-1.jpg 模式的檔案
+                    string[] imageFiles = Directory.GetFiles(selectedFolder, "*-1.jpg", SearchOption.TopDirectoryOnly);
+
+                    if (imageFiles.Length == 0)
+                    {
+                        MessageBox.Show("找不到符合 a-1.jpg 模式的圖檔！", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // 統計變數
+                    int okCount = 0;
+                    int ngCount = 0;
+                    int errorCount = 0;
+                    List<string> errorFiles = new List<string>();
+
+                    // 建立 bptest 資料夾（如果需要儲存）
+                    string bptestFolder = Path.Combine(selectedFolder, "bptest");
+                    if (app.offlinetest && !Directory.Exists(bptestFolder))
+                    {
+                        Directory.CreateDirectory(bptestFolder);
+                    }
+
+                    // 統計檔案路徑
+                    string statisticsFile = Path.Combine(selectedFolder, "統計.txt");
+
+                    // 處理每張圖片
+                    for (int i = 0; i < imageFiles.Length; i++)
+                    {
+                        string filePath = imageFiles[i];
+                        string fileName = Path.GetFileName(filePath);
+
+                        // 進度回饋
+                        if (this.InvokeRequired)
+                        {
+                            this.Invoke(new Action(() =>
+                            {
+                                this.Text = $"黑點檢測中... ({i + 1}/{imageFiles.Length}) - {fileName}";
+                            }));
+                        }
+                        else
+                        {
+                            this.Text = $"黑點檢測中... ({i + 1}/{imageFiles.Length}) - {fileName}";
+                        }
+
+                        Mat inputImage = null;
+                        Mat roiImage = null;
+                        Mat annotatedImage = null;
+
+                        try
+                        {
+                            // 正則表達式解析檔名：提取數字 a
+                            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+                            string[] parts = fileNameWithoutExt.Split('-');
+                            if (parts.Length < 2 || !int.TryParse(parts[0], out int countValue))
+                            {
+                                Log.Warning($"檔名格式不符 (應為 a-1.jpg): {fileName}");
+                                errorCount++;
+                                errorFiles.Add(fileName + " (檔名格式錯誤)");
+                                continue;
+                            }
+
+                            // 載入圖片
+                            inputImage = Cv2.ImRead(filePath, ImreadModes.Color);
+                            if (inputImage == null || inputImage.Empty())
+                            {
+                                Log.Warning($"無法載入圖片: {fileName}");
+                                errorCount++;
+                                errorFiles.Add(fileName + " (載入失敗)");
+                                continue;
+                            }
+
+                            // 呼叫 DetectAndExtractROI_W (站點 1，白色遮罩)
+                            roiImage = DetectAndExtractROI_W(inputImage, stop: 1, count: countValue, chamfer: false);
+
+                            // 呼叫 DetectBlackSpots（離線測試不使用非ROI過濾,傳入 null）
+                            var (hasDefect, annotated) = DetectBlackSpots(roiImage, 1, countValue, fileName, null);
+                            annotatedImage = annotated;
+
+                            // 統計
+                            if (hasDefect)
+                            {
+                                ngCount++;
+
+                                // 若 app.offlinetest = true，寫檔 NG 圖片
+                                if (app.offlinetest)
+                                {
+                                    string outputPath = Path.Combine(bptestFolder, fileName);
+                                    Cv2.ImWrite(outputPath, annotatedImage);
+                                }
+                            }
+                            else
+                            {
+                                okCount++;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error($"處理圖片時發生錯誤 ({fileName}): {ex.Message}");
+                            errorCount++;
+                            errorFiles.Add(fileName + $" ({ex.Message})");
+                        }
+                        finally
+                        {
+                            // 由 GitHub Copilot 產生 - 確保記憶體正確釋放
+                            inputImage?.Dispose();
+                            roiImage?.Dispose();
+                            annotatedImage?.Dispose();
+                        }
+                    }
+
+                    // 寫入統計檔案
+                    try
+                    {
+                        using (StreamWriter sw = new StreamWriter(statisticsFile, false, Encoding.UTF8))
+                        {
+                            sw.WriteLine("=== 黑點 AOI 檢測統計報告 ===");
+                            sw.WriteLine($"檢測時間: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                            sw.WriteLine($"檢測資料夾: {selectedFolder}");
+                            sw.WriteLine();
+                            sw.WriteLine($"總圖片數: {imageFiles.Length}");
+                            sw.WriteLine($"OK 數量: {okCount}");
+                            sw.WriteLine($"NG 數量: {ngCount}");
+                            sw.WriteLine($"錯誤數量: {errorCount}");
+                            sw.WriteLine();
+                            sw.WriteLine($"良率: {(imageFiles.Length > 0 ? (okCount * 100.0 / imageFiles.Length).ToString("F2") : "N/A")}%");
+
+                            if (errorFiles.Count > 0)
+                            {
+                                sw.WriteLine();
+                                sw.WriteLine("=== 錯誤檔案列表 ===");
+                                foreach (var errorFile in errorFiles)
+                                {
+                                    sw.WriteLine($"  - {errorFile}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"寫入統計檔案失敗: {ex.Message}");
+                    }
+
+                    // 恢復標題
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() => { this.Text = "peilin"; }));
+                    }
+                    else
+                    {
+                        this.Text = "peilin";
+                    }
+
+                    // 顯示完成訊息
+                    string resultMessage = $"黑點檢測完成！\\n\\n" +
+                                          $"總數: {imageFiles.Length}\\n" +
+                                          $"OK: {okCount}\\n" +
+                                          $"NG: {ngCount}\\n" +
+                                          $"錯誤: {errorCount}\\n\\n" +
+                                          $"統計檔案已儲存至:\\n{statisticsFile}";
+
+                    if (app.offlinetest && ngCount > 0)
+                    {
+                        resultMessage += $"\\n\\nNG 圖片已儲存至:\\n{bptestFolder}";
+                    }
+
+                    MessageBox.Show(resultMessage, "檢測完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"button24_Click 發生錯誤: {ex.Message}\\n{ex.StackTrace}");
+                MessageBox.Show($"執行過程中發生錯誤:\\n{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // 恢復標題
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new Action(() => { this.Text = "peilin"; }));
+                }
+                else
+                {
+                    this.Text = "peilin";
+                }
+            }
+        }
+        #endregion
+
         #region OTP五彩鋅色彩檢測相關函數0
 
 
@@ -16684,10 +17270,6 @@ namespace peilin
             }
         }
 
-        private void button24_Click(object sender, EventArgs e)
-        {
-
-        }
     }
     /// <summary>
     /// 管理瑕疵計數的寫入、讀取和更新
@@ -19069,7 +19651,7 @@ public class app
     public static int lastD98Accepted = -1;
     public static int ProductiveTimeoutSec = 10;
 
-    public static bool offlinetest = false;
+    public static bool offlinetest =true;
     public static bool testc = false;
     public static bool testd = false;
     public static bool test = true;
