@@ -1160,6 +1160,60 @@ namespace peilin
                                         {
                                             PerformanceProfiler.StopMeasure($"{input.count}_nonRoiDetection1");
                                         }
+
+                                        // 由 GitHub Copilot 產生
+                                        // 篩選 cyg 框，確保恰好 4 個（使用 NMS + 方案A：先空間去重，再角度篩選）
+                                        if (nonRoiRects.Count > 0)
+                                        {
+                                            // 1. 分離 cyg 和其他類別
+                                            var cygRects = nonRoiRects.Where(r => r.className == "cyg").ToList();
+                                            var otherRects = nonRoiRects.Where(r => r.className != "cyg").ToList();
+
+                                            // 2. 如果 cyg 數量不是 4，進行篩選
+                                            if (cygRects.Count > 4)
+                                            {
+                                                Log.Debug($"站點 {input.stop} 樣品 {input.count} 檢測到 {cygRects.Count} 個 cyg，開始篩選");
+
+                                                // ===【階段1】空間去重（NMS）===
+                                                // 移除空間上重疊的框，保留 score 較高的
+                                                cygRects = ApplyNMS(cygRects, iouThreshold: 0.01); // 有疊到就不行!
+                                                Log.Debug($"  NMS 後剩餘 {cygRects.Count} 個 cyg 框");
+
+                                                // 如果 NMS 後還是 > 4，才做角度篩選
+                                                if (cygRects.Count > 4)
+                                                {
+                                                    // ===【階段2】角度篩選（方案A + 遞迴）===
+                                                    // 讀取圓心座標
+                                                    int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{input.stop}"]);
+                                                    int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{input.stop}"]);
+                                                    Point circleCenter = new Point(knownInnerCenterX, knownInnerCenterY);
+
+                                                    // 計算每個 cyg 框中心點相對於圓心的角度
+                                                    var cygWithAngles = cygRects.Select(r =>
+                                                    {
+                                                        Point center = new Point(r.rect.X + r.rect.Width / 2, r.rect.Y + r.rect.Height / 2);
+                                                        double angle = Math.Atan2(center.Y - circleCenter.Y, center.X - circleCenter.X) * 180.0 / Math.PI;
+                                                        if (angle < 0) angle += 360; // 轉換為 0-360 度
+                                                        return new { Rect = r, Center = center, Angle = angle };
+                                                    }).OrderBy(x => x.Angle).ToList();
+
+                                                    // 遞迴移除多餘的框，直到剩下 4 個
+                                                    var filteredCygWithAngles = RecursiveRemoveExcessCygFrames(cygWithAngles);
+
+                                                    // 更新 cygRects 為篩選後的結果
+                                                    cygRects = filteredCygWithAngles.Select(c => c.Rect).ToList();
+                                                }
+
+                                                Log.Debug($"  最終保留 {cygRects.Count} 個 cyg 框");
+                                            }
+                                            else if (cygRects.Count < 4)
+                                            {
+                                                Log.Warning($"站點 {input.stop} 樣品 {input.count} 只檢測到 {cygRects.Count} 個 cyg（應為 4 個）");
+                                            }
+
+                                            // 3. 合併 cyg 和其他類別，更新 nonRoiRects
+                                            nonRoiRects = cygRects.Concat(otherRects).ToList();
+                                        }
                                     }
 
                                     #endregion
@@ -10458,9 +10512,11 @@ namespace peilin
         // 由 GitHub Copilot 產生
         // 黑點檢測參數 - 方便調整
         private const int BLACKSPOT_THRESHOLD = 50;        // 二值化閾值
-        private const int BLACKSPOT_MIN_AREA = 400;        // 最小面積
+        private const int BLACKSPOT_MIN_AREA = 200;        // 最小面積
         private const int BLACKSPOT_MAX_AREA = 50000;      // 最大面積
-        private const double BLACKSPOT_MIN_CIRCULARITY = 0.4; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
+        private const double BLACKSPOT_MIN_CIRCULARITY = 0.3; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
+        private const double BLACKSPOT_MIN_ASPECT_RATIO = 0.5; // 最小長寬比（寬/高或高/寬的較小值，範圍 0-1，1=正方形）
+        private const double BLACKSPOT_MAX_ASPECT_RATIO = 3.0; // 最大長寬比（長/寬的較大值，範圍 ≥1，1=正方形）
         private const int BLACKSPOT_CONTOUR_THICKNESS = 2; // 輪廓粗細
         private const int MORPH_KERNEL_SIZE = 3;         // 形態學核心大小（可選，方便註解）
         private const double IOUTHRESHOLD = 0.3;
@@ -10698,7 +10754,7 @@ namespace peilin
 
                     // 讀取擴展參數（與你在 getmat1 中的方式相同）
                     int innerExpandPixels = int.Parse(app.param[$"expandNROI_in_{stop}"]);
-                    int outerExpandPixels = int.Parse(app.param[$"expandNROI_in_{stop}"]);
+                    int outerExpandPixels = int.Parse(app.param[$"expandNROI_out_{stop}"]);
 
                     // 對每個 nonRoiRect 計算對應的多邊形
                     foreach (var nonRoiRect in nonRoiRects)
@@ -10719,14 +10775,12 @@ namespace peilin
                     {
                         foreach (var polygon in nonRoiPolygons)
                         {
-                            Cv2.Polylines(debugImage, new Point[][] { polygon }, true, new Scalar(0, 255, 0), 2);
+                            Cv2.Polylines(debugImage, new Point[][] { polygon }, true, new Scalar(0, 255, 255), 2);
                         }
                     }
                 }
 
                 // ========== 修正結束 ==========
-
-
 
                 // 面積與圓度過濾
                 List<Point[]> validContours = new List<Point[]>();
@@ -10735,7 +10789,8 @@ namespace peilin
                     double area = Cv2.ContourArea(contour);
                     if (area >= BLACKSPOT_MIN_AREA && area <= BLACKSPOT_MAX_AREA)
                     {
-                        // 計算圓度：圓度 = 4π × 面積 / 周長²
+                        // 由 GitHub Copilot 產生
+                        // 計算圓度
                         double perimeter = Cv2.ArcLength(contour, true);
                         double circularity = 0;
                         if (perimeter > 0)
@@ -10743,48 +10798,64 @@ namespace peilin
                             circularity = (4 * Math.PI * area) / (perimeter * perimeter);
                         }
 
-                        // 圓度檢測
-                        if (circularity >= BLACKSPOT_MIN_CIRCULARITY)
+                        // 計算長寬比
+                        Rect tempRect = Cv2.BoundingRect(contour);
+                        double aspectRatio = (double)Math.Max(tempRect.Width, tempRect.Height) / Math.Min(tempRect.Width, tempRect.Height);
+
+                        // 形狀檢測：圓度或長寬比符合標準即可
+                        // 圓度標準：接近圓形（circularity >= 0.3）
+                        // 長寬比標準：接近正方形或長條形（aspectRatio <= 2.0）
+                        bool passCircularityTest = circularity >= BLACKSPOT_MIN_CIRCULARITY;
+                        bool passAspectRatioTest = aspectRatio <= BLACKSPOT_MAX_ASPECT_RATIO;
+
+                        if (passCircularityTest/* || passAspectRatioTest*/)
                         {
-                            // 由 GitHub Copilot 產生 - 非ROI區域過濾
+                            // ========== 修正重點：使用多邊形判斷替代 IoU ==========
+                            // 由 GitHub Copilot 產生
                             bool shouldSkip = false;
                             Rect contourRect = Cv2.BoundingRect(contour);
 
-                            // 由 GitHub Copilot 產生 - 繪製所有 contourRect（綠色）到除錯圖
+                            // 由 GitHub Copilot 產生
+                            // 繪製 contourRect（綠色）到除錯圖，並顯示圓度和長寬比
                             if (enableBlackSpotDebug && debugImage != null)
                             {
                                 Cv2.Rectangle(debugImage, contourRect, new Scalar(0, 255, 0), 2);
-                                Cv2.PutText(debugImage, $"C:{circularity:F2}", 
+                                Cv2.PutText(debugImage, $"C:{circularity:F2} AR:{aspectRatio:F2}",
                                             new Point(contourRect.X, contourRect.Y - 5),
-                                            HersheyFonts.HersheySimplex, 0.4, new Scalar(0, 255, 0), 1);
+                                            HersheyFonts.HersheyDuplex, 0.4, new Scalar(0, 255, 0), 1);
                             }
 
-                            if (nonRoiRects != null && nonRoiRects.Count > 0)
+                            if (nonRoiPolygons.Count > 0)
                             {
-                                double iouThreshold = IOUTHRESHOLD /*GetDoubleParam(app.param, $"IOU_{stop}", 0.2)*/;
+                                // 由 GitHub Copilot 產生
+                                // 計算矩形的四個角點
+                                Point topLeft = new Point(contourRect.X, contourRect.Y);
+                                Point topRight = new Point(contourRect.Right, contourRect.Y);
+                                Point bottomLeft = new Point(contourRect.X, contourRect.Bottom);
+                                Point bottomRight = new Point(contourRect.Right, contourRect.Bottom);
 
-                                // 與所有非ROI區域進行 IoU 檢測
-                                foreach (var nonRoiRect in nonRoiRects)
+                                // 與所有非ROI多邊形進行檢測
+                                foreach (var polygon in nonRoiPolygons)
                                 {
-                                    double iou = CalculateIoU(contourRect, nonRoiRect);
-                                    if (iou > iouThreshold && area < 16000)
+                                    // 使用 IsPointInPolygon 判斷四個角點是否有任一點在非ROI區域內
+                                    if (IsPointInPolygon(topLeft, polygon) ||
+                                        IsPointInPolygon(topRight, polygon) ||
+                                        IsPointInPolygon(bottomLeft, polygon) ||
+                                        IsPointInPolygon(bottomRight, polygon))
                                     {
                                         shouldSkip = true;
 
-                                        // 由 GitHub Copilot 產生 - 用黃色粗框標記被過濾的 contour
                                         if (enableBlackSpotDebug && debugImage != null)
                                         {
-                                            Cv2.Rectangle(debugImage, contourRect, new Scalar(0, 255, 255), 3);
-                                            Cv2.PutText(debugImage, $"Filtered(IOU:{iou:F2})", 
-                                                        new Point(contourRect.X, contourRect.Y + contourRect.Height + 15),
-                                                        HersheyFonts.HersheySimplex, 0.4, new Scalar(0, 255, 255), 1);
+                                            Cv2.PutText(debugImage, "Filtered",
+                                                        new Point(contourRect.X, contourRect.Y + 20),
+                                                        HersheyFonts.HersheySimplex, 0.4, new Scalar(0, 0, 255), 1);
                                         }
-
-                                        Log.Debug($"黑點輪廓被非ROI過濾 (站{stop}, 編號{count}, IoU={iou:F3}, 閾值={iouThreshold:F3}, 面積={area})");
-                                        break;
+                                        break; // 找到一個匹配就可以跳出
                                     }
                                 }
                             }
+                            // ========== 修正結束 ==========
 
                             // 只有未被非ROI過濾的輪廓才加入 validContours
                             if (!shouldSkip)
@@ -10807,7 +10878,7 @@ namespace peilin
                         }
 
                         string debugPath = Path.Combine(debugFolder, 
-                                                        $"Debug_Stop{stop}_{count}_{DateTime.Now:yyyyMMdd_HHmmss_fff}.jpg");
+                                                        $"Debug_{count}-{stop}.jpg");
                         //Cv2.ImWrite(debugPath, debugImage);
                         app.Queue_Save.Enqueue(new ImageSave(debugImage.Clone(), debugPath));
                         app._sv.Set();
@@ -10841,6 +10912,7 @@ namespace peilin
                         // 計算面積
                         double area = Cv2.ContourArea(validContours[i]);
 
+                        // 由 GitHub Copilot 產生
                         // 計算圓度：圓度 = 4π × 面積 / 周長²，完美圓形 = 1.0
                         double perimeter = Cv2.ArcLength(validContours[i], true);
                         double circularity = 0;
@@ -10852,26 +10924,35 @@ namespace peilin
                         // 計算輪廓的邊界矩形，用於定位文字
                         Rect boundingRect = Cv2.BoundingRect(validContours[i]);
 
+                        // 計算長寬比
+                        double aspectRatio = (double)Math.Max(boundingRect.Width, boundingRect.Height) / Math.Min(boundingRect.Width, boundingRect.Height);
+
                         // 準備文字資訊
                         string infoText1 = $"Area: {area:F0}";
                         string infoText2 = $"Circ: {circularity:F3}";
+                        string infoText3 = $"AR: {aspectRatio:F2}";
 
                         // 文字位置：在輪廓左上角附近
                         Point textPos1 = new Point(boundingRect.X, boundingRect.Y - 10);
                         Point textPos2 = new Point(boundingRect.X, boundingRect.Y - 30);
+                        Point textPos3 = new Point(boundingRect.X, boundingRect.Y - 50);
 
+                        // 由 GitHub Copilot 產生
                         // 確保文字不超出圖像邊界
-                        if (textPos2.Y < 0)
+                        if (textPos3.Y < 0)
                         {
                             textPos1 = new Point(boundingRect.X, boundingRect.Y + boundingRect.Height + 20);
                             textPos2 = new Point(boundingRect.X, boundingRect.Y + boundingRect.Height + 40);
+                            textPos3 = new Point(boundingRect.X, boundingRect.Y + boundingRect.Height + 60);
                         }
 
                         // 繪製文字（黃色背景黑色字體以提高可讀性）
                         // 先繪製黑色背景
+                        Cv2.PutText(annotatedImage, infoText3, textPos3, HersheyFonts.HersheySimplex, 0.5, Scalar.Black, 3);
                         Cv2.PutText(annotatedImage, infoText2, textPos2, HersheyFonts.HersheySimplex, 0.5, Scalar.Black, 3);
                         Cv2.PutText(annotatedImage, infoText1, textPos1, HersheyFonts.HersheySimplex, 0.5, Scalar.Black, 3);
                         // 再繪製黃色文字
+                        Cv2.PutText(annotatedImage, infoText3, textPos3, HersheyFonts.HersheySimplex, 0.5, Scalar.Yellow, 1);
                         Cv2.PutText(annotatedImage, infoText2, textPos2, HersheyFonts.HersheySimplex, 0.5, Scalar.Yellow, 1);
                         Cv2.PutText(annotatedImage, infoText1, textPos1, HersheyFonts.HersheySimplex, 0.5, Scalar.Yellow, 1);
                     }
@@ -15152,6 +15233,182 @@ namespace peilin
             );
 
             return nonRoiPolygon;
+        }
+
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 遞迴移除多餘的 cyg 框，直到剩下 4 個
+        /// 使用方案A：計算每個框到最近理論位置的偏離距離，移除偏離最大的框
+        /// score 作為次要判斷依據（同偏離距離時，優先移除 score 較低的框）
+        /// </summary>
+        /// <typeparam name="T">包含 Rect、Center、Angle 屬性的匿名型別</typeparam>
+        /// <param name="cygWithAngles">包含角度資訊的 cyg 框列表</param>
+        /// <returns>篩選後的 cyg 框列表（恰好 4 個）</returns>
+        private List<T> RecursiveRemoveExcessCygFrames<T>(List<T> cygWithAngles)
+        {
+            // 遞迴終止條件：剩下 4 個框
+            if (cygWithAngles.Count <= 4)
+            {
+                return cygWithAngles;
+            }
+
+            // 使用反射取得匿名型別的屬性
+            var firstItem = cygWithAngles[0];
+            var angleProperty = firstItem.GetType().GetProperty("Angle");
+            var rectProperty = firstItem.GetType().GetProperty("Rect");
+
+            // 以第一個框的角度為基準，計算 4 個理論位置
+            double baseAngle = (double)angleProperty.GetValue(firstItem);
+            double[] theoreticalAngles = new double[]
+            {
+                baseAngle,
+                NormalizeAngle(baseAngle + 90),
+                NormalizeAngle(baseAngle + 180),
+                NormalizeAngle(baseAngle + 270)
+            };
+
+            // 計算每個框到最近理論位置的偏離距離
+            var deviations = cygWithAngles.Select(c =>
+            {
+                double angle = (double)angleProperty.GetValue(c);
+                var rect = rectProperty.GetValue(c);
+
+                // rect 是 (Rect rect, string className, double score) 元組，使用反射取得 score
+                var rectType = rect.GetType();
+                var scoreField = rectType.GetField("Item3"); // 元組的第三個元素 (score)
+                double score = (double)scoreField.GetValue(rect);
+
+                // 計算到每個理論位置的角度差（考慮 360° 循環）
+                double minDeviation = theoreticalAngles.Min(theoreticalAngle =>
+                {
+                    double diff = Math.Abs(angle - theoreticalAngle);
+                    // 處理跨越 360°/0° 的情況
+                    if (diff > 180)
+                        diff = 360 - diff;
+                    return diff;
+                });
+
+                return new
+                {
+                    CygFrame = c,
+                    Deviation = minDeviation,
+                    Score = score, // 用於次要判斷
+                    Angle = angle
+                };
+            }).ToList();
+
+            // 找出偏離最大的框
+            // 主要依據：偏離距離最大
+            // 次要依據：同偏離距離時，score 較低的優先移除
+            var maxDeviation = deviations.Max(d => d.Deviation);
+            var candidatesToRemove = deviations.Where(d => Math.Abs(d.Deviation - maxDeviation) < 0.01).ToList(); // 容忍 0.01° 誤差
+
+            T frameToRemove;
+            double removedAngle;
+            double removedScore;
+            if (candidatesToRemove.Count > 1)
+            {
+                // 多個框偏離距離相同，選擇 score 最低的移除
+                var toRemove = candidatesToRemove.OrderBy(c => c.Score).First();
+                frameToRemove = toRemove.CygFrame;
+                removedAngle = toRemove.Angle;
+                removedScore = toRemove.Score;
+                Log.Debug($"  移除框（角度 {removedAngle:F1}°，偏離 {maxDeviation:F2}°，score {removedScore:F2}）- 依 score 次要判斷");
+            }
+            else
+            {
+                // 只有一個框偏離最大，直接移除
+                frameToRemove = candidatesToRemove[0].CygFrame;
+                removedAngle = candidatesToRemove[0].Angle;
+                removedScore = candidatesToRemove[0].Score;
+                Log.Debug($"  移除框（角度 {removedAngle:F1}°，偏離 {maxDeviation:F2}°，score {removedScore:F2}）");
+            }
+
+            // 從列表中移除該框
+            cygWithAngles.Remove(frameToRemove);
+
+            // 遞迴呼叫，繼續移除多餘的框
+            return RecursiveRemoveExcessCygFrames(cygWithAngles);
+        }
+
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 非極大值抑制（NMS）：移除空間上重疊的框，保留 score 較高的
+        /// </summary>
+        /// <param name="rects">待篩選的框列表</param>
+        /// <param name="iouThreshold">IoU 閾值（預設 0.5），超過此值視為重疊</param>
+        /// <returns>去重後的框列表</returns>
+        private List<(Rect rect, string className, double score)> ApplyNMS(
+            List<(Rect rect, string className, double score)> rects,
+            double iouThreshold = 0.5)
+        {
+            if (rects.Count <= 1)
+                return rects;
+
+            // 依 score 降序排列
+            var sorted = rects.OrderByDescending(r => r.score).ToList();
+            var kept = new List<(Rect, string, double)>();
+
+            while (sorted.Count > 0)
+            {
+                // 保留當前 score 最高的框
+                var current = sorted[0];
+                kept.Add(current);
+                sorted.RemoveAt(0);
+
+                // 移除與 current 重疊超過閾值的框
+                sorted = sorted.Where(r =>
+                    CalculateIoUforNROI(current.rect, r.rect) < iouThreshold
+                ).ToList();
+            }
+
+            return kept;
+        }
+
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 計算兩個矩形的 IoU（Intersection over Union，交集除以聯集）
+        /// </summary>
+        /// <param name="a">矩形 A</param>
+        /// <param name="b">矩形 B</param>
+        /// <returns>IoU 值（0-1 之間）</returns>
+        private double CalculateIoUforNROI(Rect a, Rect b)
+        {
+            // 計算交集區域
+            int interLeft = Math.Max(a.Left, b.Left);
+            int interTop = Math.Max(a.Top, b.Top);
+            int interRight = Math.Min(a.Right, b.Right);
+            int interBottom = Math.Min(a.Bottom, b.Bottom);
+
+            // 無交集
+            if (interRight <= interLeft || interBottom <= interTop)
+                return 0.0;
+
+            // 計算交集面積
+            int interArea = (interRight - interLeft) * (interBottom - interTop);
+
+            // 計算聯集面積
+            int aArea = a.Width * a.Height;
+            int bArea = b.Width * b.Height;
+            int unionArea = aArea + bArea - interArea;
+
+            // 返回 IoU
+            return (double)interArea / unionArea;
+        }
+
+        /// <summary>
+        /// 由 GitHub Copilot 產生
+        /// 將角度正規化到 0-360 度範圍
+        /// </summary>
+        /// <param name="angle">待正規化的角度</param>
+        /// <returns>正規化後的角度（0-360 度）</returns>
+        private double NormalizeAngle(double angle)
+        {
+            while (angle < 0)
+                angle += 360;
+            while (angle >= 360)
+                angle -= 360;
+            return angle;
         }
 
         /// <summary>
