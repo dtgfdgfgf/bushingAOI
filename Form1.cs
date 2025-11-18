@@ -1164,13 +1164,13 @@ namespace peilin
 
                                     #endregion
 
+                                    List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
+
                                     #region 黑點AOI
                                     // 由 GitHub Copilot 產生 - 黑點檢測
                                     // 檢查是否啟用黑點檢測（從參數讀取）
-                                    bool performBlackSpotDetection = app.param.ContainsKey($"enable_BlackSpot_{input.stop}") && 
-                                                                     int.Parse(app.param[$"enable_BlackSpot_{input.stop}"]) == 1;
 
-                                    if (performBlackSpotDetection)
+                                    if (defectsToDetect.Contains("bp_AOI"))
                                     {
                                         Mat roiWhite = null;
                                         Mat blackSpotResult = null;
@@ -1185,7 +1185,10 @@ namespace peilin
                                                 List<Rect> blackSpotNonRoiRects = null;
                                                 if (nonRoiRects != null && nonRoiRects.Count > 0)
                                                 {
-                                                    blackSpotNonRoiRects = nonRoiRects.Select(nr => nr.rect).ToList();
+                                                    blackSpotNonRoiRects = nonRoiRects
+                                                        .Where(nr => nr.className != "mouth")  // 過濾掉 className == "mouth"
+                                                        .Select(nr => nr.rect)
+                                                        .ToList();
                                                 }
 
                                                 // 執行黑點檢測
@@ -1194,9 +1197,30 @@ namespace peilin
 
                                                 if (hasBlackSpot)
                                                 {
-                                                    Log.Information($"站點{input.stop} 樣本{input.count} 檢出黑點瑕疵");
+                                                    //Log.Information($"站點{input.stop} 樣本{input.count} 檢出黑點瑕疵");
                                                     // TODO: 根據需求決定是否將黑點檢測結果整合到 StationResult 中
                                                     // 目前僅記錄日誌,可後續擴展為影響 OK/NG 判定
+                                                    // 顯示檢測結果
+                                                    showResultMat(blackSpotResult, input.stop);
+
+                                                    // 由 GitHub Copilot 產生
+                                                    // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
+                                                    // 建立檢測結果物件
+                                                    StationResult bpAOIResult = new StationResult
+                                                    {
+                                                        Stop = input.stop,
+                                                        IsNG = hasBlackSpot,
+                                                        OkNgScore = 1.0f,
+                                                        FinalMap = blackSpotResult.Clone(),  // 使用 Clone 避免 double-free
+                                                        DefectName = "bp",
+                                                        DefectScore = 1.0f,
+                                                        OriName = input.name
+                                                    };
+
+                                                    // 添加結果到管理器
+                                                    app.resultManager.AddResult(input.count, bpAOIResult);
+                                                    //updateLabel();
+                                                    continue;
                                                 }
                                             }
                                             else
@@ -1220,7 +1244,7 @@ namespace peilin
 
                                     using (Mat visualizationImage = input.image.Clone())
                                     {
-                                        List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
+                                        //List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
 
                                         string defectServerUrl = "";
                                         // AI 推論 OK/NG
@@ -1424,7 +1448,7 @@ namespace peilin
                                                 defectName = highestScoreDefect.class_name;
 
                                                 // 獲取閥值供後續使用
-                                                if (app.param.TryGetValue(defectName + "_threshold", out string thresholdStr))
+                                                if (app.param.TryGetValue(defectName + input.stop.ToString() + "_threshold", out string thresholdStr))
                                                 {
                                                     float.TryParse(thresholdStr, out threshold);
                                                 }
@@ -1930,7 +1954,7 @@ namespace peilin
                                                 defectName = highestScoreDefect.class_name;
 
                                                 // 獲取閥值供後續使用
-                                                if (app.param.TryGetValue(defectName + "_threshold", out string thresholdStr))
+                                                if (app.param.TryGetValue(defectName + input.stop.ToString() + "_threshold", out string thresholdStr))
                                                 {
                                                     float.TryParse(thresholdStr, out threshold);
                                                 }
@@ -2643,7 +2667,7 @@ namespace peilin
                                             defectName = highestScoreDefect.class_name;
 
                                             // 獲取閥值供後續使用
-                                            if (app.param.TryGetValue(defectName + "_threshold", out string thresholdStr))
+                                            if (app.param.TryGetValue(defectName + input.stop.ToString() + "_threshold", out string thresholdStr))
                                             {
                                                 float.TryParse(thresholdStr, out threshold);
                                             }
@@ -3224,7 +3248,7 @@ namespace peilin
                                             defectName = highestScoreDefect.class_name;
 
                                             // 獲取閥值供後續使用
-                                            if (app.param.TryGetValue(defectName + "_threshold", out string thresholdStr))
+                                            if (app.param.TryGetValue(defectName + input.stop.ToString() + "_threshold", out string thresholdStr))
                                             {
                                                 float.TryParse(thresholdStr, out threshold);
                                             }
@@ -10433,13 +10457,15 @@ namespace peilin
         #region 黑點檢測相關常數
         // 由 GitHub Copilot 產生
         // 黑點檢測參數 - 方便調整
-        private const int BLACKSPOT_THRESHOLD = 80;        // 二值化閾值
+        private const int BLACKSPOT_THRESHOLD = 50;        // 二值化閾值
         private const int BLACKSPOT_MIN_AREA = 400;        // 最小面積
         private const int BLACKSPOT_MAX_AREA = 50000;      // 最大面積
-        private const double BLACKSPOT_MIN_CIRCULARITY = 0.5; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
+        private const double BLACKSPOT_MIN_CIRCULARITY = 0.4; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
         private const int BLACKSPOT_CONTOUR_THICKNESS = 2; // 輪廓粗細
-        // private const int MORPH_KERNEL_SIZE = 3;         // 形態學核心大小（可選，方便註解）
+        private const int MORPH_KERNEL_SIZE = 3;         // 形態學核心大小（可選，方便註解）
+        private const double IOUTHRESHOLD = 0.3;
         private static readonly Scalar BLACKSPOT_CONTOUR_COLOR = Scalar.Yellow; // 輪廓顏色
+        bool enableBlackSpotDebug = true;
         #endregion
 
         #region DetectAndExtractROI_W (白色遮罩版本)
@@ -10598,9 +10624,24 @@ namespace peilin
             Mat binaryImage = null;
             Mat morphImage = null;
             Mat annotatedImage = null;
+            Mat debugImage = null;
 
             try
             {
+                // 由 GitHub Copilot 產生 - 創建除錯圖像（如果啟用）
+                if (enableBlackSpotDebug)
+                {
+                    if (roiImage.Channels() == 1)
+                    {
+                        debugImage = new Mat();
+                        Cv2.CvtColor(roiImage, debugImage, ColorConversionCodes.GRAY2BGR);
+                    }
+                    else
+                    {
+                        debugImage = roiImage.Clone();
+                    }
+                }
+
                 // 轉灰階（如果尚未轉換）
                 if (roiImage.Channels() == 3)
                 {
@@ -10617,18 +10658,75 @@ namespace peilin
                 Cv2.Threshold(grayImage, binaryImage, BLACKSPOT_THRESHOLD, 255, ThresholdTypes.BinaryInv);
 
                 // 形態學處理（開運算去除雜訊）- 目前註解，方便調整
-                // morphImage = new Mat();
-                // Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(MORPH_KERNEL_SIZE, MORPH_KERNEL_SIZE));
-                // Cv2.MorphologyEx(binaryImage, morphImage, MorphTypes.Open, kernel);
-                // kernel.Dispose();
+                morphImage = new Mat();
+                Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(MORPH_KERNEL_SIZE, MORPH_KERNEL_SIZE));
+                Cv2.MorphologyEx(binaryImage, morphImage, MorphTypes.Open, kernel);
+                kernel.Dispose();
 
                 // 使用二值化結果進行輪廓檢測（若啟用形態學則用 morphImage）
-                Mat contourSource = binaryImage; // 或 morphImage
+                Mat contourSource = morphImage; // 或 morphImage / binaryImage
 
                 // 輪廓檢測
                 Point[][] contours;
                 HierarchyIndex[] hierarchy;
-                Cv2.FindContours(contourSource, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+                Cv2.FindContours(contourSource, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxSimple);
+
+                // 由 GitHub Copilot 產生 - 繪製所有 nonRoiRect（紅色）到除錯圖
+                if (enableBlackSpotDebug && debugImage != null && nonRoiRects != null && nonRoiRects.Count > 0)
+                {
+                    foreach (var nonRoiRect in nonRoiRects)
+                    {
+                        Cv2.Rectangle(debugImage, nonRoiRect, new Scalar(0, 0, 255), 2);
+                        Cv2.PutText(debugImage, "NonROI", 
+                                    new Point(nonRoiRect.X, nonRoiRect.Y - 5),
+                                    HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 0, 255), 1);
+                    }
+                }
+
+                // ========== 修正重點：讀取參數並預先計算所有非ROI多邊形 ==========
+                // 由 GitHub Copilot 產生
+                List<Point[]> nonRoiPolygons = new List<Point[]>();
+
+                if (nonRoiRects != null && nonRoiRects.Count > 0)
+                {
+                    // 讀取圓心和半徑參數（與 IsDefectInNonRoiRegion_in 相同邏輯）
+                    int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
+                    int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
+                    int outerRadius = int.Parse(app.param[$"known_outer_radius_{stop}"]);
+                    int innerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
+                    Point circleCenter = new Point(knownInnerCenterX, knownInnerCenterY);
+
+                    // 讀取擴展參數（與你在 getmat1 中的方式相同）
+                    int innerExpandPixels = int.Parse(app.param[$"expandNROI_in_{stop}"]);
+                    int outerExpandPixels = int.Parse(app.param[$"expandNROI_in_{stop}"]);
+
+                    // 對每個 nonRoiRect 計算對應的多邊形
+                    foreach (var nonRoiRect in nonRoiRects)
+                    {
+                        Point[] polygon = CalculateNonRoiPolygon(
+                            nonRoiRect,
+                            circleCenter,
+                            innerRadius,
+                            outerRadius,
+                            innerExpandPixels,
+                            outerExpandPixels
+                        );
+                        nonRoiPolygons.Add(polygon);
+                    }
+
+                    // 由 GitHub Copilot 產生 - 除錯模式下繪製多邊形（綠色）
+                    if (enableBlackSpotDebug && debugImage != null)
+                    {
+                        foreach (var polygon in nonRoiPolygons)
+                        {
+                            Cv2.Polylines(debugImage, new Point[][] { polygon }, true, new Scalar(0, 255, 0), 2);
+                        }
+                    }
+                }
+
+                // ========== 修正結束 ==========
+
+
 
                 // 面積與圓度過濾
                 List<Point[]> validContours = new List<Point[]>();
@@ -10645,25 +10743,44 @@ namespace peilin
                             circularity = (4 * Math.PI * area) / (perimeter * perimeter);
                         }
 
-                        // 圓度檢測：只保留圓度 >= 0.35 的輪廓
+                        // 圓度檢測
                         if (circularity >= BLACKSPOT_MIN_CIRCULARITY)
                         {
                             // 由 GitHub Copilot 產生 - 非ROI區域過濾
                             bool shouldSkip = false;
+                            Rect contourRect = Cv2.BoundingRect(contour);
+
+                            // 由 GitHub Copilot 產生 - 繪製所有 contourRect（綠色）到除錯圖
+                            if (enableBlackSpotDebug && debugImage != null)
+                            {
+                                Cv2.Rectangle(debugImage, contourRect, new Scalar(0, 255, 0), 2);
+                                Cv2.PutText(debugImage, $"C:{circularity:F2}", 
+                                            new Point(contourRect.X, contourRect.Y - 5),
+                                            HersheyFonts.HersheySimplex, 0.4, new Scalar(0, 255, 0), 1);
+                            }
+
                             if (nonRoiRects != null && nonRoiRects.Count > 0)
                             {
-                                // 計算輪廓的最小外接矩形
-                                Rect contourRect = Cv2.BoundingRect(contour);
-                                double iouThreshold = GetDoubleParam(app.param, $"IOU_{stop}", 0.2);
+                                double iouThreshold = IOUTHRESHOLD /*GetDoubleParam(app.param, $"IOU_{stop}", 0.2)*/;
 
                                 // 與所有非ROI區域進行 IoU 檢測
                                 foreach (var nonRoiRect in nonRoiRects)
                                 {
                                     double iou = CalculateIoU(contourRect, nonRoiRect);
-                                    if (iou > iouThreshold)
+                                    if (iou > iouThreshold && area < 16000)
                                     {
                                         shouldSkip = true;
-                                        Log.Debug($"黑點輪廓被非ROI過濾 (站{stop}, 編號{count}, IoU={iou:F3}, 閾值={iouThreshold:F3})");
+
+                                        // 由 GitHub Copilot 產生 - 用黃色粗框標記被過濾的 contour
+                                        if (enableBlackSpotDebug && debugImage != null)
+                                        {
+                                            Cv2.Rectangle(debugImage, contourRect, new Scalar(0, 255, 255), 3);
+                                            Cv2.PutText(debugImage, $"Filtered(IOU:{iou:F2})", 
+                                                        new Point(contourRect.X, contourRect.Y + contourRect.Height + 15),
+                                                        HersheyFonts.HersheySimplex, 0.4, new Scalar(0, 255, 255), 1);
+                                        }
+
+                                        Log.Debug($"黑點輪廓被非ROI過濾 (站{stop}, 編號{count}, IoU={iou:F3}, 閾值={iouThreshold:F3}, 面積={area})");
                                         break;
                                     }
                                 }
@@ -10675,6 +10792,30 @@ namespace peilin
                                 validContours.Add(contour);
                             }
                         }
+                    }
+                }
+
+                // 由 GitHub Copilot 產生 - 儲存除錯圖像（如果啟用）
+                if (enableBlackSpotDebug && debugImage != null)
+                {
+                    try
+                    {
+                        string debugFolder = $@".\image\{st.ToString("yyyy-MM")}\{st.ToString("MMdd")}\{app.foldername}\BlackSpot_Debug";
+                        if (!Directory.Exists(debugFolder))
+                        {
+                            Directory.CreateDirectory(debugFolder);
+                        }
+
+                        string debugPath = Path.Combine(debugFolder, 
+                                                        $"Debug_Stop{stop}_{count}_{DateTime.Now:yyyyMMdd_HHmmss_fff}.jpg");
+                        //Cv2.ImWrite(debugPath, debugImage);
+                        app.Queue_Save.Enqueue(new ImageSave(debugImage.Clone(), debugPath));
+                        app._sv.Set();
+                        //Log.Information($"DetectBlackSpots 除錯圖已儲存: {debugPath}");
+                    }
+                    catch (Exception debugEx)
+                    {
+                        //Log.Warning($"儲存除錯圖失敗: {debugEx.Message}");
                     }
                 }
 
@@ -10753,6 +10894,7 @@ namespace peilin
                 grayImage?.Dispose();
                 binaryImage?.Dispose();
                 morphImage?.Dispose();
+                debugImage?.Dispose();
                 // annotatedImage 由呼叫者負責釋放
             }
         }
@@ -14789,14 +14931,14 @@ namespace peilin
                                 }
 
                                 // 記錄檢測結果
-                                Log.Debug($"站點 {stop} 倒角檢測: NG (藍色像素數={bluePixelCount}, 閾值={bluePixelThreshold}, 輪廓數={contours?.Length ?? 0})");
+                                //Log.Debug($"站點 {stop} 倒角檢測: NG (藍色像素數={bluePixelCount}, 閾值={bluePixelThreshold}, 輪廓數={contours?.Length ?? 0})");
 
                                 return (true, resultImage);
                             }
                             else
                             {
                                 // OK：返回原始圖像
-                                Log.Debug($"站點 {stop} 倒角檢測: OK (藍色像素數={bluePixelCount}, 閾值={bluePixelThreshold})");
+                                //Log.Debug($"站點 {stop} 倒角檢測: OK (藍色像素數={bluePixelCount}, 閾值={bluePixelThreshold})");
                                 return (false, image.Clone());
                             }
                         }
