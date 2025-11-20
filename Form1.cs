@@ -10512,13 +10512,13 @@ namespace peilin
         // 由 GitHub Copilot 產生
         // 黑點檢測參數 - 方便調整
         private const int BLACKSPOT_THRESHOLD = 50;        // 二值化閾值
-        private const int BLACKSPOT_MIN_AREA = 200;        // 最小面積
+        private const int BLACKSPOT_MIN_AREA = 400;        // 最小面積
         private const int BLACKSPOT_MAX_AREA = 50000;      // 最大面積
-        private const double BLACKSPOT_MIN_CIRCULARITY = 0.3; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
+        private const double BLACKSPOT_MIN_CIRCULARITY = 0.4; // 最小圓度（圓度 = 4π×面積/周長²，範圍 0-1）
         private const double BLACKSPOT_MIN_ASPECT_RATIO = 0.5; // 最小長寬比（寬/高或高/寬的較小值，範圍 0-1，1=正方形）
         private const double BLACKSPOT_MAX_ASPECT_RATIO = 3.0; // 最大長寬比（長/寬的較大值，範圍 ≥1，1=正方形）
         private const int BLACKSPOT_CONTOUR_THICKNESS = 2; // 輪廓粗細
-        private const int MORPH_KERNEL_SIZE = 3;         // 形態學核心大小（可選，方便註解）
+        private const int MORPH_KERNEL_SIZE = 5;         // 形態學核心大小（可選，方便註解）
         private const double IOUTHRESHOLD = 0.3;
         private static readonly Scalar BLACKSPOT_CONTOUR_COLOR = Scalar.Yellow; // 輪廓顏色
         bool enableBlackSpotDebug = true;
@@ -10828,20 +10828,22 @@ namespace peilin
                             if (nonRoiPolygons.Count > 0)
                             {
                                 // 由 GitHub Copilot 產生
-                                // 計算矩形的四個角點
+                                // 計算矩形的四個角點和中心點
                                 Point topLeft = new Point(contourRect.X, contourRect.Y);
                                 Point topRight = new Point(contourRect.Right, contourRect.Y);
                                 Point bottomLeft = new Point(contourRect.X, contourRect.Bottom);
                                 Point bottomRight = new Point(contourRect.Right, contourRect.Bottom);
+                                Point center = new Point(contourRect.X + contourRect.Width / 2, contourRect.Y + contourRect.Height / 2);
 
                                 // 與所有非ROI多邊形進行檢測
                                 foreach (var polygon in nonRoiPolygons)
                                 {
-                                    // 使用 IsPointInPolygon 判斷四個角點是否有任一點在非ROI區域內
+                                    // 使用 IsPointInPolygon 判斷四個角點或中心點是否有任一點在非ROI區域內
                                     if (IsPointInPolygon(topLeft, polygon) ||
                                         IsPointInPolygon(topRight, polygon) ||
                                         IsPointInPolygon(bottomLeft, polygon) ||
-                                        IsPointInPolygon(bottomRight, polygon))
+                                        IsPointInPolygon(bottomRight, polygon) ||
+                                        IsPointInPolygon(center, polygon))
                                     {
                                         shouldSkip = true;
 
