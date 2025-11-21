@@ -6595,6 +6595,7 @@ namespace peilin
             app.detect_result.Clear();
             app.detect_result_check.Clear();
             app.counter.Clear();
+            ResultManager.ClearStats();  //同步清除 ResultManager 的統計數據
             var counterType = new[] { "OK1", "OK2", "OK", "SAMPLE_ID", "NG", "NULL", "stop0", "stop1", "stop2", "stop3" };
             foreach (var s in counterType)
             {
@@ -9541,6 +9542,381 @@ namespace peilin
                     return (false, visualImg.Clone(), gapPositions);
                 }
             } // using 結束，ori, visualImg, gray, ringThresh 自動 Dispose
+        }
+
+        // 由 GitHub Copilot 產生
+        // 批次處理版本：接受多張影像並回傳每張的檢測結果
+        public List<(bool isNG, Mat img, List<Point> gapPositions)> findGapWidth_new(List<Mat> imgs, int stop, string debugFolder = null)
+        {
+            var results = new List<(bool isNG, Mat img, List<Point> gapPositions)>();
+            if (imgs == null) return results;
+
+            int idx = 0;
+            foreach (var m in imgs)
+            {
+                if (m == null)
+                {
+                    idx++;
+                    continue;
+                }
+
+                string savePath = null;
+                if (!string.IsNullOrEmpty(debugFolder))
+                {
+                    try
+                    {
+                        if (!Directory.Exists(debugFolder)) Directory.CreateDirectory(debugFolder);
+                        savePath = Path.Combine(debugFolder, $"binary_{stop}_{idx}.jpg");
+                    }
+                    catch
+                    {
+                        savePath = null;
+                    }
+                }
+
+                // 呼叫單張處理函式
+                var res = findGapWidth_Single(m, stop, savePath);
+                results.Add(res);
+                idx++;
+            }
+            return results;
+        }
+
+        // Helper to get smallest difference between two angles (0~180)
+        private double GetAngleDiff(double a1, double a2)
+        {
+            double diff = Math.Abs(a1 - a2);
+            if (diff > 180) diff = 360 - diff;
+            return diff;
+        }
+
+        // 由 GitHub Copilot 產生
+        // 核心單張處理 (原 findGapWidth_new)
+        // 功能：1. 找出內圓 2. 計算開口寬度(Gap Width) 3. 檢測向內/向外變形
+        // 修正：
+        // 1. 改用 Least Squares Circle Fit 找圓心，解決 C 型環質心偏移問題
+        // 2. 綠色邊界改以圓心為基準進行向量縮放 (IdealRadius +/- Tolerance)，呈現正確的檢測通道
+        // 3. 外凸判定加入角度邏輯：若有點外凸，檢查其與開口點的夾角。若夾角夠大(遠離開口)則NG；若未找到開口則直接NG。
+        public (bool isNG, Mat img, List<Point> gapPositions) findGapWidth_Single(Mat img, int stop, string debugSavePath = null)
+        {
+            List<Point> gapPositions = new List<Point>();
+            
+            // 複製輸入影像用於視覺化
+            Mat visualImg = img.Clone();
+            
+            // 使用 using 區塊管理暫存 Mat
+            using (Mat gray = new Mat())
+            using (Mat binary = new Mat())
+            {
+                // 1. 預處理
+                if (img.Channels() == 3)
+                    Cv2.CvtColor(img, gray, ColorConversionCodes.BGR2GRAY);
+                else
+                    img.CopyTo(gray);
+                
+                // 從參數獲取閾值
+                int minthresh = 0;
+                if (app.param.ContainsKey($"gapThresh_{stop}"))
+                {
+                    int.TryParse(app.param[$"gapThresh_{stop}"], out minthresh);
+                }
+                
+                if (minthresh == 0)
+                {
+                    return (false, visualImg, gapPositions);
+                }
+
+                // 二值化
+                Cv2.Threshold(gray, binary, minthresh, 255, ThresholdTypes.Binary);
+
+                // 2. 尋找輪廓 (使用 External 模式只找最外層輪廓)
+                Point[][] contours;
+                HierarchyIndex[] hierarchy;
+                Cv2.FindContours(binary, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxNone);
+
+                if (contours.Length == 0)
+                {
+                    return (false, visualImg, gapPositions);
+                }
+
+                // 3. 篩選最佳輪廓 (取面積最大的，假設為 Bushing 本體)
+                var bushingContour = contours.OrderByDescending(c => Cv2.ContourArea(c)).First();
+
+                // 4. 讀取已知圓心與半徑參數 (僅用於初步篩選內圓點)
+                int knownCenterX = 0, knownCenterY = 0, knownRadius = 0;
+                if (app.param.ContainsKey($"known_inner_center_x_{stop}")) int.TryParse(app.param[$"known_inner_center_x_{stop}"], out knownCenterX);
+                if (app.param.ContainsKey($"known_inner_center_y_{stop}")) int.TryParse(app.param[$"known_inner_center_y_{stop}"], out knownCenterY);
+                if (app.param.ContainsKey($"known_inner_radius_{stop}")) int.TryParse(app.param[$"known_inner_radius_{stop}"], out knownRadius);
+
+                Point2f tempCenter = new Point2f(knownCenterX, knownCenterY);
+                
+                // 若無參數，先用輪廓重心做初步估計
+                if (knownRadius == 0)
+                {
+                    Moments m = Cv2.Moments(bushingContour);
+                    if (m.M00 != 0)
+                    {
+                        tempCenter = new Point2f((float)(m.M10 / m.M00), (float)(m.M01 / m.M00));
+                        knownRadius = (int)bushingContour.Min(p => Math.Sqrt(Math.Pow(p.X - tempCenter.X, 2) + Math.Pow(p.Y - tempCenter.Y, 2)));
+                    }
+                }
+
+                // 5. 分離內圓點 (Inner Edge Points)
+                double distThreshold = knownRadius + 30; 
+                List<Point> innerPoints = new List<Point>();
+                
+                foreach (var p in bushingContour)
+                {
+                    double d = Math.Sqrt(Math.Pow(p.X - tempCenter.X, 2) + Math.Pow(p.Y - tempCenter.Y, 2));
+                    if (d < distThreshold)
+                    {
+                        innerPoints.Add(p);
+                    }
+                }
+
+                if (innerPoints.Count < 10) return (false, visualImg, gapPositions);
+
+                // 6. 【關鍵修正】擬合圓心與半徑 (Circle Fit)
+                // 使用最小平方法找出內圓點的真實幾何中心，解決 C 型環質心偏移問題
+                var fitResult = FitCircle(innerPoints);
+                Point2f center = fitResult.center;
+                float fittedRadius = fitResult.radius;
+
+                // 繪製 "黃圈" (實際內圓輪廓)
+                foreach(var p in innerPoints)
+                {
+                    if(p.X >= 0 && p.X < visualImg.Width && p.Y >= 0 && p.Y < visualImg.Height)
+                        visualImg.At<Vec3b>(p.Y, p.X) = new Vec3b(0, 255, 255); 
+                }
+
+                // 7. 檢測開口 (Gap)
+                var anglePoints = innerPoints.Select(p => new { 
+                    Point = p, 
+                    Angle = Math.Atan2(p.Y - center.Y, p.X - center.X) * 180.0 / Math.PI 
+                }).Select(x => new { x.Point, Angle = x.Angle < 0 ? x.Angle + 360 : x.Angle })
+                  .OrderBy(x => x.Angle)
+                  .ToList();
+
+                double maxGapAngle = 0;
+                Point pStart = new Point();
+                Point pEnd = new Point();
+                bool hasGap = false;
+
+                for (int i = 0; i < anglePoints.Count; i++)
+                {
+                    var curr = anglePoints[i];
+                    var next = anglePoints[(i + 1) % anglePoints.Count];
+                    
+                    double diff = next.Angle - curr.Angle;
+                    if (diff < 0) diff += 360;
+                    
+                    if (diff > maxGapAngle)
+                    {
+                        maxGapAngle = diff;
+                        pStart = curr.Point;
+                        pEnd = next.Point;
+                    }
+                }
+                
+                // 設定一個最小開口角度閾值，例如 5 度，才視為有開口
+                if (maxGapAngle > 5.0) 
+                {
+                    hasGap = true;
+                    // 繪製開口點 (視覺化確認用)
+                    Cv2.Circle(visualImg, pStart, 4, Scalar.Orange, -1);
+                    Cv2.Circle(visualImg, pEnd, 4, Scalar.Orange, -1);
+                }
+
+                // 8. 參數準備
+                double pixeltomm = 1.0;
+                if (app.param.ContainsKey($"PixelToMM_{stop}")) double.TryParse(app.param[$"PixelToMM_{stop}"], out pixeltomm);
+                
+                double toleranceMm = 0.5; 
+                double tolerancePx = toleranceMm / pixeltomm;
+                if (tolerancePx < 5) tolerancePx = 5;
+                tolerancePx = 6; //強制
+
+                // 新增：讀取瑕疵點數量閾值 (預設 5)
+                int defectCountLimit = 2;
+                if (app.param.ContainsKey($"defectCountLimit_{stop}")) 
+                    int.TryParse(app.param[$"defectCountLimit_{stop}"], out defectCountLimit);
+
+                // 9. 判定邏輯 A: 開口寬度
+                double gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
+                double gapWidthMm = gapWidthPx * pixeltomm;
+                
+                // 讀取最大/最小開口寬度參數
+                double maxGapWidthMm = 10.0; 
+                if (app.param.ContainsKey($"maxGapWidth_{stop}")) double.TryParse(app.param[$"maxGapWidth_{stop}"], out maxGapWidthMm);
+                
+                // 新增：最小開口寬度檢查 (預設 0，即允許閉合)
+                double minGapWidthMm = 0.0;
+                if (app.param.ContainsKey($"minGapWidth_{stop}")) double.TryParse(app.param[$"minGapWidth_{stop}"], out minGapWidthMm);
+
+                bool isGapTooWide = gapWidthMm > maxGapWidthMm;
+                bool isGapTooSmall = gapWidthMm < minGapWidthMm; // 檢查是否過小(或閉合)
+
+                Scalar gapColor = Scalar.Cyan;
+                if (isGapTooWide || isGapTooSmall) gapColor = Scalar.Red;
+
+                Cv2.Line(visualImg, pStart, pEnd, gapColor, 2);
+                Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm", new Point(10, 80), HersheyFonts.HersheySimplex, 1, gapColor, 2);
+
+                // 10. 判定邏輯 B: 內彎檢測 (Inward Bending)
+                bool isDeformed = false;
+                int inwardBendingCount = 0;
+                int outwardDeformationCount = 0;
+                double gapExclusionAngle = 15.0; // 開口處排除角度 (度)
+
+                foreach (var p in innerPoints)
+                {
+                    double dx = p.X - center.X;
+                    double dy = p.Y - center.Y;
+                    double actualRadius = Math.Sqrt(dx * dx + dy * dy);
+                    
+                    // 計算單位向量
+                    double ux = dx / actualRadius;
+                    double uy = dy / actualRadius;
+
+                    // 【關鍵修正】繪製綠色邊界 (Safe Corridor)
+                    // 以圓心為基準，沿著該點的方向，分別在 IdealRadius +/- Tolerance 處畫點
+                    // 這樣可以畫出一個完美的「理想檢測通道」，且只顯示在有輪廓的角度上
+                    Point pOut = new Point((int)(center.X + ux * (fittedRadius + tolerancePx)), (int)(center.Y + uy * (fittedRadius + tolerancePx)));
+                    Point pIn = new Point((int)(center.X + ux * (fittedRadius - tolerancePx)), (int)(center.Y + uy * (fittedRadius - tolerancePx)));
+                    
+                    if(pOut.X >=0 && pOut.X < visualImg.Width && pOut.Y >=0 && pOut.Y < visualImg.Height)
+                        visualImg.At<Vec3b>(pOut.Y, pOut.X) = new Vec3b(0, 255, 0);
+                    if(pIn.X >=0 && pIn.X < visualImg.Width && pIn.Y >=0 && pIn.Y < visualImg.Height)
+                        visualImg.At<Vec3b>(pIn.Y, pIn.X) = new Vec3b(0, 255, 0);
+
+                    // 判定：如果實際點落在綠色通道內側 (半徑過小)，則為內彎
+                    if (actualRadius < (fittedRadius - tolerancePx))
+                    {
+                        Cv2.Circle(visualImg, p, 2, Scalar.Red, -1);
+                        inwardBendingCount++;
+                        gapPositions.Add(p);
+                    }
+                    else if (actualRadius > (fittedRadius + tolerancePx))
+                    {
+                        bool isDefect = true;
+
+                        if (hasGap)
+                        {
+                            // 計算該點的角度
+                            double angleP = Math.Atan2(p.Y - center.Y, p.X - center.X) * 180.0 / Math.PI;
+                            double angleStart = Math.Atan2(pStart.Y - center.Y, pStart.X - center.X) * 180.0 / Math.PI;
+                            double angleEnd = Math.Atan2(pEnd.Y - center.Y, pEnd.X - center.X) * 180.0 / Math.PI;
+
+                            // 計算角度差 (取絕對值最小夾角)
+                            double diffStart = GetAngleDiff(angleP, angleStart);
+                            double diffEnd = GetAngleDiff(angleP, angleEnd);
+
+                            // 如果該點角度非常接近開口兩端 (在排除角度內)，則視為自然輪廓，忽略
+                            if (diffStart < gapExclusionAngle || diffEnd < gapExclusionAngle)
+                            {
+                                isDefect = false;
+                            }
+                        }
+                        else
+                        {
+                            // 若沒有找到開口 (閉合圓或檢測失敗)，任何外凸都視為 NG
+                            isDefect = true;
+                        }
+
+                        if (isDefect)
+                        {
+                            Cv2.Circle(visualImg, p, 2, Scalar.Magenta, -1);
+                            outwardDeformationCount++;
+                            gapPositions.Add(p);
+                        }
+                    }
+                }
+
+                // 11. 繪製理想圓 (藍色細線)
+                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, 5, Scalar.Blue, -1);
+                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, (int)fittedRadius, Scalar.Blue, 1);
+                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new Point(10, 110), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
+
+                // 修改：使用變數 defectCountLimit 取代硬編碼的 5，並加入 isGapTooSmall 判斷
+                if (inwardBendingCount > defectCountLimit || outwardDeformationCount > defectCountLimit || isGapTooWide || isGapTooSmall)
+                {
+                    isDeformed = true;
+                }
+                
+                // 顯示詳細 NG 原因 (除錯用)
+                if (isDeformed)
+                {
+                    string reason = "";
+                    if (inwardBendingCount > defectCountLimit) reason += "Inward ";
+                    if (outwardDeformationCount > defectCountLimit) reason += "Outward ";
+                    if (isGapTooWide) reason += "GapBig ";
+                    if (isGapTooSmall) reason += "GapSmall ";
+                    Cv2.PutText(visualImg, reason, new Point(10, 140), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
+                }
+
+                string statusText = isDeformed ? "NG" : "OK";
+                Scalar statusColor = isDeformed ? Scalar.Red : Scalar.Green;
+                Cv2.PutText(visualImg, $"Result: {statusText}", new Point(10, 30), HersheyFonts.HersheySimplex, 1.2, statusColor, 3);
+
+                // 儲存結果
+                if (!string.IsNullOrEmpty(debugSavePath))
+                {
+                    try
+                    {
+                        string dir = Path.GetDirectoryName(debugSavePath);
+                        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                        visualImg.SaveImage(debugSavePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Save visual result failed: {ex.Message}");
+                    }
+                }
+
+                return (isDeformed, visualImg, gapPositions);
+            }
+        }
+
+        // 新增：最小平方法圓擬合 (Least Squares Circle Fit)
+        // 解決 x^2 + y^2 + Dx + Ey + F = 0
+        private (Point2f center, float radius) FitCircle(List<Point> points)
+        {
+            int numPoints = points.Count;
+            if (numPoints < 3) return (new Point2f(0, 0), 0);
+
+            // 使用 OpenCV Solve 求解線性方程組
+            // 2x_i * A + 2y_i * B + C = x_i^2 + y_i^2
+            // Center(A, B), Radius = Sqrt(C + A^2 + B^2)
+            
+            using (Mat matA = new Mat(numPoints, 3, MatType.CV_32F))
+            using (Mat matB = new Mat(numPoints, 1, MatType.CV_32F))
+            {
+                var indexerA = matA.GetGenericIndexer<float>();
+                var indexerB = matB.GetGenericIndexer<float>();
+
+                for (int i = 0; i < numPoints; i++)
+                {
+                    float x = points[i].X;
+                    float y = points[i].Y;
+                    indexerA[i, 0] = 2 * x;
+                    indexerA[i, 1] = 2 * y;
+                    indexerA[i, 2] = 1;
+                    indexerB[i, 0] = x * x + y * y;
+                }
+
+                using (Mat matX = new Mat())
+                {
+                    // SVD 分解求解
+                    Cv2.Solve(matA, matB, matX, DecompTypes.SVD);
+                    
+                    float A = matX.At<float>(0);
+                    float B = matX.At<float>(1);
+                    float C = matX.At<float>(2);
+
+                    float r = (float)Math.Sqrt(C + A * A + B * B);
+                    return (new Point2f(A, B), r);
+                }
+            }
         }
 
         public (bool isNG, Mat img, List<Point> gapPositions) findGap(Mat img, int stop/*, CircleSegment[] outerCircles, CircleSegment[] innerCircles*/)
@@ -17671,6 +18047,106 @@ namespace peilin
             }
         }
 
+        private async void button25_Click(object sender, EventArgs e)
+        {
+            // 由 GitHub Copilot 產生
+            // 測試 findGapWidth_new 功能 (批量處理) - Async 改良版
+            // 解決 ContextSwitchDeadlock 與記憶體問題
+            try
+            {
+                // 1. 選取圖片 (支援多選)
+                CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+                dialog.IsFolderPicker = false;
+                dialog.Multiselect = true; // 開啟多選
+                dialog.Title = "選取測試圖片 (可多選)";
+                dialog.Filters.Add(new CommonFileDialogFilter("Image Files", "*.jpg;*.png;*.bmp"));
+
+                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    var filePaths = dialog.FileNames.ToList(); // 轉為 List 以便處理
+                    if (filePaths.Count == 0) return;
+
+                    // 準備存放結果的資料夾
+                    string firstFileDir = Path.GetDirectoryName(filePaths.First());
+                    string resultDir = Path.Combine(firstFileDir, "result_batch");
+                    if (!Directory.Exists(resultDir))
+                    {
+                        Directory.CreateDirectory(resultDir);
+                    }
+
+                    // 鎖定 UI 防止重複操作
+                    button25.Enabled = false;
+                    string originalTitle = this.Text;
+
+                    // 統計變數
+                    int ngCount = 0;
+                    int okCount = 0;
+                    int totalCount = filePaths.Count;
+
+                    // 在背景執行耗時操作
+                    await Task.Run(() =>
+                    {
+                        for (int i = 0; i < totalCount; i++)
+                        {
+                            string filePath = filePaths[i];
+                            string fileName = Path.GetFileName(filePath);
+
+                            // 更新進度顯示 (需 Invoke 回 UI 執行緒)
+                            if (this.InvokeRequired)
+                            {
+                                this.Invoke(new Action(() =>
+                                {
+                                    this.Text = $"Processing {i + 1}/{totalCount}: {fileName}";
+                                }));
+                            }
+
+                            // 單張處理模式：讀取 -> 處理 -> 儲存 -> 釋放
+                            // 避免一次載入所有圖片導致 OOM
+                            using (Mat src = Cv2.ImRead(filePath))
+                            {
+                                if (src.Empty())
+                                {
+                                    Console.WriteLine($"讀取圖片失敗: {filePath}");
+                                    continue;
+                                }
+
+                                // 呼叫單張處理函式 (假設站點為 2)
+                                // 傳入 resultDir 作為 debugSavePath 的目錄，但 findGapWidth_Single 期望的是完整路徑或 null
+                                // 這裡我們傳入 null，讓它只回傳結果，我們自己儲存
+                                var result = findGapWidth_Single(src, 2, null);
+
+                                string savePath = Path.Combine(resultDir, "Result_" + fileName);
+
+                                // 儲存結果影像
+                                if (result.img != null && !result.img.IsDisposed)
+                                {
+                                    result.img.SaveImage(savePath);
+                                    result.img.Dispose(); // 立即釋放結果影像
+                                }
+
+                                if (result.isNG) ngCount++;
+                                else okCount++;
+                            }
+                            
+                            // 稍微讓出 CPU 時間，避免介面完全凍結 (雖然已經在 Task.Run 中，但這是好習慣)
+                            // Thread.Sleep(1); 
+                        }
+                    });
+
+                    // 恢復 UI
+                    this.Text = originalTitle;
+                    button25.Enabled = true;
+
+                    MessageBox.Show($"批量檢測完成\n總數: {totalCount}\nOK: {okCount}\nNG: {ngCount}\n結果已儲存至: {resultDir}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"發生錯誤: {ex.Message}");
+                this.Text = "peilin"; // 確保標題復原
+                button25.Enabled = true;
+            }
+        }
     }
     /// <summary>
     /// 管理瑕疵計數的寫入、讀取和更新
@@ -19399,6 +19875,7 @@ public class ResultManager
                 }
                 #endregion
                 #region 12/34 合併統計OK/NG
+                /*
                 // 由 GitHub Copilot 產生 - 修正: 以樣品為單位統計，任一站 NG 則該樣品算 NG
                 int group12OK = 0, group12NG = 0;
                 int group34OK = 0, group34NG = 0;
@@ -19443,8 +19920,10 @@ public class ResultManager
                 writer.WriteLine("組別,OK數量,NG數量");
                 writer.WriteLine($"1+2,{group12OK},{group12NG}");
                 writer.WriteLine($"3+4,{group34OK},{group34NG}");
+                */
                 #endregion
                 #region 站點統計
+                /*
                 writer.WriteLine();
                 writer.WriteLine("==== 站點統計 ====");
                 writer.WriteLine("站點,OK數量,NG數量,瑕疵類型,瑕疵數量");
@@ -19473,6 +19952,7 @@ public class ResultManager
                         }
                     }
                 }
+                */
                 #endregion
 
             }
@@ -19491,6 +19971,7 @@ public class ResultManager
         stationDefectStats.Clear();
         stationOkNgStats.Clear();
         sampleResults.Clear();
+        sampleStationResults.Clear();
 
         // 預設四個站點
         for (int i = 1; i <= 4; i++)
