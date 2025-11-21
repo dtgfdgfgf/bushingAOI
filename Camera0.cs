@@ -966,7 +966,7 @@ namespace basler
                                 {
                                     // 儲存到 \white 資料夾並終止處理 (SaveWhiteIssueImage 會釋放 Clone)
                                     SaveWhiteIssueImage(src.Clone(), cameraIndex, whiteRatio);
-                                    return; // ✅ finally 會釋放 src
+                                    //return; // ✅ finally 會釋放 src
                                 }
 
                                 // 沒有白比率問題，儲存誤觸發圖像並終止處理 (SaveTouchedImageAndGetPath 會釋放 Clone)
@@ -984,7 +984,7 @@ namespace basler
                                 if (!isValid)
                                 {
                                     SaveWhiteIssueImage(src.Clone(), cameraIndex, whiteRatio);
-                                    return; // ✅ finally 會釋放 src
+                                    //return; // ✅ finally 會釋放 src
                                 }
                             }
                         }
