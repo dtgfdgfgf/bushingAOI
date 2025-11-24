@@ -1753,7 +1753,7 @@ namespace peilin
                                 try
                                 {
                                     gapInputImage = input.image.Clone();
-                                    (gapIsNG, gapResult, gapPositions) = findGapWidth(gapInputImage, input.stop);
+                                    (gapIsNG, gapResult, gapPositions) = findGapWidth_Single(gapInputImage, input.stop);
 
                                     if (gapIsNG)
                                     {
@@ -2616,45 +2616,7 @@ namespace peilin
                                                 {
                                                     double.TryParse(thresholdStr, out otpRatioThreshold);
                                                     isAreaNG = defectToRoiRatio > otpRatioThreshold;
-                                                }
-                                                /*
-                                                if (app.param.ContainsKey($"OTPratio_{input.stop}"))
-                                                {
-                                                    otpRatioThreshold = double.Parse(app.param[$"OTPratio_{input.stop}"]);
-                                                    isAreaNG = defectToRoiRatio > otpRatioThreshold;
-                                                }
-                                                */
-                                                /*
-                                                if (resultImage != null)
-                                                {
-                                                    // 在圖像上添加OTP總面積信息
-                                                    areaText = $"OTP Total Area: {totalOtpAreaMmSquared:F1}mm² ({verifiedOtpDefects.Count} defects)";
-                                                    Cv2.PutText(resultImage, areaText,
-                                                               new Point(10, 100), // 避免與其他文字重疊，放在稍低的位置
-                                                               HersheyFonts.HersheyDuplex, 0.6, Scalar.Cyan, 2);
-                                                }
-                                                */
-
-                                                // 可選：將面積信息記錄到資料庫或檔案
-                                                /*
-                                                try
-                                                {
-                                                    string areaLogPath = $@".\logs\otp_area_log_{st.ToString("yyyy-MM")}.csv";
-                                                    string logEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss},{input.count},{input.stop},{verifiedOtpDefects.Count},{totalOtpAreaPixels},{totalOtpAreaMmSquared:F3}";
-
-                                                    // 如果檔案不存在，先寫入標題行
-                                                    if (!File.Exists(areaLogPath))
-                                                    {
-                                                        File.WriteAllText(areaLogPath, "時間,樣品編號,站點,OTP瑕疵數,總面積(像素),總面積(mm²)\n");
-                                                    }
-
-                                                    File.AppendAllText(areaLogPath, logEntry + "\n");
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    Log.Warning($"記錄OTP面積日誌失敗: {ex.Message}");
-                                                }
-                                                */
+                                                }                                            
                                             }
                                             else
                                             {
@@ -3224,9 +3186,26 @@ namespace peilin
                                     // 在 getMat3() 和 getMat4() 函數中替換色彩檢測部分
 
                                     #region 五彩鋅色彩複檢 (針對OTP瑕疵)
-                                    // 只對站3和站4的OTP瑕疵進行色彩複檢
-                                    if ((input.stop == 3 || input.stop == 4) && processedDefects.Count > 0)
+                                    // 只對站3和站4的OTP瑕疵進行色彩、面積複檢
+                                    string areaText = "non";
+                                    string roiText = "non";
+                                    string ratioText = "non";
+                                    bool isAreaNG = false;
+                                    if (processedDefects.Count > 0)
                                     {
+                                        // 計算ROI面積 (外圓面積 - 內圓面積)
+                                        int knownOuterRadius = int.Parse(app.param[$"known_outer_radius_{input.stop}"]);
+                                        int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{input.stop}"]);
+
+                                        double outerAreaPixels = Math.PI * Math.Pow(knownOuterRadius, 2);
+                                        double innerAreaPixels = Math.PI * Math.Pow(knownInnerRadius, 2);
+                                        double roiAreaPixels = outerAreaPixels - innerAreaPixels;
+
+                                        // 轉換為物理單位
+                                        double pixelToMmSquared = Math.Pow(double.Parse(app.param[$"PixelToMM_{input.stop}"]), 2);
+                                        double roiAreaMmSquared = roiAreaPixels * pixelToMmSquared;
+                                        roiText = $"ROI: {roiAreaPixels:F1} pixels)";
+
                                         // 分離OTP瑕疵和其他瑕疵
                                         var otpDefects = processedDefects.Where(d => d.class_name == "OTP").ToList();
                                         var otherDefects = processedDefects.Where(d => d.class_name != "OTP").ToList();
@@ -3236,12 +3215,43 @@ namespace peilin
                                         {
                                             var colorVerifier = new SimplifiedColorVerifier();
 
-                                            //Log.Debug($"=== 站{input.stop} OTP瑕疵色彩複檢開始，待檢OTP瑕疵數: {otpDefects.Count} ===");
-
                                             // 使用簡化的3+1特徵模型進行色彩複檢
                                             // 主要特徵 (2.5σ): G通道、V通道、R通道
                                             // 輔助特徵 (3.0σ): B通道
-                                            var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 3.0);
+                                            var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
+
+                                            if (verifiedOtpDefects.Count > 0)
+                                            {
+                                                double defectToRoiRatio = 0.0;
+                                                // 將OTP瑕疵框轉換為矩形列表
+                                                List<Rect> otpRects = verifiedOtpDefects.Select(defect =>
+                                                new Rect(defect.box[0], defect.box[1],
+                                                        defect.box[2] - defect.box[0],
+                                                        defect.box[3] - defect.box[1])).ToList();
+
+                                                // 使用方案二：精確計算聯合面積（處理重疊問題）
+                                                int totalOtpAreaPixels = CalculateTotalAreaWithoutOverlap(otpRects);
+
+                                                // 轉換為物理單位（如果需要）
+                                                double totalOtpAreaMmSquared = totalOtpAreaPixels * pixelToMmSquared;
+
+                                                // 計算瑕疵面積佔ROI面積的百分比
+                                                defectToRoiRatio = (totalOtpAreaPixels / roiAreaPixels);
+
+                                                // 如果需要在結果圖像上顯示總面積信息
+                                                areaText = $"OTP Total Area: {totalOtpAreaPixels:F2} pixels ({verifiedOtpDefects.Count:F2} defects)";
+                                                ratioText = $"defectToRoiRatio: {defectToRoiRatio:F2}";
+                                                double otpRatioThreshold = 0.0;
+                                                if (app.param.TryGetValue("OTPratio" + input.stop.ToString() + "_threshold", out string thresholdStr))
+                                                {
+                                                    double.TryParse(thresholdStr, out otpRatioThreshold);
+                                                    isAreaNG = defectToRoiRatio > otpRatioThreshold;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                //Log.Debug($"站{input.stop} 色彩複檢後無確認OTP瑕疵，總面積為0");
+                                            }
 
                                             // 合併驗證後的OTP瑕疵和其他瑕疵
                                             processedDefects = new List<DetectionResult>();
@@ -3260,6 +3270,7 @@ namespace peilin
                                         //Log.Debug($"站{input.stop} 不進行色彩複檢或無瑕疵");
                                     }
                                     #endregion
+
                                     // 找出最高分的瑕疵檢測結果
                                     bool hasDefect = false;
                                     string defectName = "OK";
@@ -9544,44 +9555,6 @@ namespace peilin
             } // using 結束，ori, visualImg, gray, ringThresh 自動 Dispose
         }
 
-        // 由 GitHub Copilot 產生
-        // 批次處理版本：接受多張影像並回傳每張的檢測結果
-        public List<(bool isNG, Mat img, List<Point> gapPositions)> findGapWidth_new(List<Mat> imgs, int stop, string debugFolder = null)
-        {
-            var results = new List<(bool isNG, Mat img, List<Point> gapPositions)>();
-            if (imgs == null) return results;
-
-            int idx = 0;
-            foreach (var m in imgs)
-            {
-                if (m == null)
-                {
-                    idx++;
-                    continue;
-                }
-
-                string savePath = null;
-                if (!string.IsNullOrEmpty(debugFolder))
-                {
-                    try
-                    {
-                        if (!Directory.Exists(debugFolder)) Directory.CreateDirectory(debugFolder);
-                        savePath = Path.Combine(debugFolder, $"binary_{stop}_{idx}.jpg");
-                    }
-                    catch
-                    {
-                        savePath = null;
-                    }
-                }
-
-                // 呼叫單張處理函式
-                var res = findGapWidth_Single(m, stop, savePath);
-                results.Add(res);
-                idx++;
-            }
-            return results;
-        }
-
         // Helper to get smallest difference between two angles (0~180)
         private double GetAngleDiff(double a1, double a2)
         {
@@ -9600,57 +9573,78 @@ namespace peilin
         public (bool isNG, Mat img, List<Point> gapPositions) findGapWidth_Single(Mat img, int stop, string debugSavePath = null)
         {
             List<Point> gapPositions = new List<Point>();
-            
-            // 複製輸入影像用於視覺化
             Mat visualImg = img.Clone();
-            
-            // 使用 using 區塊管理暫存 Mat
+
+            // ==========================================
+            // 1. 參數讀取 (統一於函數開頭)
+            // ==========================================
+
+            // --- A. 既有參數 (維持原讀取方式) ---
+            int minthresh = 0;
+            if (app.param.ContainsKey($"gapThresh_{stop}"))
+                int.TryParse(app.param[$"gapThresh_{stop}"], out minthresh);
+
+            double pixeltomm = 1.0;
+            if (app.param.ContainsKey($"PixelToMM_{stop}"))
+                double.TryParse(app.param[$"PixelToMM_{stop}"], out pixeltomm);
+
+            int knownCenterX = 0, knownCenterY = 0, knownRadius = 0;
+            if (app.param.ContainsKey($"known_inner_center_x_{stop}")) int.TryParse(app.param[$"known_inner_center_x_{stop}"], out knownCenterX);
+            if (app.param.ContainsKey($"known_inner_center_y_{stop}")) int.TryParse(app.param[$"known_inner_center_y_{stop}"], out knownCenterY);
+            if (app.param.ContainsKey($"known_inner_radius_{stop}")) int.TryParse(app.param[$"known_inner_radius_{stop}"], out knownRadius);
+
+            // --- B. 新增參數 (使用 _threshold 結尾格式) ---
+
+            // 1. deform_inward -> inwardThreshold
+            int inwardThreshold = 40;
+            if (app.param.TryGetValue($"deform_inward{stop}_threshold", out string inwardStr))
+            {
+                int.TryParse(inwardStr, out inwardThreshold);
+            }
+
+            // 2. deform_outward -> outwardThreshold
+            int outwardThreshold = 10;
+            if (app.param.TryGetValue($"deform_outward{stop}_threshold", out string outwardStr))
+            {
+                int.TryParse(outwardStr, out outwardThreshold);
+            }
+
+            // 3. deform_gapTolerance -> maxGapWidthMm
+            double maxGapWidthMm = 10.0;
+            if (app.param.TryGetValue($"deform_gapTolerance{stop}_threshold", out string gapTolStr))
+            {
+                double.TryParse(gapTolStr, out maxGapWidthMm);
+            }
+
+            // 4. deform_misalign -> tolerancePx
+            double tolerancePx = 6.0;
+            if (app.param.TryGetValue($"deform_misalign{stop}_threshold", out string misalignStr))
+            {
+                double.TryParse(misalignStr, out tolerancePx);
+            }
+
             using (Mat gray = new Mat())
             using (Mat binary = new Mat())
             {
-                // 1. 預處理
                 if (img.Channels() == 3)
                     Cv2.CvtColor(img, gray, ColorConversionCodes.BGR2GRAY);
                 else
                     img.CopyTo(gray);
-                
-                // 從參數獲取閾值
-                int minthresh = 0;
-                if (app.param.ContainsKey($"gapThresh_{stop}"))
-                {
-                    int.TryParse(app.param[$"gapThresh_{stop}"], out minthresh);
-                }
-                
-                if (minthresh == 0)
-                {
-                    return (false, visualImg, gapPositions);
-                }
 
-                // 二值化
+                if (minthresh == 0) return (false, visualImg, gapPositions);
+
+                // White = Gap (255), Black = Object (0)
                 Cv2.Threshold(gray, binary, minthresh, 255, ThresholdTypes.Binary);
 
-                // 2. 尋找輪廓 (使用 External 模式只找最外層輪廓)
                 Point[][] contours;
                 HierarchyIndex[] hierarchy;
-                Cv2.FindContours(binary, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxNone);
+                Cv2.FindContours(binary, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxNone);
 
-                if (contours.Length == 0)
-                {
-                    return (false, visualImg, gapPositions);
-                }
+                if (contours.Length == 0) return (false, visualImg, gapPositions);
 
-                // 3. 篩選最佳輪廓 (取面積最大的，假設為 Bushing 本體)
                 var bushingContour = contours.OrderByDescending(c => Cv2.ContourArea(c)).First();
 
-                // 4. 讀取已知圓心與半徑參數 (僅用於初步篩選內圓點)
-                int knownCenterX = 0, knownCenterY = 0, knownRadius = 0;
-                if (app.param.ContainsKey($"known_inner_center_x_{stop}")) int.TryParse(app.param[$"known_inner_center_x_{stop}"], out knownCenterX);
-                if (app.param.ContainsKey($"known_inner_center_y_{stop}")) int.TryParse(app.param[$"known_inner_center_y_{stop}"], out knownCenterY);
-                if (app.param.ContainsKey($"known_inner_radius_{stop}")) int.TryParse(app.param[$"known_inner_radius_{stop}"], out knownRadius);
-
                 Point2f tempCenter = new Point2f(knownCenterX, knownCenterY);
-                
-                // 若無參數，先用輪廓重心做初步估計
                 if (knownRadius == 0)
                 {
                     Moments m = Cv2.Moments(bushingContour);
@@ -9661,135 +9655,164 @@ namespace peilin
                     }
                 }
 
-                // 5. 分離內圓點 (Inner Edge Points)
-                double distThreshold = knownRadius + 30; 
+                // Extract Inner Points
+                double distThreshold = knownRadius + 30;
                 List<Point> innerPoints = new List<Point>();
-                
                 foreach (var p in bushingContour)
                 {
                     double d = Math.Sqrt(Math.Pow(p.X - tempCenter.X, 2) + Math.Pow(p.Y - tempCenter.Y, 2));
-                    if (d < distThreshold)
-                    {
-                        innerPoints.Add(p);
-                    }
+                    if (d < distThreshold) innerPoints.Add(p);
                 }
 
                 if (innerPoints.Count < 10) return (false, visualImg, gapPositions);
 
-                // 6. 【關鍵修正】擬合圓心與半徑 (Circle Fit)
-                // 使用最小平方法找出內圓點的真實幾何中心，解決 C 型環質心偏移問題
+                // Fit Circle (Least Squares)
                 var fitResult = FitCircle(innerPoints);
                 Point2f center = fitResult.center;
                 float fittedRadius = fitResult.radius;
+                /*
+                // 策略1：防禦性後處理 (Iterative Refitting)
+                // 檢查擬合圓是否切入黑色實體 (即輪廓點落在圓內)
+                // 若切入過深，剔除這些異常點並重新擬合
+                List<Point> refinedPoints = new List<Point>();
+                int cutIntoObjectCount = 0;
+                double cutThreshold = 3.0; // 切入深度閾值 (像素)
 
-                // 繪製 "黃圈" (實際內圓輪廓)
-                foreach(var p in innerPoints)
+                foreach (var p in innerPoints)
                 {
-                    if(p.X >= 0 && p.X < visualImg.Width && p.Y >= 0 && p.Y < visualImg.Height)
-                        visualImg.At<Vec3b>(p.Y, p.X) = new Vec3b(0, 255, 255); 
-                }
-
-                // 7. 檢測開口 (Gap)
-                var anglePoints = innerPoints.Select(p => new { 
-                    Point = p, 
-                    Angle = Math.Atan2(p.Y - center.Y, p.X - center.X) * 180.0 / Math.PI 
-                }).Select(x => new { x.Point, Angle = x.Angle < 0 ? x.Angle + 360 : x.Angle })
-                  .OrderBy(x => x.Angle)
-                  .ToList();
-
-                double maxGapAngle = 0;
-                Point pStart = new Point();
-                Point pEnd = new Point();
-                bool hasGap = false;
-
-                for (int i = 0; i < anglePoints.Count; i++)
-                {
-                    var curr = anglePoints[i];
-                    var next = anglePoints[(i + 1) % anglePoints.Count];
+                    double d = Math.Sqrt(Math.Pow(p.X - center.X, 2) + Math.Pow(p.Y - center.Y, 2));
                     
-                    double diff = next.Angle - curr.Angle;
-                    if (diff < 0) diff += 360;
-                    
-                    if (diff > maxGapAngle)
+                    // 如果點到圓心的距離小於 (半徑 - 閾值)，代表該點位於圓內深處
+                    // 意即擬合圓在該處切入了外部的黑色實體
+                    if (d < fittedRadius - cutThreshold)
                     {
-                        maxGapAngle = diff;
-                        pStart = curr.Point;
-                        pEnd = next.Point;
+                        cutIntoObjectCount++;
+                        // 剔除此點，不參與二次擬合
+                    }
+                    else
+                    {
+                        refinedPoints.Add(p);
                     }
                 }
                 
-                // 設定一個最小開口角度閾值，例如 5 度，才視為有開口
-                if (maxGapAngle > 5.0) 
+                // 若異常點數量超過閾值 (例如 5 點)，且剩餘點數仍足夠 (例如 > 50%)，則執行重算
+                if (cutIntoObjectCount > 5 && refinedPoints.Count > innerPoints.Count * 0.5)
                 {
-                    hasGap = true;
-                    // 繪製開口點 (視覺化確認用)
-                    Cv2.Circle(visualImg, pStart, 4, Scalar.Orange, -1);
-                    Cv2.Circle(visualImg, pEnd, 4, Scalar.Orange, -1);
+                    var refinedFit = FitCircle(refinedPoints);
+                    center = refinedFit.center;
+                    fittedRadius = refinedFit.radius;
+                }
+                */
+                // Draw Fitted Circle
+                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, 5, Scalar.Blue, -1);
+                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, (int)fittedRadius, Scalar.Blue, 1);
+                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new Point(10, 110), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
+
+                // Pixel Scanning for Gap
+                // 修改：將掃描半徑向外擴 5 像素，確保掃描路徑落在物體實體(黑色)上
+                int scanRadius = (int)fittedRadius + 20;
+                if (scanRadius <= 0) scanRadius = 1;
+
+                int totalSteps = 3600;
+                double stepAngle = 360.0 / totalSteps;
+                List<List<Point>> allGaps = new List<List<Point>>();
+                List<Point> currentGap = new List<Point>();
+
+                for (int i = 0; i < totalSteps; i++)
+                {
+                    double angle = i * stepAngle;
+                    double rad = angle * Math.PI / 180.0;
+                    int x = (int)(center.X + scanRadius * Math.Cos(rad));
+                    int y = (int)(center.Y + scanRadius * Math.Sin(rad));
+
+                    if (x >= 0 && x < binary.Width && y >= 0 && y < binary.Height)
+                    {
+                        if (binary.At<byte>(y, x) > 225) // White = Gap
+                        {
+                            currentGap.Add(new Point(x, y));
+                        }
+                        else
+                        {
+                            if (currentGap.Count > 0)
+                            {
+                                allGaps.Add(new List<Point>(currentGap));
+                                currentGap.Clear();
+                            }
+                        }
+                    }
+                }
+                // Handle wrap-around
+                if (currentGap.Count > 0)
+                {
+                    if (allGaps.Count > 0 && binary.At<byte>((int)(center.Y + scanRadius * Math.Sin(0)), (int)(center.X + scanRadius * Math.Cos(0))) > 225)
+                    {
+                        allGaps[0].InsertRange(0, currentGap);
+                    }
+                    else
+                    {
+                        allGaps.Add(currentGap);
+                    }
                 }
 
-                // 8. 參數準備
-                double pixeltomm = 1.0;
-                if (app.param.ContainsKey($"PixelToMM_{stop}")) double.TryParse(app.param[$"PixelToMM_{stop}"], out pixeltomm);
+                var mainGap = allGaps.OrderByDescending(g => g.Count).FirstOrDefault();
+                bool hasGap = false;
+                Point pStart = new Point();
+                Point pEnd = new Point();
+                double gapWidthMm = 0;
                 
-                double toleranceMm = 0.5; 
-                double tolerancePx = toleranceMm / pixeltomm;
-                if (tolerancePx < 5) tolerancePx = 5;
-                tolerancePx = 6; //強制
+                if (mainGap != null && mainGap.Count > 1)
+                {
+                    hasGap = true;
+                    pStart = mainGap.First();
+                    pEnd = mainGap.Last();
+                    double gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
+                    gapWidthMm = gapWidthPx * pixeltomm;
 
-                // 新增：讀取瑕疵點數量閾值 (預設 5)
-                int defectCountLimit = 2;
-                if (app.param.ContainsKey($"defectCountLimit_{stop}")) 
-                    int.TryParse(app.param[$"defectCountLimit_{stop}"], out defectCountLimit);
+                    Cv2.Line(visualImg, pStart, pEnd, Scalar.Magenta, 2);
+                    Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm ({gapWidthPx:F1}px)", new Point(10, 80), HersheyFonts.HersheySimplex, 0.8, Scalar.Magenta, 2);
+                }
 
-                // 9. 判定邏輯 A: 開口寬度
-                double gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
-                double gapWidthMm = gapWidthPx * pixeltomm;
-                
-                // 讀取最大/最小開口寬度參數
-                double maxGapWidthMm = 10.0; 
-                if (app.param.ContainsKey($"maxGapWidth_{stop}")) double.TryParse(app.param[$"maxGapWidth_{stop}"], out maxGapWidthMm);
-                
-                // 新增：最小開口寬度檢查 (預設 0，即允許閉合)
-                double minGapWidthMm = 0.0;
-                if (app.param.ContainsKey($"minGapWidth_{stop}")) double.TryParse(app.param[$"minGapWidth_{stop}"], out minGapWidthMm);
+                // 邏輯修正：若有開口，外凸容許值為 outwardThreshold (參數值)；若無開口，容許值為 2
+                outwardThreshold = hasGap ? outwardThreshold : 2;
 
+                // Check Defects
+                List<string> ngReasons = new List<string>();
                 bool isGapTooWide = gapWidthMm > maxGapWidthMm;
-                bool isGapTooSmall = gapWidthMm < minGapWidthMm; // 檢查是否過小(或閉合)
 
-                Scalar gapColor = Scalar.Cyan;
-                if (isGapTooWide || isGapTooSmall) gapColor = Scalar.Red;
+                if (isGapTooWide) ngReasons.Add($"GapBig({gapWidthMm:F1}>{maxGapWidthMm})");
 
-                Cv2.Line(visualImg, pStart, pEnd, gapColor, 2);
-                Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm", new Point(10, 80), HersheyFonts.HersheySimplex, 1, gapColor, 2);
+                Scalar gapColor = isGapTooWide ? Scalar.Red : Scalar.Cyan;
 
-                // 10. 判定邏輯 B: 內彎檢測 (Inward Bending)
-                bool isDeformed = false;
+                if (hasGap)
+                {
+                    Cv2.Line(visualImg, pStart, pEnd, gapColor, 2);
+                    // 顯示像素距離與物理距離
+                    Point midPoint = new Point((pStart.X + pEnd.X) / 2, (pStart.Y + pEnd.Y) / 2);
+                    Cv2.PutText(visualImg, $"{gapWidthMm:F2}mm", new Point(10, 80), HersheyFonts.HersheySimplex, 1, gapColor, 2);
+                }
+                else
+                {
+                    Cv2.PutText(visualImg, "No Gap", new Point(10, 80), HersheyFonts.HersheySimplex, 1, Scalar.Red, 2);
+                }
+
                 int inwardBendingCount = 0;
                 int outwardDeformationCount = 0;
-                double gapExclusionAngle = 15.0; // 開口處排除角度 (度)
+                double gapExclusionAngle = 1.0;
 
                 foreach (var p in innerPoints)
                 {
                     double dx = p.X - center.X;
                     double dy = p.Y - center.Y;
                     double actualRadius = Math.Sqrt(dx * dx + dy * dy);
-                    
-                    // 計算單位向量
                     double ux = dx / actualRadius;
                     double uy = dy / actualRadius;
 
-                    // 【關鍵修正】繪製綠色邊界 (Safe Corridor)
-                    // 以圓心為基準，沿著該點的方向，分別在 IdealRadius +/- Tolerance 處畫點
-                    // 這樣可以畫出一個完美的「理想檢測通道」，且只顯示在有輪廓的角度上
+                    // Draw Green Corridor
                     Point pOut = new Point((int)(center.X + ux * (fittedRadius + tolerancePx)), (int)(center.Y + uy * (fittedRadius + tolerancePx)));
                     Point pIn = new Point((int)(center.X + ux * (fittedRadius - tolerancePx)), (int)(center.Y + uy * (fittedRadius - tolerancePx)));
-                    
-                    if(pOut.X >=0 && pOut.X < visualImg.Width && pOut.Y >=0 && pOut.Y < visualImg.Height)
-                        visualImg.At<Vec3b>(pOut.Y, pOut.X) = new Vec3b(0, 255, 0);
-                    if(pIn.X >=0 && pIn.X < visualImg.Width && pIn.Y >=0 && pIn.Y < visualImg.Height)
-                        visualImg.At<Vec3b>(pIn.Y, pIn.X) = new Vec3b(0, 255, 0);
+                    if (pOut.X >= 0 && pOut.X < visualImg.Width && pOut.Y >= 0 && pOut.Y < visualImg.Height) visualImg.At<Vec3b>(pOut.Y, pOut.X) = new Vec3b(0, 255, 0);
+                    if (pIn.X >= 0 && pIn.X < visualImg.Width && pIn.Y >= 0 && pIn.Y < visualImg.Height) visualImg.At<Vec3b>(pIn.Y, pIn.X) = new Vec3b(0, 255, 0);
 
-                    // 判定：如果實際點落在綠色通道內側 (半徑過小)，則為內彎
                     if (actualRadius < (fittedRadius - tolerancePx))
                     {
                         Cv2.Circle(visualImg, p, 2, Scalar.Red, -1);
@@ -9799,30 +9822,19 @@ namespace peilin
                     else if (actualRadius > (fittedRadius + tolerancePx))
                     {
                         bool isDefect = true;
-
                         if (hasGap)
                         {
-                            // 計算該點的角度
                             double angleP = Math.Atan2(p.Y - center.Y, p.X - center.X) * 180.0 / Math.PI;
                             double angleStart = Math.Atan2(pStart.Y - center.Y, pStart.X - center.X) * 180.0 / Math.PI;
                             double angleEnd = Math.Atan2(pEnd.Y - center.Y, pEnd.X - center.X) * 180.0 / Math.PI;
-
-                            // 計算角度差 (取絕對值最小夾角)
-                            double diffStart = GetAngleDiff(angleP, angleStart);
-                            double diffEnd = GetAngleDiff(angleP, angleEnd);
-
-                            // 如果該點角度非常接近開口兩端 (在排除角度內)，則視為自然輪廓，忽略
-                            if (diffStart < gapExclusionAngle || diffEnd < gapExclusionAngle)
+                            
+                            // 邏輯修正：如果該點角度非常接近開口兩端 (在排除角度內)，則視為自然輪廓，忽略
+                            if (GetAngleDiff(angleP, angleStart) < gapExclusionAngle || GetAngleDiff(angleP, angleEnd) < gapExclusionAngle) 
                             {
                                 isDefect = false;
                             }
                         }
-                        else
-                        {
-                            // 若沒有找到開口 (閉合圓或檢測失敗)，任何外凸都視為 NG
-                            isDefect = true;
-                        }
-
+                        
                         if (isDefect)
                         {
                             Cv2.Circle(visualImg, p, 2, Scalar.Magenta, -1);
@@ -9832,25 +9844,13 @@ namespace peilin
                     }
                 }
 
-                // 11. 繪製理想圓 (藍色細線)
-                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, 5, Scalar.Blue, -1);
-                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, (int)fittedRadius, Scalar.Blue, 1);
-                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new Point(10, 110), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
+                if (inwardBendingCount > inwardThreshold) ngReasons.Add($"Inward({inwardBendingCount})");
+                if (outwardDeformationCount > outwardThreshold) ngReasons.Add($"Outward({outwardDeformationCount})");
 
-                // 修改：使用變數 defectCountLimit 取代硬編碼的 5，並加入 isGapTooSmall 判斷
-                if (inwardBendingCount > defectCountLimit || outwardDeformationCount > defectCountLimit || isGapTooWide || isGapTooSmall)
-                {
-                    isDeformed = true;
-                }
-                
-                // 顯示詳細 NG 原因 (除錯用)
+                bool isDeformed = ngReasons.Count > 0;
                 if (isDeformed)
                 {
-                    string reason = "";
-                    if (inwardBendingCount > defectCountLimit) reason += "Inward ";
-                    if (outwardDeformationCount > defectCountLimit) reason += "Outward ";
-                    if (isGapTooWide) reason += "GapBig ";
-                    if (isGapTooSmall) reason += "GapSmall ";
+                    string reason = string.Join(", ", ngReasons);
                     Cv2.PutText(visualImg, reason, new Point(10, 140), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
                 }
 
@@ -9858,7 +9858,6 @@ namespace peilin
                 Scalar statusColor = isDeformed ? Scalar.Red : Scalar.Green;
                 Cv2.PutText(visualImg, $"Result: {statusText}", new Point(10, 30), HersheyFonts.HersheySimplex, 1.2, statusColor, 3);
 
-                // 儲存結果
                 if (!string.IsNullOrEmpty(debugSavePath))
                 {
                     try
@@ -9867,10 +9866,7 @@ namespace peilin
                         if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                         visualImg.SaveImage(debugSavePath);
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Save visual result failed: {ex.Message}");
-                    }
+                    catch (Exception ex) { Console.WriteLine($"Save visual result failed: {ex.Message}"); }
                 }
 
                 return (isDeformed, visualImg, gapPositions);
@@ -18115,7 +18111,7 @@ namespace peilin
                                 // 這裡我們傳入 null，讓它只回傳結果，我們自己儲存
                                 var result = findGapWidth_Single(src, 2, null);
 
-                                string savePath = Path.Combine(resultDir, "Result_" + fileName);
+                                string savePath = Path.Combine(resultDir, $"{result.isNG}_" + fileName);
 
                                 // 儲存結果影像
                                 if (result.img != null && !result.img.IsDisposed)
