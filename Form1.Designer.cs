@@ -83,6 +83,7 @@ namespace peilin
             this.panel3 = new System.Windows.Forms.Panel();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.button25 = new System.Windows.Forms.Button();
             this.button24 = new System.Windows.Forms.Button();
             this.button49 = new System.Windows.Forms.Button();
             this.button48 = new System.Windows.Forms.Button();
@@ -210,7 +211,6 @@ namespace peilin
             this.label44 = new System.Windows.Forms.Label();
             this.label46 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.button25 = new System.Windows.Forms.Button();
             this.panel2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -711,6 +711,17 @@ namespace peilin
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "主畫面";
             // 
+            // button25
+            // 
+            this.button25.Location = new System.Drawing.Point(357, 327);
+            this.button25.Name = "button25";
+            this.button25.Size = new System.Drawing.Size(75, 23);
+            this.button25.TabIndex = 467;
+            this.button25.Text = "testgap";
+            this.button25.UseVisualStyleBackColor = true;
+            this.button25.Visible = false;
+            this.button25.Click += new System.EventHandler(this.button25_Click);
+            // 
             // button24
             // 
             this.button24.Location = new System.Drawing.Point(357, 361);
@@ -719,6 +730,7 @@ namespace peilin
             this.button24.TabIndex = 466;
             this.button24.Text = "testbp1";
             this.button24.UseVisualStyleBackColor = true;
+            this.button24.Visible = false;
             this.button24.Click += new System.EventHandler(this.button24_Click);
             // 
             // button49
@@ -2140,16 +2152,6 @@ namespace peilin
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
-            // 
-            // button25
-            // 
-            this.button25.Location = new System.Drawing.Point(357, 327);
-            this.button25.Name = "button25";
-            this.button25.Size = new System.Drawing.Size(75, 23);
-            this.button25.TabIndex = 467;
-            this.button25.Text = "testgap";
-            this.button25.UseVisualStyleBackColor = true;
-            this.button25.Click += new System.EventHandler(this.button25_Click);
             // 
             // Form1
             // 
