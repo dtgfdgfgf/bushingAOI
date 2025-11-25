@@ -1013,12 +1013,8 @@ namespace peilin
                                 */
                                 #endregion
 
-                                #region 是否變形，無效取像也有可能在這裡檢出，因為使用固定座標
+                                #region 是否變形， 停用
                                 /*
-                                PerformanceProfiler.StartMeasure($"{input.count}_DetectCircles1");
-                                var (outerCircles, innerCircles) = DetectCircles(input.image, input.stop);
-                                PerformanceProfiler.StopMeasure($"{input.count}_DetectCircles1");
-                                */
                                 // 根本解決方案: 傳遞 Clone 副本,避免 finally 塊釋放 input.image 時影響函數內部
                                 // 原因: async 函數的 finally 塊可能在函數呼叫完成前執行
                                 Mat gapInputImage = null;
@@ -1055,11 +1051,13 @@ namespace peilin
                                     gapInputImage?.Dispose();
                                     gapResult?.Dispose();  // ✅ 確保釋放
                                 }
+                                
                                 // 保存開口位置供後續使用
                                 //List<Point> detectedGapPositions = gapPositions;
+                                */
                                 #endregion
 
-                                #region 倒角
+                                #region 倒角 只檢藍色畫線
                                 // 由 GitHub Copilot 產生
                                 // 修正: 使用快取檢查是否需要倒角檢測,避免資料庫鎖定
                                 string chamferCacheKey = $"{app.produce_No}_{input.stop}";
@@ -1115,7 +1113,7 @@ namespace peilin
                                 // 根本解決方案: 傳遞 Clone 副本給 DetectAndExtractROI
                                 Mat roiInputImage = null;
                                 Mat roi = null;
-                                Mat nong = null;
+                                Mat nong = null; //釋放nongTemp用的
                                 try
                                 {
                                     roiInputImage = input.image.Clone();
@@ -19751,7 +19749,7 @@ public class ResultManager
                 writer.WriteLine();
                 writer.WriteLine($"LOT ID:,{app.LotID}");
                 writer.WriteLine($"工單數量:,{app.order}");
-                writer.WriteLine("==== 總體統計 ====");
+                writer.WriteLine("==== 總體統計 （實際推料數量，不含NULL）====");
 
                 // 由 GitHub Copilot 產生 - 以樣品為單位計算總數（不是站點單位）
                 // 從sampleResults中統計唯一的樣品ID數量
@@ -19818,7 +19816,7 @@ public class ResultManager
                 }
 
                 writer.WriteLine();
-                writer.WriteLine("==== 瑕疵統計（只統計 NG 樣品） ====");
+                writer.WriteLine("==== 瑕疵統計（只統計 NG 樣品，包含檢測為NG但是超時流進NULL的樣品） ====");
                 writer.WriteLine("瑕疵類型,數量,比例");
                 foreach (var defect in defectTypeSummary.OrderByDescending(d => d.Value))
                 {
@@ -19831,7 +19829,7 @@ public class ResultManager
                 #region 分數分布分析
                 // 由 GitHub Copilot 產生 - 添加新的分數分布分析部分（加入 null 檢查）
                 writer.WriteLine();
-                writer.WriteLine("==== 所有檢出瑕疵分布（包含 OK 樣品中的低分瑕疵） ====");
+                writer.WriteLine("==== 所有檢出瑕疵分布（包含 OK 樣品中的低分瑕疵、因為超時流進NULL的OK / NG樣品的瑕疵） ====");
 
                 // 由 GitHub Copilot 產生 - 收集分數數據，加入 try-catch 避免 NullReferenceException
                 try
