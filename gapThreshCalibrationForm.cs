@@ -626,273 +626,279 @@ namespace peilin
         public (bool isNG, Mat img, double outerGapMm, double outerGapAngleDeg, double inwardBendMm, double inwardBendAngleDeg)
             AnalyzeGapWithThreshold(Mat img, int stop, int gapThresh)
         {
-            // 無效站別的thresh會預設為0
-
             // 由 GitHub Copilot 產生
-            // 修正: 將 gray 和 ringThresh 納入 using 管理，確保記憶體釋放
-            using (Mat ori = img.Clone())
-            using (Mat visualImg = img.Clone())
-            using (Mat gray = new Mat())
-            using (Mat ringThresh = new Mat())
+            // 改用 findGapWidth_Single 邏輯：動態擬合圓心 + 變形檢測
+
+            Mat visualImg = img.Clone();
+
+            // ==========================================
+            // 1. 參數讀取 (統一於函數開頭)
+            // ==========================================
+
+            // --- A. 既有參數 (維持原讀取方式) ---
+            int minthresh = gapThresh;
+            if (minthresh == 0)
             {
-                int minthresh = gapThresh;
-                if (minthresh == 0)
+                return (false, visualImg, 0, 0, 0, 0);
+            }
+
+            double pixeltomm = 1.0;
+            if (app.param.ContainsKey($"PixelToMM_{stop}"))
+                double.TryParse(app.param[$"PixelToMM_{stop}"], out pixeltomm);
+
+            int knownCenterX = 0, knownCenterY = 0, knownRadius = 0;
+            if (app.param.ContainsKey($"known_inner_center_x_{stop}")) int.TryParse(app.param[$"known_inner_center_x_{stop}"], out knownCenterX);
+            if (app.param.ContainsKey($"known_inner_center_y_{stop}")) int.TryParse(app.param[$"known_inner_center_y_{stop}"], out knownCenterY);
+            if (app.param.ContainsKey($"known_inner_radius_{stop}")) int.TryParse(app.param[$"known_inner_radius_{stop}"], out knownRadius);
+
+            // --- B. 新增參數 (使用 _threshold 結尾格式) ---
+
+            // 1. deform_inward -> inwardThreshold
+            int inwardThreshold = 40;
+            if (app.param.TryGetValue($"deform_inward{stop}_threshold", out string inwardStr))
+            {
+                int.TryParse(inwardStr, out inwardThreshold);
+            }
+
+            // 2. deform_outward -> outwardThreshold
+            int outwardThreshold = 10;
+            if (app.param.TryGetValue($"deform_outward{stop}_threshold", out string outwardStr))
+            {
+                int.TryParse(outwardStr, out outwardThreshold);
+            }
+
+            // 3. deform_gapTolerance -> maxGapWidthMm
+            double maxGapWidthMm = 10.0;
+            if (app.param.TryGetValue($"deform_gapTolerance{stop}_threshold", out string gapTolStr))
+            {
+                double.TryParse(gapTolStr, out maxGapWidthMm);
+            }
+
+            // 4. deform_misalign -> tolerancePx
+            double tolerancePx = 6.0;
+            if (app.param.TryGetValue($"deform_misalign{stop}_threshold", out string misalignStr))
+            {
+                double.TryParse(misalignStr, out tolerancePx);
+            }
+
+            using (Mat gray = new Mat())
+            using (Mat binary = new Mat())
+            {
+                if (img.Channels() == 3)
+                    Cv2.CvtColor(img, gray, ColorConversionCodes.BGR2GRAY);
+                else
+                    img.CopyTo(gray);
+
+                // White = Gap (255), Black = Object (0)
+                Cv2.Threshold(gray, binary, minthresh, 255, ThresholdTypes.Binary);
+
+                OpenCvSharp.Point[][] contours;
+                HierarchyIndex[] hierarchy;
+                Cv2.FindContours(binary, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxNone);
+
+                if (contours.Length == 0) return (false, visualImg, 0, 0, 0, 0);
+
+                var bushingContour = contours.OrderByDescending(c => Cv2.ContourArea(c)).First();
+
+                Point2f tempCenter = new Point2f(knownCenterX, knownCenterY);
+                if (knownRadius == 0)
                 {
-                    return (false, visualImg.Clone(), 0, 0, 0, 0); // 0表示不做阈值，需要 Clone 因為會被 Dispose
+                    Moments m = Cv2.Moments(bushingContour);
+                    if (m.M00 != 0)
+                    {
+                        tempCenter = new Point2f((float)(m.M10 / m.M00), (float)(m.M01 / m.M00));
+                        knownRadius = (int)bushingContour.Min(p => Math.Sqrt(Math.Pow(p.X - tempCenter.X, 2) + Math.Pow(p.Y - tempCenter.Y, 2)));
+                    }
                 }
 
-                Cv2.CvtColor(visualImg, gray, ColorConversionCodes.BGR2GRAY);
-                Cv2.Threshold(gray, ringThresh, minthresh, 255, ThresholdTypes.Binary);
-
-                #region 不霍夫
-                /*
-                int centerTolerance = 80;
-                bool matched = false;
-                Mat roi_blurred = null;
-                CircleSegment? bestInner = null;
-
-                // 1) 用霍夫圓找外圈+內圈 看是否匹配 匹配意義在於確認樣本沒有非常嚴重的變形
-                // 2) 沒有非常嚴重變形再去計算內彎和外擴
-                if (outerCircles.Length == 0) Console.WriteLine("外圈沒圓");
-                if (innerCircles.Length == 0) Console.WriteLine("內圈沒圓");
-
-                if (outerCircles.Length > 0 && innerCircles.Length > 0) //皆存在
+                // Extract Inner Points
+                double distThreshold = knownRadius + 30;
+                List<OpenCvSharp.Point> innerPoints = new List<OpenCvSharp.Point>();
+                foreach (var p in bushingContour)
                 {
-                    foreach (var outer in outerCircles)
+                    double d = Math.Sqrt(Math.Pow(p.X - tempCenter.X, 2) + Math.Pow(p.Y - tempCenter.Y, 2));
+                    if (d < distThreshold) innerPoints.Add(p);
+                }
+
+                if (innerPoints.Count < 10) return (false, visualImg, 0, 0, 0, 0);
+
+                // Fit Circle (Least Squares)
+                var fitResult = FitCircle(innerPoints);
+                Point2f center = fitResult.center;
+                float fittedRadius = fitResult.radius;
+
+                // Draw Fitted Circle
+                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, 5, Scalar.Blue, -1);
+                Cv2.Circle(visualImg, (int)center.X, (int)center.Y, (int)fittedRadius, Scalar.Blue, 1);
+                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new OpenCvSharp.Point(10, 110), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
+
+                // Pixel Scanning for Gap
+                int scanRadius = (int)fittedRadius + 20;
+                if (scanRadius <= 0) scanRadius = 1;
+
+                int totalSteps = 3600;
+                double stepAngle = 360.0 / totalSteps;
+                List<List<OpenCvSharp.Point>> allGaps = new List<List<OpenCvSharp.Point>>();
+                List<OpenCvSharp.Point> currentGap = new List<OpenCvSharp.Point>();
+
+                for (int i = 0; i < totalSteps; i++)
+                {
+                    double angle = i * stepAngle;
+                    double rad = angle * Math.PI / 180.0;
+                    int x = (int)(center.X + scanRadius * Math.Cos(rad));
+                    int y = (int)(center.Y + scanRadius * Math.Sin(rad));
+
+                    if (x >= 0 && x < binary.Width && y >= 0 && y < binary.Height)
                     {
-                        foreach (var inner in innerCircles)
+                        if (binary.At<byte>(y, x) > 225) // White = Gap
                         {
-                            double radiusDistance = outer.Radius - inner.Radius;
-                            double centerDistance = Math.Sqrt(
-                                Math.Pow(outer.Center.X - inner.Center.X, 2) +
-                                Math.Pow(outer.Center.Y - inner.Center.Y, 2));
-                            if (centerDistance <= centerTolerance)
+                            currentGap.Add(new OpenCvSharp.Point(x, y));
+                        }
+                        else
+                        {
+                            if (currentGap.Count > 0)
                             {
-                                // 视为匹配
-                                bestInner = inner;
-                                // 建 mask
-                                Mat mask = new Mat(visualImg.Size(), MatType.CV_8UC1, Scalar.Black);
-                                // 外圈=white
-                                Cv2.Circle(mask, (Point)outer.Center, (int)outer.Radius, Scalar.White, -1);
-                                // 内圈=black
-                                Cv2.Circle(mask, (Point)inner.Center, (int)inner.Radius, Scalar.Black, -1);
-
-                                Mat roi_full = new Mat();
-                                Cv2.BitwiseAnd(visualImg, visualImg, roi_full, mask);
-
-                                // 转灰阶+模糊
-                                Mat roi_gray = new Mat();
-                                Cv2.CvtColor(roi_full, roi_gray, ColorConversionCodes.BGR2GRAY);
-                                roi_blurred = new Mat();
-                                Cv2.GaussianBlur(roi_gray, roi_blurred, new Size(5, 5), 0);
-
-                                Cv2.CvtColor(roi_blurred, roi_blurred, ColorConversionCodes.GRAY2BGR);
-
-                                matched = true;
-                                break;
+                                allGaps.Add(new List<OpenCvSharp.Point>(currentGap));
+                                currentGap.Clear();
                             }
                         }
-                        if (matched) break;
                     }
                 }
-
-                if (!matched || bestInner == null)
+                // Handle wrap-around
+                if (currentGap.Count > 0)
                 {
-                    Console.WriteLine("內外圈未成功匹配, 判斷變形嚴重.");
-                    return (true, visualImg);
-                }
-                */
-                #endregion
-
-                int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
-                int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
-                int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
-                int knownOuterCenterX = int.Parse(app.param[$"known_outer_center_x_{stop}"]);
-                int knownOuterCenterY = int.Parse(app.param[$"known_outer_center_y_{stop}"]);
-                int knownOuterRadius = int.Parse(app.param[$"known_outer_radius_{stop}"]);
-
-                Point2f innerCenter = new Point2f(knownInnerCenterX, knownInnerCenterY);
-                double innerRadius = knownInnerRadius;
-                Point2f outerCenter = new Point2f(knownOuterCenterX, knownOuterCenterY);
-                double outerRadius = knownOuterRadius;
-
-                // 4) 對 ringThresh 執行極坐標掃描
-                double angleStep = 0.5;
-                int nSteps = (int)(360.0 / angleStep);
-
-                bool[] inner_isHole_outward = new bool[nSteps]; // 內圓向外擴掃描的結果
-                bool[] inner_isHole_inward = new bool[nSteps];  // 內圓向內彎掃描的結果
-
-                double pixeltomm = double.Parse(app.param[$"PixelToMM_{stop}"]);
-                double roiTolerance = (1 / pixeltomm) / (1 / 0.6) - 5; // 0.5mm, 基本落在15~23px
-                                                                       //double roiTolerance = 10;
-                                                                       // 向外擴掃描的半徑 (原來邏輯)
-                double outerScanRadius = innerRadius + roiTolerance;
-
-                // 向內彎掃描的半徑 (新增邏輯：內圓半徑向內縮小)
-                double inwardScanRadius = innerRadius - roiTolerance;
-
-                // =========== 向外擴掃描 (內圓向外) ===========
-                // 可视化: 在 src 上画点(绿=環, 红=hole)
-                for (int i = 0; i < nSteps; i++)
-                {
-                    double angleDeg = i * angleStep;
-                    double rad = angleDeg * Math.PI / 180.0;
-
-                    double rx = innerCenter.X + outerScanRadius * Math.Cos(rad);
-                    double ry = innerCenter.Y + outerScanRadius * Math.Sin(rad);
-
-                    int px = (int)Math.Round(rx);
-                    int py = (int)Math.Round(ry);
-
-                    if (px < 0 || px >= ringThresh.Cols || py < 0 || py >= ringThresh.Rows)
+                    if (allGaps.Count > 0 && binary.At<byte>((int)(center.Y + scanRadius * Math.Sin(0)), (int)(center.X + scanRadius * Math.Cos(0))) > 225)
                     {
-                        // hole
-                        inner_isHole_outward[i] = true;
-                        Cv2.Circle(visualImg, new OpenCvSharp.Point(px, py), 2, Scalar.Red, -1);
+                        allGaps[0].InsertRange(0, currentGap);
                     }
                     else
                     {
-                        byte val = ringThresh.Get<byte>(py, px);
-                        if (val < 127)
-                        {
-                            // ring
-                            inner_isHole_outward[i] = false;
-                            Cv2.Circle(visualImg, new OpenCvSharp.Point(px, py), 1, Scalar.Green, -1);
-                        }
-                        else
-                        {
-                            // hole
-                            inner_isHole_outward[i] = true;
-                            Cv2.Circle(visualImg, new OpenCvSharp.Point(px, py), 2, Scalar.Red, -1);
-                        }
+                        allGaps.Add(currentGap);
                     }
                 }
 
-                // =========== 向內彎掃描 (內圓向內) ===========
-                for (int i = 0; i < nSteps; i++)
+                var mainGap = allGaps.OrderByDescending(g => g.Count).FirstOrDefault();
+                bool hasGap = false;
+                OpenCvSharp.Point pStart = new OpenCvSharp.Point();
+                OpenCvSharp.Point pEnd = new OpenCvSharp.Point();
+                double gapWidthMm = 0;
+
+                if (mainGap != null && mainGap.Count > 1)
                 {
-                    double angleDeg = i * angleStep;
-                    double rad = angleDeg * Math.PI / 180.0;
+                    hasGap = true;
+                    pStart = mainGap.First();
+                    pEnd = mainGap.Last();
+                    double gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
+                    gapWidthMm = gapWidthPx * pixeltomm;
 
-                    double rx = innerCenter.X + inwardScanRadius * Math.Cos(rad);
-                    double ry = innerCenter.Y + inwardScanRadius * Math.Sin(rad);
-
-                    int px = (int)Math.Round(rx);
-                    int py = (int)Math.Round(ry);
-
-                    if (px < 0 || px >= ringThresh.Cols || py < 0 || py >= ringThresh.Rows)
-                    {
-                        // 超出圖像邊界，標記為hole
-                        inner_isHole_inward[i] = true;
-                        Cv2.Circle(visualImg, new OpenCvSharp.Point(px, py), 2, Scalar.Blue, -1); // 藍色標記
-                    }
-                    else
-                    {
-                        byte val = ringThresh.Get<byte>(py, px);
-                        if (val < 127)
-                        {
-                            // 檢測到環狀物體，說明內彎！這是異常情況
-                            inner_isHole_inward[i] = false; // 非hole代表檢測到內彎
-                            Cv2.Circle(visualImg, new OpenCvSharp.Point(px, py), 1, Scalar.Yellow, -1); // 黃色標記
-                        }
-                        else
-                        {
-                            // 正常情況，內側應該是空白的
-                            inner_isHole_inward[i] = true;
-                            Cv2.Circle(visualImg, new OpenCvSharp.Point(px, py), 2, Scalar.Blue, -1); // 藍色標記
-                        }
-                    }
+                    Cv2.Line(visualImg, pStart, pEnd, Scalar.Magenta, 2);
+                    Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm ({gapWidthPx:F1}px)", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 0.8, Scalar.Magenta, 2);
                 }
 
-                // 5) 計算外擴尺寸 - 找最大連續缺口
-                double outerMaxGapAngleDeg = 0;
-                int outerStartIdx = -1;
-                for (int idx = 0; idx < nSteps * 2; idx++)
+                // 邏輯修正：若有開口，外凸容許值為 outwardThreshold (參數值)；若無開口，容許值為 2
+                outwardThreshold = hasGap ? outwardThreshold : 2;
+
+                // Check Defects
+                List<string> ngReasons = new List<string>();
+                bool isGapTooWide = gapWidthMm > maxGapWidthMm;
+
+                if (isGapTooWide) ngReasons.Add($"GapBig({gapWidthMm:F1}>{maxGapWidthMm})");
+
+                Scalar gapColor = isGapTooWide ? Scalar.Red : Scalar.Cyan;
+
+                if (hasGap)
                 {
-                    int realIdx = idx % nSteps;
-                    if (inner_isHole_outward[realIdx])
-                    {
-                        if (outerStartIdx < 0) outerStartIdx = idx;
-                    }
-                    else
-                    {
-                        if (outerStartIdx >= 0)
-                        {
-                            int length = idx - outerStartIdx;
-                            double gapDeg = length * angleStep;
-                            if (gapDeg > outerMaxGapAngleDeg) outerMaxGapAngleDeg = gapDeg;
-                            outerStartIdx = -1;
-                        }
-                    }
-                }
-                if (outerStartIdx >= 0)
-                {
-                    int length = (nSteps * 2) - outerStartIdx;
-                    double gapDeg = length * angleStep;
-                    if (gapDeg > outerMaxGapAngleDeg) outerMaxGapAngleDeg = gapDeg;
-                }
-
-                // 6) 計算向內彎的尺寸 - 找連續檢測到"非空白"區域的長度
-                double inwardBendAngleDeg = 0;
-                int inwardStartIdx = -1;
-                for (int idx = 0; idx < nSteps * 2; idx++)
-                {
-                    int realIdx = idx % nSteps;
-                    // 如果檢測到非空白，即內彎
-                    if (!inner_isHole_inward[realIdx])
-                    {
-                        if (inwardStartIdx < 0) inwardStartIdx = idx;
-                    }
-                    else
-                    {
-                        if (inwardStartIdx >= 0)
-                        {
-                            int length = idx - inwardStartIdx;
-                            double bendDeg = length * angleStep;
-                            if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
-                            inwardStartIdx = -1;
-                        }
-                    }
-                }
-                if (inwardStartIdx >= 0)
-                {
-                    int length = (nSteps * 2) - inwardStartIdx;
-                    double bendDeg = length * angleStep;
-                    if (bendDeg > inwardBendAngleDeg) inwardBendAngleDeg = bendDeg;
-                }
-
-                // 7) 將角度轉換為物理尺寸 (mm)
-                double outerGapArcPx = outerScanRadius * (outerMaxGapAngleDeg * Math.PI / 180.0);
-                double outerGapArcMm = outerGapArcPx * pixeltomm;
-
-                double inwardBendArcPx = inwardScanRadius * (inwardBendAngleDeg * Math.PI / 180.0);
-                double inwardBendArcMm = inwardBendArcPx * pixeltomm;
-
-                //Console.WriteLine($"外擴情況: 最大開口角度={outerMaxGapAngleDeg:F2} deg => 弧長={outerGapArcMm:F2} mm");
-                //Console.WriteLine($"內彎情況: 最大內彎角度={inwardBendAngleDeg:F2} deg => 弧長={inwardBendArcMm:F2} mm");
-
-                // 由 GitHub Copilot 產生
-                // 修正: 移除手動 Dispose（using 會自動處理）
-                // gray.Dispose();
-                // ringThresh.Dispose();
-
-                // 8) 判斷是否NG (內彎或外擴超出閾值)
-                bool isOutwardNG = outerGapArcMm >= 1.5;
-                bool isInwardNG = inwardBendAngleDeg > 0; // 只要有內彎就算NG
-
-                // 由 GitHub Copilot 產生 - 返回開口大小數據而非位置列表
-                if (isOutwardNG || isInwardNG)
-                {
-                    // ori 會被 using 自動釋放
-                    return (true, visualImg.Clone(), outerGapArcMm, outerMaxGapAngleDeg, inwardBendArcMm, inwardBendAngleDeg);
+                    Cv2.Line(visualImg, pStart, pEnd, gapColor, 2);
+                    OpenCvSharp.Point midPoint = new OpenCvSharp.Point((pStart.X + pEnd.X) / 2, (pStart.Y + pEnd.Y) / 2);
+                    Cv2.PutText(visualImg, $"{gapWidthMm:F2}mm", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 1, gapColor, 2);
                 }
                 else
                 {
-                    // ori, visualImg 都會被 using 自動釋放
-                    return (false, visualImg.Clone(), outerGapArcMm, outerMaxGapAngleDeg, inwardBendArcMm, inwardBendAngleDeg);
+                    Cv2.PutText(visualImg, "No Gap", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 1, Scalar.Red, 2);
                 }
-            } // using 結束，ori, visualImg, gray, ringThresh 自動 Dispose
+
+                int inwardBendingCount = 0;
+                int outwardDeformationCount = 0;
+                double gapExclusionAngle = 1.0;
+
+                foreach (var p in innerPoints)
+                {
+                    double dx = p.X - center.X;
+                    double dy = p.Y - center.Y;
+                    double actualRadius = Math.Sqrt(dx * dx + dy * dy);
+                    double ux = dx / actualRadius;
+                    double uy = dy / actualRadius;
+
+                    // Draw Green Corridor
+                    OpenCvSharp.Point pOut = new OpenCvSharp.Point((int)(center.X + ux * (fittedRadius + tolerancePx)), (int)(center.Y + uy * (fittedRadius + tolerancePx)));
+                    OpenCvSharp.Point pIn = new OpenCvSharp.Point((int)(center.X + ux * (fittedRadius - tolerancePx)), (int)(center.Y + uy * (fittedRadius - tolerancePx)));
+                    if (pOut.X >= 0 && pOut.X < visualImg.Width && pOut.Y >= 0 && pOut.Y < visualImg.Height) visualImg.At<Vec3b>(pOut.Y, pOut.X) = new Vec3b(0, 255, 0);
+                    if (pIn.X >= 0 && pIn.X < visualImg.Width && pIn.Y >= 0 && pIn.Y < visualImg.Height) visualImg.At<Vec3b>(pIn.Y, pIn.X) = new Vec3b(0, 255, 0);
+
+                    if (actualRadius < (fittedRadius - tolerancePx))
+                    {
+                        Cv2.Circle(visualImg, p, 2, Scalar.Red, -1);
+                        inwardBendingCount++;
+                    }
+                    else if (actualRadius > (fittedRadius + tolerancePx))
+                    {
+                        bool isDefect = true;
+                        if (hasGap)
+                        {
+                            double angleP = Math.Atan2(p.Y - center.Y, p.X - center.X) * 180.0 / Math.PI;
+                            double angleStart = Math.Atan2(pStart.Y - center.Y, pStart.X - center.X) * 180.0 / Math.PI;
+                            double angleEnd = Math.Atan2(pEnd.Y - center.Y, pEnd.X - center.X) * 180.0 / Math.PI;
+
+                            if (GetAngleDiff(angleP, angleStart) < gapExclusionAngle || GetAngleDiff(angleP, angleEnd) < gapExclusionAngle)
+                            {
+                                isDefect = false;
+                            }
+                        }
+
+                        if (isDefect)
+                        {
+                            Cv2.Circle(visualImg, p, 2, Scalar.Magenta, -1);
+                            outwardDeformationCount++;
+                        }
+                    }
+                }
+
+                if (inwardBendingCount > inwardThreshold) ngReasons.Add($"Inward({inwardBendingCount})");
+                if (outwardDeformationCount > outwardThreshold) ngReasons.Add($"Outward({outwardDeformationCount})");
+
+                bool isDeformed = ngReasons.Count > 0;
+                if (isDeformed)
+                {
+                    string reason = string.Join(", ", ngReasons);
+                    Cv2.PutText(visualImg, reason, new OpenCvSharp.Point(10, 140), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
+                }
+
+                string statusText = isDeformed ? "NG" : "OK";
+                Scalar statusColor = isDeformed ? Scalar.Red : Scalar.Green;
+                Cv2.PutText(visualImg, $"Result: {statusText}", new OpenCvSharp.Point(10, 30), HersheyFonts.HersheySimplex, 1.2, statusColor, 3);
+
+                // 由 GitHub Copilot 產生
+                // 計算回傳值以保持與 UI 相容
+                // outerGapMm: 直接使用 gapWidthMm (開口寬度)
+                // outerGapAngleDeg: 根據主要開口的點數計算角度
+                double outerGapAngleDeg = 0;
+                if (mainGap != null && mainGap.Count > 0)
+                {
+                    outerGapAngleDeg = (mainGap.Count / (double)totalSteps) * 360.0;
+                }
+
+                // inwardBendMm: 根據內彎點數計算弧長
+                double inwardBendAngleDeg = 0;
+                double inwardBendMm = 0;
+                if (inwardBendingCount > 0)
+                {
+                    // 估算內彎弧長：假設內彎點均勻分布
+                    inwardBendAngleDeg = (inwardBendingCount / (double)innerPoints.Count) * 360.0;
+                    inwardBendMm = inwardBendAngleDeg * Math.PI / 180.0 * fittedRadius * pixeltomm;
+                }
+
+                return (isDeformed, visualImg, gapWidthMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg);
+            }
         }
         #endregion
 
@@ -1043,6 +1049,60 @@ namespace peilin
             picOriginalControl?.Image?.Dispose();
             picResultControl?.Image?.Dispose();
         }
+
+        #region 輔助函數
+        // 由 GitHub Copilot 產生
+        // 複製自 Form1.cs - 最小平方法圓擬合
+        private (Point2f center, float radius) FitCircle(List<OpenCvSharp.Point> points)
+        {
+            int numPoints = points.Count;
+            if (numPoints < 3) return (new Point2f(0, 0), 0);
+
+            // 使用 OpenCV Solve 求解線性方程組
+            // 2x_i * A + 2y_i * B + C = x_i^2 + y_i^2
+            // Center(A, B), Radius = Sqrt(C + A^2 + B^2)
+
+            using (Mat matA = new Mat(numPoints, 3, MatType.CV_32F))
+            using (Mat matB = new Mat(numPoints, 1, MatType.CV_32F))
+            {
+                var indexerA = matA.GetGenericIndexer<float>();
+                var indexerB = matB.GetGenericIndexer<float>();
+
+                for (int i = 0; i < numPoints; i++)
+                {
+                    float x = points[i].X;
+                    float y = points[i].Y;
+                    indexerA[i, 0] = 2 * x;
+                    indexerA[i, 1] = 2 * y;
+                    indexerA[i, 2] = 1;
+                    indexerB[i, 0] = x * x + y * y;
+                }
+
+                using (Mat matX = new Mat())
+                {
+                    // SVD 分解求解
+                    Cv2.Solve(matA, matB, matX, DecompTypes.SVD);
+
+                    float A = matX.At<float>(0);
+                    float B = matX.At<float>(1);
+                    float C = matX.At<float>(2);
+
+                    float r = (float)Math.Sqrt(C + A * A + B * B);
+                    return (new Point2f(A, B), r);
+                }
+            }
+        }
+
+        // 由 GitHub Copilot 產生
+        // 複製自 Form1.cs - 計算角度差
+        private double GetAngleDiff(double a1, double a2)
+        {
+            double diff = Math.Abs(a1 - a2);
+            if (diff > 180) diff = 360 - diff;
+            return diff;
+        }
+        #endregion
+
         #endregion
     }
 }
