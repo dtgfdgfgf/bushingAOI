@@ -1329,6 +1329,7 @@ namespace peilin
         // 由 GitHub Copilot 產生 - 取像按鈕點擊事件
         private void buttonCapture_Click(object sender, EventArgs e)
         {
+
             if (currentCameraIndex < 0)
             {
                 MessageBox.Show("請先選擇站點（站1-站4）", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1342,10 +1343,11 @@ namespace peilin
                 // 獲取原始影像（不包含輔助線）
                 using (Mat originalFrame = GetLatestFrame(currentCameraIndex))
                 {
+
                     if (originalFrame == null || originalFrame.Empty())
                     {
                         MessageBox.Show("無法獲取相機影像", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
+                       return;
                     }
 
                     // 使用 SaveFileDialog 讓使用者選擇儲存位置

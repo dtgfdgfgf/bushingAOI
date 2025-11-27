@@ -26,6 +26,9 @@ namespace peilin
         // 【新增】參數狀態視覺化
         private Dictionary<string, ParameterStatus> parameterStatusMap = new Dictionary<string, ParameterStatus>();
 
+        // 由 GitHub Copilot 產生 - 參數區域快取（用於加速顏色查詢，避免重複 LINQ 查詢）
+        private Dictionary<string, ParameterZone> _parameterZoneCache = new Dictionary<string, ParameterZone>();
+
         // 【新增】參數狀態列舉
         public enum ParameterStatus
         {
@@ -247,18 +250,21 @@ namespace peilin
             btnSelectAll.Size = new Size(80, 30);
             btnSelectAll.Tag = prefix;
             btnSelectAll.Click += btnSelectAll_Click;
+            btnSelectAll.Visible = false;
 
             btnSelectNone.Text = "清除";
             btnSelectNone.Location = new Point(100, 20);
             btnSelectNone.Size = new Size(80, 30);
             btnSelectNone.Tag = prefix;
             btnSelectNone.Click += btnSelectNone_Click;
+            btnSelectNone.Visible = false;
 
             btnSelectInvert.Text = "反選";
             btnSelectInvert.Location = new Point(190, 20);
             btnSelectInvert.Size = new Size(80, 30);
             btnSelectInvert.Tag = prefix;
             btnSelectInvert.Click += btnSelectInvert_Click;
+            btnSelectInvert.Visible = false;
 
             // 加入控件到GroupBox
             grpUnmodified.Controls.Add(dgvUnmodified);
@@ -362,24 +368,49 @@ namespace peilin
                 }
             };
         }
-        // 由 GitHub Copilot 產生 - 進度與顏色修正：抽出計算邏輯（處理 Stop null/0）
+        // 由 GitHub Copilot 產生 - 進度與顏色修正：使用快取查詢（O(1) 複雜度）
         private System.Drawing.Color GetReferenceRowBackground(ParameterItem refItem)
         {
-            int refStop = refItem.Stop ?? 0;
+            string key = $"{refItem.Name}_{refItem.Stop ?? 0}";
 
-            bool hasUnmodified = allParameters.Any(p =>
-                p.Name == refItem.Name &&
-                (p.Stop ?? 0) == refStop &&
-                p.Zone == ParameterZone.AddedUnmodified);
+            if (_parameterZoneCache.TryGetValue(key, out var zone))
+            {
+                if (zone == ParameterZone.AddedModified) return System.Drawing.Color.LightBlue;
+                if (zone == ParameterZone.AddedUnmodified) return System.Drawing.Color.LightGreen;
+            }
 
-            bool hasModified = allParameters.Any(p =>
-                p.Name == refItem.Name &&
-                (p.Stop ?? 0) == refStop &&
-                p.Zone == ParameterZone.AddedModified);
-
-            if (hasModified) return System.Drawing.Color.LightBlue;
-            if (hasUnmodified) return System.Drawing.Color.LightGreen;
             return System.Drawing.Color.White; // 尚未新增
+        }
+
+        // 由 GitHub Copilot 產生 - 建立參數區域快取（一次性建立，避免 O(N²) 查詢）
+        private void BuildParameterZoneCache()
+        {
+            _parameterZoneCache.Clear();
+
+            if (allParameters == null) return;
+
+            // 遍歷所有非參考區參數，建立快取
+            // 優先記錄 AddedModified（若同時存在則以 Modified 為準）
+            foreach (var param in allParameters)
+            {
+                if (param.Zone == ParameterZone.Reference) continue;
+
+                string key = $"{param.Name}_{param.Stop ?? 0}";
+
+                if (param.Zone == ParameterZone.AddedModified)
+                {
+                    // AddedModified 優先級最高，直接覆蓋
+                    _parameterZoneCache[key] = ParameterZone.AddedModified;
+                }
+                else if (param.Zone == ParameterZone.AddedUnmodified)
+                {
+                    // 僅在尚未有記錄時才加入 AddedUnmodified
+                    if (!_parameterZoneCache.ContainsKey(key))
+                    {
+                        _parameterZoneCache[key] = ParameterZone.AddedUnmodified;
+                    }
+                }
+            }
         }
         private void UpdateReferenceRowVisual(DataGridViewRow row, ParameterItem item)
         {
@@ -564,6 +595,7 @@ namespace peilin
             btnCalculateBasedOnOD.Size = new Size(180, 25);
             btnCalculateBasedOnOD.BackColor = Color.LightGreen;
             btnCalculateBasedOnOD.Click += BtnCalculateBasedOnOD_Click;
+            btnCalculateBasedOnOD.Visible = false;
 
             // 參考範例按鈕
             var btnShowReference = new Button();
@@ -669,45 +701,53 @@ namespace peilin
             }
         }
 
-        // 【修正】：顯示時間參數計算對話框 - 加入詳細公式說明
+        // 由 GitHub Copilot 產生 - 顯示時間參數計算對話框（fourTo複製 + delay線性預測）
         private void ShowTimingCalculationDialog(double od)
         {
             using (var dialog = new Form())
             {
                 dialog.Text = "時間參數計算結果";
-                dialog.Size = new Size(900, 600); // 增加寬度以容納更多資訊
+                dialog.Size = new Size(900, 650);
                 dialog.StartPosition = FormStartPosition.CenterParent;
 
-                // 計算時間參數
+                // 計算時間參數（fourTo複製 + delay線性預測）
                 var calculatedParams = CalculateTimingParameters(od);
 
-                // 【新增】公式說明區域
+                if (calculatedParams.Count == 0)
+                {
+                    MessageBox.Show("無法取得時間參數，請確認來源料號是否有設定相關參數", "警告",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 公式說明區域
                 var txtFormula = new TextBox();
                 txtFormula.Text = GetCalculationFormula(od);
                 txtFormula.Location = new Point(10, 10);
-                txtFormula.Size = new Size(860, 200);
+                txtFormula.Size = new Size(860, 180);
                 txtFormula.Multiline = true;
                 txtFormula.ReadOnly = true;
                 txtFormula.ScrollBars = ScrollBars.Vertical;
                 txtFormula.Font = new Font("Microsoft JhengHei", 9);
 
-                // 簡化的公式顯示標籤
+                // 標題標籤
                 var lblFormula = new Label();
-                lblFormula.Text = $"📊 基於實際生產資料的智能演算法 | 當前OD: {od:F2}mm";
-                lblFormula.Location = new Point(10, 220);
-                lblFormula.Size = new Size(600, 25);
+                lblFormula.Text = $"📊 fourTo參數從來源料號複製 | delay參數根據OD線性預測 | 當前OD: {od:F2}mm";
+                lblFormula.Location = new Point(10, 200);
+                lblFormula.Size = new Size(700, 25);
                 lblFormula.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
                 lblFormula.ForeColor = Color.DarkBlue;
 
                 // 結果表格
                 var dgvResults = new DataGridView();
-                dgvResults.Location = new Point(10, 250);
-                dgvResults.Size = new Size(860, 250);
+                dgvResults.Location = new Point(10, 230);
+                dgvResults.Size = new Size(860, 320);
                 dgvResults.DataSource = calculatedParams.Select(p => new {
                     參數名稱 = p.Name,
-                    計算結果 = $"{p.Value} ms",
+                    計算結果 = p.Name == "delay" ? $"{p.Value} ms" : p.Value,
                     站點 = p.Stop,
-                    說明 = p.ChineseName
+                    說明 = p.ChineseName,
+                    來源 = p.Name.StartsWith("fourTo") ? "來源料號複製" : "OD線性預測"
                 }).ToList();
                 dgvResults.ReadOnly = true;
                 dgvResults.AllowUserToAddRows = false;
@@ -716,7 +756,7 @@ namespace peilin
                 // 按鈕
                 var btnOK = new Button();
                 btnOK.Text = "✅ 使用這些數值";
-                btnOK.Location = new Point(680, 520);
+                btnOK.Location = new Point(680, 570);
                 btnOK.Size = new Size(120, 30);
                 btnOK.BackColor = Color.LightGreen;
                 btnOK.Click += (s, args) =>
@@ -727,7 +767,7 @@ namespace peilin
 
                 var btnCancel = new Button();
                 btnCancel.Text = "❌ 取消";
-                btnCancel.Location = new Point(810, 520);
+                btnCancel.Location = new Point(810, 570);
                 btnCancel.Size = new Size(80, 30);
                 btnCancel.Click += (s, args) => dialog.DialogResult = DialogResult.Cancel;
 
@@ -738,229 +778,159 @@ namespace peilin
                     RefreshCurrentTabDisplay();
                     SaveSession();
 
-                    MessageBox.Show($"✅ 成功計算並加入 {calculatedParams.Count} 個時間參數到已修改區\n\n" +
-                        $"計算結果摘要：\n" +
-                        $"• fourToOK1: {calculatedParams.First(p => p.Name == "fourToOK1_time_ms").Value} ms\n" +
-                        $"• fourToOK2: {calculatedParams.First(p => p.Name == "fourToOK2_time_ms").Value} ms\n" +
-                        $"• fourToNG: {calculatedParams.First(p => p.Name == "fourToNG_time_ms").Value} ms\n" +
-                        $"• fourToNULL: {calculatedParams.First(p => p.Name == "fourToNULL_time_ms").Value} ms",
+                    // 統計結果
+                    int fourToCount = calculatedParams.Count(p => p.Name.StartsWith("fourTo"));
+                    int delayCount = calculatedParams.Count(p => p.Name == "delay");
+
+                    MessageBox.Show($"✅ 成功加入 {calculatedParams.Count} 個時間參數到已修改區\n\n" +
+                        $"• fourTo 系列參數：{fourToCount} 個（從來源料號複製）\n" +
+                        $"• delay 參數：{delayCount} 個（根據OD線性預測）",
                         "計算完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
 
         #region 時間參數演算法
-        // 【修正】：計算時間參數 - 基於真實資料的演算法
+        // 由 GitHub Copilot 產生 - 計算時間參數（fourTo從來源複製 + delay線性預測）
         private List<ParameterItem> CalculateTimingParameters(double od)
         {
             var calculatedParams = new List<ParameterItem>();
+            var warnings = new List<string>();
 
-            // 【新演算法】：基於實際資料的線性回歸和經驗公式
-            var timingCalculations = new[]
+            // ========== 1. fourTo 系列參數：從來源料號的參考區複製 ==========
+            string[] fourToParamNames = { "fourToOK1_time_ms", "fourToOK2_time_ms", "fourToNG_time_ms", "fourToNULL_time_ms" };
+            var fourToDescriptions = new Dictionary<string, string>
             {
-                new {
-                    Name = "fourToOK1_time_ms",
-                    Calculator = new Func<double, double>(CalculateFourToOK1Time),
-                    Description = "站4到OK1出料時間"
-                },
-                new {
-                    Name = "fourToOK2_time_ms",
-                    Calculator = new Func<double, double>(CalculateFourToOK2Time),
-                    Description = "站4到OK2出料時間"
-                },
-                new {
-                    Name = "fourToNG_time_ms",
-                    Calculator = new Func<double, double>(CalculateFourToNGTime),
-                    Description = "站4到NG出料時間"
-                },
-                new {
-                    Name = "fourToNULL_time_ms",
-                    Calculator = new Func<double, double>(CalculateFourToNULLTime),
-                    Description = "站4到NULL出料時間"
-                }
+                { "fourToOK1_time_ms", "站4到OK1出料時間" },
+                { "fourToOK2_time_ms", "站4到OK2出料時間" },
+                { "fourToNG_time_ms", "站4到NG出料時間" },
+                { "fourToNULL_time_ms", "站4到NULL出料時間" }
             };
 
-            foreach (var timing in timingCalculations)
+            // 預設值（當來源料號無參數時使用）
+            var fourToDefaults = new Dictionary<string, string>
             {
-                double calculatedValue = Math.Round(timing.Calculator(od));
+                { "fourToOK1_time_ms", "1250" },
+                { "fourToOK2_time_ms", "1920" },
+                { "fourToNG_time_ms", "4500" },
+                { "fourToNULL_time_ms", "5000" }
+            };
+
+            foreach (var paramName in fourToParamNames)
+            {
+                // 從參考區尋找來源料號的參數
+                var refParam = allParameters.FirstOrDefault(p =>
+                    p.Zone == ParameterZone.Reference &&
+                    p.Name == paramName &&
+                    (p.Stop ?? 0) == 4);
+
+                string value;
+                string chineseName = fourToDescriptions[paramName];
+
+                if (refParam != null)
+                {
+                    // 從來源料號複製
+                    value = refParam.Value;
+                }
+                else
+                {
+                    // 使用預設值並記錄警告
+                    value = fourToDefaults[paramName];
+                    warnings.Add($"{paramName}: 來源料號無此參數，使用預設值 {value}");
+                }
 
                 calculatedParams.Add(new ParameterItem
                 {
-                    Name = timing.Name,
-                    Value = calculatedValue.ToString(),
-                    Stop = 4, // 這些參數都是站4的
-                    ChineseName = timing.Description,
+                    Name = paramName,
+                    Value = value,
+                    Stop = 4,
+                    ChineseName = chineseName,
                     Type = TargetType,
                     Zone = ParameterZone.AddedModified
                 });
             }
 
+            // ========== 2. delay 參數：根據 OD 線性預測（儲存到 camera 資料表） ==========
+            // 線性公式：基於 OD=35 的基準值，使用斜率進行線性預測
+            // delay_1 = 434 + (OD - 35) × 5.2
+            // delay_2 = 427 + (OD - 35) × 3.6
+            // delay_3 = 418 + (OD - 35) × 5.8
+            // delay_4 = 520 + (OD - 35) × 6.2
+            var delayCalculations = new[]
+            {
+                new { Stop = 1, BaseValue = 434.0, Slope = 5.2 },
+                new { Stop = 2, BaseValue = 427.0, Slope = 3.6 },
+                new { Stop = 3, BaseValue = 418.0, Slope = 5.8 },
+                new { Stop = 4, BaseValue = 520.0, Slope = 6.2 }
+            };
+
+            foreach (var calc in delayCalculations)
+            {
+                // 線性預測公式
+                double delayValue = calc.BaseValue + (od - 35.0) * calc.Slope;
+                int roundedValue = (int)Math.Round(delayValue);
+
+                calculatedParams.Add(new ParameterItem
+                {
+                    Name = "delay",
+                    Value = roundedValue.ToString(),
+                    Stop = calc.Stop,
+                    ChineseName = "拍照延遲時間",
+                    Type = TargetType,
+                    Zone = ParameterZone.AddedModified
+                });
+            }
+
+            // 顯示警告訊息（如果有）
+            if (warnings.Count > 0)
+            {
+                MessageBox.Show($"部分參數使用預設值：\n\n" + string.Join("\n", warnings),
+                    "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
             return calculatedParams;
         }
 
-        // 【新增】：基於實際資料的時間計算方法
-
-        /// <summary>
-        /// 計算 fourToOK1 時間 - 基於線性回歸分析
-        /// 資料點：(35, 1240), (37.75, 1250), (40.03, 1250)
-        /// </summary>
-        private double CalculateFourToOK1Time(double od)
-        {
-            // 基於實際資料的分段線性函數
-            if (od <= 35.0)
-            {
-                // 小於35mm：基礎時間1240ms
-                return 1240 + (35.0 - od) * 2; // 每減少1mm，時間減少2ms
-            }
-            else if (od <= 37.75)
-            {
-                // 35-37.75mm：緩慢增長
-                double slope = (1250 - 1240) / (37.75 - 35.0); // 約3.64 ms/mm
-                return 1240 + slope * (od - 35.0);
-            }
-            else if (od <= 40.03)
-            {
-                // 37.75-40.03mm：保持穩定
-                return 1250;
-            }
-            else
-            {
-                // 大於40.03mm：略微增加
-                return 1250 + (od - 40.03) * 1.5; // 每增加1mm，時間增加1.5ms
-            }
-        }
-
-        /// <summary>
-        /// 計算 fourToOK2 時間 - 考慮機械傳送距離差異
-        /// 資料點：(35, 1930), (37.75, 1900), (40.03, 1940)
-        /// </summary>
-        private double CalculateFourToOK2Time(double od)
-        {
-            // OK2出料口距離較遠，時間較長且受OD影響更明顯
-            if (od <= 35.0)
-            {
-                return 1930 + (35.0 - od) * 5; // 每減少1mm，時間減少5ms
-            }
-            else if (od <= 37.75)
-            {
-                // 35-37.75mm：略微下降（可能因為中等尺寸的流動性較好）
-                double slope = (1900 - 1930) / (37.75 - 35.0); // 約-10.91 ms/mm
-                return 1930 + slope * (od - 35.0);
-            }
-            else if (od <= 40.03)
-            {
-                // 37.75-40.03mm：上升趨勢
-                double slope = (1940 - 1900) / (40.03 - 37.75); // 約17.54 ms/mm
-                return 1900 + slope * (od - 37.75);
-            }
-            else
-            {
-                // 大於40.03mm：持續增加
-                return 1940 + (od - 40.03) * 8; // 每增加1mm，時間增加8ms
-            }
-        }
-
-        /// <summary>
-        /// 計算 fourToNG 時間 - NG出料路徑最長
-        /// 資料點：(35, 4500), (37.75, 4600), (40.03, 4500)
-        /// </summary>
-        private double CalculateFourToNGTime(double od)
-        {
-            // NG出料時間相對穩定，但中等尺寸稍長
-            if (od <= 35.0)
-            {
-                return 4500 + (35.0 - od) * 10; // 每減少1mm，時間減少10ms
-            }
-            else if (od <= 37.75)
-            {
-                // 35-37.75mm：上升到峰值
-                double slope = (4600 - 4500) / (37.75 - 35.0); // 約36.36 ms/mm
-                return 4500 + slope * (od - 35.0);
-            }
-            else if (od <= 40.03)
-            {
-                // 37.75-40.03mm：下降趨勢
-                double slope = (4500 - 4600) / (40.03 - 37.75); // 約-43.86 ms/mm
-                return 4600 + slope * (od - 37.75);
-            }
-            else
-            {
-                // 大於40.03mm：緩慢增加
-                return 4500 + (od - 40.03) * 5; // 每增加1mm，時間增加5ms
-            }
-        }
-
-        /// <summary>
-        /// 計算 fourToNULL 時間 - NULL出料時間最長
-        /// 基於現有資料推算：約為 NG時間 + 500ms
-        /// </summary>
-        private double CalculateFourToNULLTime(double od)
-        {
-            // NULL出料時間 = NG時間 + 固定延遲
-            double ngTime = CalculateFourToNGTime(od);
-
-            // 根據實際資料，NULL時間約為NG時間加上420-520ms
-            double nullOffset = 500; // 基礎偏移量
-
-            // 根據OD調整偏移量
-            if (od <= 35.0)
-            {
-                nullOffset = 520; // 小尺寸稍長
-            }
-            else if (od <= 40.03)
-            {
-                nullOffset = 500; // 中等尺寸標準
-            }
-            else
-            {
-                nullOffset = 480; // 大尺寸稍短
-            }
-
-            return ngTime + nullOffset;
-        }
-
-        // 【新增】：顯示計算公式的詳細說明
+        // 由 GitHub Copilot 產生 - 顯示計算公式的詳細說明
         private string GetCalculationFormula(double od)
         {
-            return $@"
-            📐 時間參數計算公式 (當前OD: {od:F2}mm)
+            // 計算預測的 delay 值供顯示
+            int delay1 = (int)Math.Round(434.0 + (od - 35.0) * 5.2);
+            int delay2 = (int)Math.Round(427.0 + (od - 35.0) * 3.6);
+            int delay3 = (int)Math.Round(418.0 + (od - 35.0) * 5.8);
+            int delay4 = (int)Math.Round(520.0 + (od - 35.0) * 6.2);
 
-            🔸 fourToOK1_time_ms:
-               • 基準值：1240-1250ms
-               • 小於35mm：1240 + (35-OD)×2
-               • 35-37.75mm：線性增長 (斜率≈3.64ms/mm)
-               • 37.75-40.03mm：保持1250ms
-               • 大於40.03mm：1250 + (OD-40.03)×1.5
+            return $@"📐 時間參數計算說明 (當前OD: {od:F2}mm)
 
-            🔸 fourToOK2_time_ms:
-               • 基準值：1900-1940ms
-               • 小於35mm：1930 + (35-OD)×5
-               • 35-37.75mm：下降趨勢 (斜率≈-10.91ms/mm)
-               • 37.75-40.03mm：上升趨勢 (斜率≈17.54ms/mm)
-               • 大於40.03mm：1940 + (OD-40.03)×8
+🔹 fourTo 系列參數（從來源料號複製）：
+   • fourToOK1_time_ms - 站4到OK1出料時間
+   • fourToOK2_time_ms - 站4到OK2出料時間
+   • fourToNG_time_ms - 站4到NG出料時間
+   • fourToNULL_time_ms - 站4到NULL出料時間
+   ➤ 這些參數與OD無明顯線性關係，直接從來源料號複製
+   ➤ 若來源料號無此參數，則使用預設值
 
-            🔸 fourToNG_time_ms:
-               • 基準值：4500-4600ms
-               • 呈現倒U型分佈，37.75mm為峰值
-               • 考慮機械阻力和流動性因素
+🔹 delay 參數（根據OD線性預測，儲存到camera資料表）：
+   • 基準OD：35mm
+   • 計算公式：delay = 基準值 + (OD - 35) × 斜率
 
-            🔸 fourToNULL_time_ms:
-               • 計算方式：NG時間 + 固定偏移量(480-520ms)
-               • 確保NULL出料有足夠的時間緩衝
+   站點1：delay_1 = 434 + (OD - 35) × 5.2 = {delay1} ms
+   站點2：delay_2 = 427 + (OD - 35) × 3.6 = {delay2} ms
+   站點3：delay_3 = 418 + (OD - 35) × 5.8 = {delay3} ms
+   站點4：delay_4 = 520 + (OD - 35) × 6.2 = {delay4} ms
 
-            💡 演算法特點：
-               • 基於實際生產資料的線性回歸分析
-               • 考慮不同OD的機械特性差異
-               • 採用分段函數處理非線性關係
-               • 包含邊界值的外推處理";
+💡 說明：
+   • delay 參數與 OD 呈線性正相關
+   • 斜率基於實際生產資料計算得出
+   • 無上下限限制，直接線性外推";
         }
         #endregion
-        // 【新增】：將計算結果加入到已修改區
+        // 由 GitHub Copilot 產生 - 將計算結果加入到已修改區
         private void AddCalculatedParametersToModified(List<ParameterItem> calculatedParams)
         {
             foreach (var calcParam in calculatedParams)
             {
-                // 檢查是否已存在相同的參數
+                // 檢查是否已存在相同的參數（需要同時比對 Name 和 Stop）
                 var existingParam = allParameters.FirstOrDefault(p =>
                     p.Name == calcParam.Name && p.Stop == calcParam.Stop);
 
@@ -1787,6 +1757,8 @@ namespace peilin
                     $"即將對料號 {TargetType} 執行部分自動導入\n\n" +
                     "將會處理以下條件式參數：\n" +
                     "• find_NROI：根據油溝狀態自動設定\n" +
+                    "• 所有相機參數：根據OD、PTFE顏色自動設定\n" +
+                    "• 所有位置參數：直接複製來源料號，須後續調整\n" +
                     "• 其他特殊參數依據料號特性調整\n\n" +
                     "確定要執行嗎？",
                     "確認部分自動導入",
@@ -1827,6 +1799,18 @@ namespace peilin
 
                 // 處理其他條件式參數
                 processedCount += ProcessOtherConditionalParameters(typeInfo, processedParameters);
+
+                // 由 GitHub Copilot 產生 - 處理 delay 參數（根據 OD 線性計算，寫入 Cameras 資料表）
+                processedCount += ProcessDelayParameters(typeInfo, processedParameters);
+
+                // 由 GitHub Copilot 產生 - 處理 fourTo 系列參數（從來源料號複製，寫入 params 資料表）
+                processedCount += ProcessFourToParameters(typeInfo, processedParameters);
+
+                // 由 GitHub Copilot 產生 - 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
+                processedCount += ProcessPositionParameters(typeInfo, processedParameters);
+
+                // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（缺陷檢測項目，直接寫入資料庫）
+                processedCount += ProcessDefectChecksParameters(typeInfo, processedParameters);
 
                 // 更新顯示
                 RefreshCurrentTabDisplay();
@@ -2007,16 +1991,420 @@ namespace peilin
             }
         }
 
+        // 由 GitHub Copilot 產生 - 處理 delay 參數（根據 OD 線性計算，寫入 Cameras 資料表）
+        private int ProcessDelayParameters(TypeInfo typeInfo, List<string> processedParameters)
+        {
+            int count = 0;
+
+            try
+            {
+                // 確認有有效的 OD 值
+                if (typeInfo.OD <= 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProcessDelayParameters] OD 值無效，無法計算 delay");
+                    return 0;
+                }
+
+                double od = typeInfo.OD;
+
+                // delay 線性公式：基於 OD=35 的基準值，使用斜率進行線性預測
+                // delay_1 = 434 + (OD - 35) × 5.2
+                // delay_2 = 427 + (OD - 35) × 3.6
+                // delay_3 = 418 + (OD - 35) × 5.8
+                // delay_4 = 520 + (OD - 35) × 6.2
+                var delayCalculations = new[]
+                {
+                    new { Stop = 1, BaseValue = 434.0, Slope = 5.2 },
+                    new { Stop = 2, BaseValue = 427.0, Slope = 3.6 },
+                    new { Stop = 3, BaseValue = 418.0, Slope = 5.8 },
+                    new { Stop = 4, BaseValue = 520.0, Slope = 6.2 }
+                };
+
+                foreach (var calc in delayCalculations)
+                {
+                    // 檢查是否已存在此參數
+                    var existingParam = allParameters.FirstOrDefault(p =>
+                        p.Name == "delay" &&
+                        (p.Stop ?? 0) == calc.Stop &&
+                        (p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified));
+
+                    if (existingParam != null)
+                    {
+                        // 已存在則跳過
+                        continue;
+                    }
+
+                    // 線性預測公式
+                    double delayValue = calc.BaseValue + (od - 35.0) * calc.Slope;
+                    int roundedValue = (int)Math.Round(delayValue);
+
+                    // 新增到「已新增已修改區」（因為是計算得出的新值）
+                    allParameters.Add(new ParameterItem
+                    {
+                        Type = TargetType,
+                        Name = "delay",
+                        Value = roundedValue.ToString(),
+                        Stop = calc.Stop,
+                        ChineseName = "拍照延遲時間",
+                        Zone = ParameterZone.AddedModified,
+                        IsSelected = false
+                    });
+
+                    processedParameters.Add($"delay_{calc.Stop} = {roundedValue} ms ← OD線性計算");
+                    count++;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProcessDelayParameters] 計算 delay 參數時發生錯誤：{ex.Message}");
+            }
+
+            return count;
+        }
+
+        // 由 GitHub Copilot 產生 - 處理 fourTo 系列參數（從來源料號複製，寫入 params 資料表）
+        private int ProcessFourToParameters(TypeInfo typeInfo, List<string> processedParameters)
+        {
+            int count = 0;
+
+            // 確認有來源料號
+            if (currentSession == null || string.IsNullOrEmpty(currentSession.SourceType))
+            {
+                System.Diagnostics.Debug.WriteLine("[ProcessFourToParameters] 無來源料號，無法複製 fourTo 參數");
+                return 0;
+            }
+
+            try
+            {
+                string[] fourToParamNames = { "fourToOK1_time_ms", "fourToOK2_time_ms", "fourToNG_time_ms", "fourToNULL_time_ms" };
+                var fourToDescriptions = new Dictionary<string, string>
+                {
+                    { "fourToOK1_time_ms", "站4到OK1出料時間" },
+                    { "fourToOK2_time_ms", "站4到OK2出料時間" },
+                    { "fourToNG_time_ms", "站4到NG出料時間" },
+                    { "fourToNULL_time_ms", "站4到NULL出料時間" }
+                };
+
+                // 預設值（當來源料號無參數時使用）
+                var fourToDefaults = new Dictionary<string, string>
+                {
+                    { "fourToOK1_time_ms", "1250" },
+                    { "fourToOK2_time_ms", "1920" },
+                    { "fourToNG_time_ms", "4500" },
+                    { "fourToNULL_time_ms", "5000" }
+                };
+
+                using (var db = new MydbDB())
+                {
+                    foreach (var paramName in fourToParamNames)
+                    {
+                        // 檢查是否已存在此參數
+                        var existingParam = allParameters.FirstOrDefault(p =>
+                            p.Name == paramName &&
+                            (p.Stop ?? 0) == 4 &&
+                            (p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified));
+
+                        if (existingParam != null)
+                        {
+                            // 已存在則跳過
+                            continue;
+                        }
+
+                        // 從來源料號的 params 資料表讀取
+                        var sourceParam = db.@params
+                            .Where(p => p.Type == currentSession.SourceType && 
+                                       p.Name == paramName && 
+                                       (p.Stop ?? 0) == 4)
+                            .FirstOrDefault();
+
+                        string value;
+                        string source;
+
+                        if (sourceParam != null)
+                        {
+                            value = sourceParam.Value;
+                            source = "來源料號複製";
+                        }
+                        else
+                        {
+                            // 使用預設值
+                            value = fourToDefaults[paramName];
+                            source = "預設值";
+                        }
+
+                        // 新增到「已新增未修改區」（因為是從來源複製，不是計算）
+                        allParameters.Add(new ParameterItem
+                        {
+                            Type = TargetType,
+                            Name = paramName,
+                            Value = value,
+                            Stop = 4,
+                            ChineseName = fourToDescriptions[paramName],
+                            Zone = ParameterZone.AddedUnmodified,
+                            IsSelected = false
+                        });
+
+                        processedParameters.Add($"{paramName} = {value} ← {source}");
+                        count++;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProcessFourToParameters] 複製 fourTo 參數時發生錯誤：{ex.Message}");
+            }
+
+            return count;
+        }
+
+        // 由 GitHub Copilot 產生 - 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
+        private int ProcessPositionParameters(TypeInfo typeInfo, List<string> processedParameters)
+        {
+            int count = 0;
+
+            if (currentSession == null || string.IsNullOrEmpty(currentSession.SourceType))
+            {
+                return 0;
+            }
+
+            // 從參考區找出所有 known 開頭的參數名稱（不含站點後綴）
+            var knownParamBaseNames = allParameters
+                .Where(p => p.Zone == ParameterZone.Reference && 
+                           p.Name != null && 
+                           p.Name.StartsWith("known", StringComparison.OrdinalIgnoreCase))
+                .Select(p => p.Name)
+                .Distinct()
+                .ToList();
+
+            if (knownParamBaseNames.Count == 0)
+            {
+                return 0;
+            }
+
+            // 使用現有的直接複製方法，不覆寫已存在的參數
+            foreach (var paramName in knownParamBaseNames)
+            {
+                // 找出該參數在參考區的所有站點
+                var refParams = allParameters
+                    .Where(p => p.Zone == ParameterZone.Reference && p.Name == paramName)
+                    .ToList();
+
+                foreach (var refParam in refParams)
+                {
+                    int stop = refParam.Stop ?? 0;
+
+                    // 檢查目標料號是否已經有此參數
+                    var existingParam = allParameters.FirstOrDefault(p =>
+                        p.Name == paramName &&
+                        (p.Stop ?? 0) == stop &&
+                        (p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified));
+
+                    if (existingParam != null)
+                    {
+                        // 已存在則跳過（不覆寫）
+                        continue;
+                    }
+
+                    // 新增到「已新增未修改區」
+                    allParameters.Add(new ParameterItem
+                    {
+                        Type = TargetType,
+                        Name = refParam.Name,
+                        Value = refParam.Value,
+                        Stop = refParam.Stop,
+                        ChineseName = refParam.ChineseName,
+                        Zone = ParameterZone.AddedUnmodified,
+                        IsSelected = false
+                    });
+
+                    string stopSuffix = stop > 0 ? $"_{stop}" : "";
+                    processedParameters?.Add($"{paramName}{stopSuffix} ← 來源料號直接複製");
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（缺陷檢測項目，從來源料號複製到目標料號）
+        private int ProcessDefectChecksParameters(TypeInfo typeInfo, List<string> processedParameters)
+        {
+            int count = 0;
+            var skippedItems = new List<string>();
+
+            if (currentSession == null || string.IsNullOrEmpty(currentSession.SourceType))
+            {
+                return 0;
+            }
+
+            try
+            {
+                // 定義固定導入清單（name 包含 "deform" 或 name = "minArea"）
+                var fixedImportNames = new List<string> { "minArea" };
+
+                // 條件導入清單：若 hasYZP == "有"，加入 OTP、OTPratio、blackDot
+                var conditionalImportNames = new List<string>();
+                if (typeInfo.HasYZP == "有")
+                {
+                    conditionalImportNames.AddRange(new[] { "OTP", "OTPratio", "blackDot" });
+                }
+
+                using (var db = new MydbDB())
+                {
+                    // 從來源料號讀取 DefectChecks（所有 stop）
+                    var sourceDefectChecks = db.DefectChecks
+                        .Where(d => d.Type == currentSession.SourceType)
+                        .ToList();
+
+                    // 篩選符合條件的項目
+                    var itemsToImport = sourceDefectChecks.Where(d =>
+                        fixedImportNames.Contains(d.Name, StringComparer.OrdinalIgnoreCase) ||
+                        d.Name.IndexOf("deform", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        conditionalImportNames.Contains(d.Name, StringComparer.OrdinalIgnoreCase)
+                    ).ToList();
+
+                    // 檢查固定導入項目是否存在於來源
+                    foreach (var name in fixedImportNames)
+                    {
+                        if (!sourceDefectChecks.Any(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            skippedItems.Add($"{name} ← 來源料號不存在，跳過");
+                        }
+                    }
+
+                    // 檢查 deform 項目
+                    if (!sourceDefectChecks.Any(d => d.Name.IndexOf("deform", StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        skippedItems.Add($"deform* ← 來源料號不存在，跳過");
+                    }
+
+                    // 檢查條件導入項目是否存在於來源
+                    foreach (var name in conditionalImportNames)
+                    {
+                        if (!sourceDefectChecks.Any(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            skippedItems.Add($"{name} ← 來源料號不存在，跳過");
+                        }
+                    }
+
+                    // 讀取目標料號已存在的 DefectChecks
+                    var existingTargetChecks = db.DefectChecks
+                        .Where(d => d.Type == TargetType)
+                        .ToList();
+
+                    foreach (var item in itemsToImport)
+                    {
+                        // 檢查目標料號是否已存在相同 name + stop 的項目
+                        bool exists = existingTargetChecks.Any(d =>
+                            d.Name == item.Name && d.Stop == item.Stop);
+
+                        if (exists)
+                        {
+                            // 已存在則跳過
+                            continue;
+                        }
+
+                        // 使用 update-first, insert-if-none 模式寫入資料庫
+                        int updatedRows = db.DefectChecks
+                            .Where(d => d.Type == TargetType && d.Name == item.Name && d.Stop == item.Stop)
+                            .Set(d => d.Threshold, item.Threshold)
+                            .Set(d => d.Yn, item.Yn)
+                            .Set(d => d.ChineseName, item.ChineseName)
+                            .Update();
+
+                        if (updatedRows == 0)
+                        {
+                            db.DefectChecks
+                                .Value(d => d.Type, TargetType)
+                                .Value(d => d.Stop, item.Stop)
+                                .Value(d => d.Name, item.Name)
+                                .Value(d => d.Threshold, item.Threshold)
+                                .Value(d => d.Yn, item.Yn)
+                                .Value(d => d.ChineseName, item.ChineseName)
+                                .Insert();
+                        }
+
+                        processedParameters?.Add($"[DefectCheck] {item.Name}_{item.Stop} ← 來源料號複製");
+                        count++;
+                    }
+                }
+
+                // 將跳過的項目加入處理結果清單
+                foreach (var skipped in skippedItems)
+                {
+                    processedParameters?.Add($"[DefectCheck] {skipped}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProcessDefectChecksParameters] 處理 DefectChecks 時發生錯誤：{ex.Message}");
+            }
+
+            return count;
+        }
+
         // 由 GitHub Copilot 產生 - 根據材質處理參數
         private int ProcessMaterialBasedParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
 
-            // 範例：根據材質調整檢測參數
-            if (!string.IsNullOrEmpty(typeInfo.Material))
+            // 若目標料號與來源料號材質相同，則複製來源料號的相機參數 (exposure, gain)
+            if (!string.IsNullOrEmpty(typeInfo.Material) && 
+                currentSession != null && 
+                !string.IsNullOrEmpty(currentSession.SourceType))
             {
-                // 如果是特殊材質，可能需要調整某些閾值
-                // 這裡可以根據實際需求擴展
+                try
+                {
+                    // 取得來源料號的 TypeInfo
+                    var sourceTypeInfo = GetTypeInfo(currentSession.SourceType);
+                    if (sourceTypeInfo != null && 
+                        !string.IsNullOrEmpty(sourceTypeInfo.Material) &&
+                        typeInfo.Material == sourceTypeInfo.Material)
+                    {
+                        // 材質相同，從資料庫讀取來源料號的相機參數並複製
+                        using (var db = new MydbDB())
+                        {
+                            var sourceCameraParams = db.Cameras
+                                .Where(c => c.Type == currentSession.SourceType &&
+                                           (c.Name == "exposure" || c.Name == "gain"))
+                                .ToList();
+
+                            foreach (var cam in sourceCameraParams)
+                            {
+                                // 檢查目標料號是否已有此參數（避免重複新增）
+                                var existingParam = allParameters.FirstOrDefault(p =>
+                                    p.Name == cam.Name &&
+                                    (p.Stop ?? 0) == cam.Stop &&
+                                    (p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified));
+
+                                if (existingParam != null)
+                                {
+                                    // 已存在則跳過（不覆寫）
+                                    continue;
+                                }
+
+                                // 新增為「已新增未修改區」
+                                allParameters.Add(new ParameterItem
+                                {
+                                    Type = TargetType,
+                                    Name = cam.Name,
+                                    Value = cam.Value,
+                                    Stop = cam.Stop,
+                                    ChineseName = cam.ChineseName ?? (cam.Name == "exposure" ? "曝光時間" : "增益"),
+                                    Zone = ParameterZone.AddedUnmodified,
+                                    IsSelected = false
+                                });
+
+                                processedParameters.Add($"{cam.Name}_{cam.Stop} ← 來源料號(PTFE相同) 複製相機參數");
+                                count++;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProcessMaterialBasedParameters] 複製相機參數時發生錯誤：{ex.Message}");
+                }
             }
 
             return count;
@@ -2121,19 +2509,19 @@ namespace peilin
                     count++;
                 }
 
-                // 有五彩鋅時，站3/4的 OTPratio 設為 0.2
+                // 有五彩鋅時，站3/4的 OTPratio 設為 0.1
                 if (hasYZP)
                 {
                     for (int stop = 3; stop <= 4; stop++)
                     {
                         UpdateOrAddParameterToModified(
                             "OTPratio",
-                            "0.2",
+                            "0.1",
                             stop,
                             "OTP占比",
-                            "有五彩鋅 → 設為 0.2"
+                            "有五彩鋅 → 設為 0.1"
                         );
-                        processedParameters.Add($"OTPratio_{stop} = 0.2");
+                        processedParameters.Add($"OTPratio_{stop} = 0.1");
                         count++;
                     }
                 }
@@ -2168,27 +2556,21 @@ namespace peilin
                     // 站3：有 outsc 才寫入
                     if (hasOutsc3)
                     {
-                        UpdateOrAddParameterToModified("outscAspectRatio", "4.0", 3, "金屬面刮痕長寬比門檻", "依 DefectChecks(outsc, stop=3) 設定");
-                        UpdateOrAddParameterToModified("outscLongerSide", "100", 3, "金屬面刮痕長邊長度門檻", "依 DefectChecks(outsc, stop=3) 設定");
-                        UpdateOrAddParameterToModified("outscArea", "5000", 3, "金屬面刮痕面積門檻", "依 DefectChecks(outsc, stop=3) 設定");
+                        UpdateOrAddParameterToModified("outscLen", "800", 3, "金屬面刮痕長度門檻", "依 DefectChecks(outsc, stop=3) 設定");
 
-                        processedParameters.Add("outscAspectRatio_3 = 4.0");
-                        processedParameters.Add("outscLongerSide_3 = 100");
-                        processedParameters.Add("outscArea_3 = 5000");
-                        count += 3;
+                        processedParameters.Add("outscLen_3 = 800");
+
+                        count += 1;
                     }
 
                     // 站4：有 outsc 才寫入
                     if (hasOutsc4)
                     {
-                        UpdateOrAddParameterToModified("outscAspectRatio", "4.0", 4, "金屬面刮痕長寬比門檻", "依 DefectChecks(outsc, stop=4) 設定");
-                        UpdateOrAddParameterToModified("outscLongerSide", "100", 4, "金屬面刮痕長邊長度門檻", "依 DefectChecks(outsc, stop=4) 設定");
-                        UpdateOrAddParameterToModified("outscArea", "5000", 4, "金屬面刮痕面積門檻", "依 DefectChecks(outsc, stop=4) 設定");
+                        UpdateOrAddParameterToModified("outscLen", "800", 4, "金屬面刮痕長度門檻", "依 DefectChecks(outsc, stop=4) 設定");
 
-                        processedParameters.Add("outscAspectRatio_4 = 4.0");
-                        processedParameters.Add("outscLongerSide_4 = 100");
-                        processedParameters.Add("outscArea_4 = 5000");
-                        count += 3;
+                        processedParameters.Add("outscLen_4 = 800");
+
+                        count += 1;
                     }
                 }
 
@@ -2253,7 +2635,7 @@ namespace peilin
                         });
                     }
 
-                    processedParameters?.Add($"{name}_{stop} ← 來源料號(參考區) 直接拷貝");
+                    processedParameters?.Add($"{name}_{stop} ← 來源料號(參考區) 直接複製");
                     count++;
                 }
             }
@@ -2349,7 +2731,7 @@ namespace peilin
             if (File.Exists(sessionFilePath))
             {
                 var result = MessageBox.Show(
-                    $"發現未完成的參數設定工作階段，是否要繼續？\n\n點擊「是」繼續之前的工作\n點擊「否」重新開始",
+                    $"發現未完成的參數設定工作階段，是否要繼續？\n\n點擊「是」繼續之前的工作\n點擊「否」重新選擇來源料號（一樣會導入已設定完成的參數）",
                     "發現未完成工作",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
@@ -2373,7 +2755,7 @@ namespace peilin
             this.Load += (s, e) => UpdateTabStates();
         }
 
-        // 由 GitHub Copilot 產生 - 修正進度顯示，使用 GetCategoryProgressPercentage
+        // 由 GitHub Copilot 產生 - 修正進度顯示（AddedUnmodified + AddedModified 都計入）
         private void UpdateProgressDisplayOnly()
         {
             if (allParameters == null)
@@ -2382,19 +2764,19 @@ namespace peilin
                 return;
             }
 
-            // 分母：所有參考區
-            int totalReferenceParams = allParameters.Count(p => p.Zone == ParameterZone.Reference);
+            // 分母：所有參考區參數數量
+            int totalReferenceCount = allParameters.Count(p => p.Zone == ParameterZone.Reference);
 
-            // 分子：已修改 + 有對應參考區
-            int totalModifiedParams = allParameters
-                .Where(p => p.Zone == ParameterZone.AddedModified)
-                .Count(m => allParameters.Any(r =>
+            // 分子：已新增的參數（未修改 + 已修改）且有對應參考區
+            int totalAddedCount = allParameters
+                .Where(p => p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified)
+                .Count(added => allParameters.Any(r =>
                     r.Zone == ParameterZone.Reference &&
-                    r.Name == m.Name &&
-                    (r.Stop ?? 0) == (m.Stop ?? 0)));
+                    r.Name == added.Name &&
+                    (r.Stop ?? 0) == (added.Stop ?? 0)));
 
-            int overallProgress = totalReferenceParams > 0
-                ? (int)Math.Round((double)totalModifiedParams / totalReferenceParams * 100)
+            int overallProgress = totalReferenceCount > 0
+                ? (int)Math.Round((double)totalAddedCount / totalReferenceCount * 100)
                 : 0;
             overallProgress = Math.Max(0, Math.Min(100, overallProgress));
             progressBarOverall.Value = overallProgress;
@@ -2403,25 +2785,26 @@ namespace peilin
             foreach (ParameterCategory category in Enum.GetValues(typeof(ParameterCategory)))
             {
                 var categoryParams = parameterManager.GetParametersByCategory(allParameters, category);
-                int refCount = categoryParams.Count(p => p.Zone == ParameterZone.Reference);
-                if (refCount == 0) continue;
+                int referenceCount = categoryParams.Count(p => p.Zone == ParameterZone.Reference);
+                if (referenceCount == 0) continue;
 
-                int modifiedCount = categoryParams
-                    .Where(p => p.Zone == ParameterZone.AddedModified)
-                    .Count(m => categoryParams.Any(r =>
+                // 已新增的參數（未修改 + 已修改）都計入進度
+                int addedCount = categoryParams
+                    .Where(p => p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified)
+                    .Count(added => categoryParams.Any(r =>
                         r.Zone == ParameterZone.Reference &&
-                        r.Name == m.Name &&
-                        (r.Stop ?? 0) == (m.Stop ?? 0)));
+                        r.Name == added.Name &&
+                        (r.Stop ?? 0) == (added.Stop ?? 0)));
 
-                int percent = refCount > 0
-                    ? (int)Math.Round((double)modifiedCount / refCount * 100)
+                int percent = referenceCount > 0
+                    ? (int)Math.Round((double)addedCount / referenceCount * 100)
                     : 0;
-                string name = GetCategoryDisplayName(category);
-                parts.Add($"{name}{percent}% ({modifiedCount}/{refCount})");
+                string categoryName = GetCategoryDisplayName(category);
+                parts.Add($"{categoryName}{percent}% ({addedCount}/{referenceCount})");
             }
 
             lblProgressSummary.Text = string.Join("  |  ", parts);
-            lblProgress.Text = $"料號: {TargetType}  總進度 {overallProgress}% ({totalModifiedParams}/{totalReferenceParams})";
+            lblProgress.Text = $"料號: {TargetType}  總進度 {overallProgress}% ({totalAddedCount}/{totalReferenceCount})";
         }
         private string GetCategoryDisplayName(ParameterCategory category)
         {
@@ -2947,23 +3330,24 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正參數類別進度統計邏輯
+        // 由 GitHub Copilot 產生 - 修正參數類別進度統計邏輯（AddedUnmodified + AddedModified 都計入）
         private void UpdateCategoryProgress()
         {
             foreach (ParameterCategory category in Enum.GetValues(typeof(ParameterCategory)))
             {
                 var categoryParams = parameterManager.GetParametersByCategory(allParameters, category);
 
-                int totalCount = categoryParams.Count(p => p.Zone == ParameterZone.Reference);
+                int referenceCount = categoryParams.Count(p => p.Zone == ParameterZone.Reference);
 
-                int completedCount = categoryParams
-                    .Where(p => p.Zone == ParameterZone.AddedModified)
-                    .Count(m => categoryParams.Any(r =>
+                // 已新增的參數（未修改 + 已修改）都計入進度
+                int addedCount = categoryParams
+                    .Where(p => p.Zone == ParameterZone.AddedUnmodified || p.Zone == ParameterZone.AddedModified)
+                    .Count(added => categoryParams.Any(r =>
                         r.Zone == ParameterZone.Reference &&
-                        r.Name == m.Name &&
-                        (r.Stop ?? 0) == (m.Stop ?? 0)));
+                        r.Name == added.Name &&
+                        (r.Stop ?? 0) == (added.Stop ?? 0)));
 
-                parameterManager.UpdateCategoryProgress(category, completedCount, totalCount);
+                parameterManager.UpdateCategoryProgress(category, addedCount, referenceCount);
                 parameterManager.UpdateCategoryStatusFromDatabase(category, TargetType);
             }
         }
@@ -3730,6 +4114,9 @@ namespace peilin
         }
         private void ApplyReferenceZoneColors()
         {
+            // 由 GitHub Copilot 產生 - 先建立快取，避免每列都執行 LINQ 查詢
+            BuildParameterZoneCache();
+
             foreach (var dgv in new[] { dgvCameraUnmodified, dgvPositionUnmodified, dgvDetectionUnmodified, dgvTimingUnmodified })
             {
                 if (dgv?.DataSource is List<ParameterItem> list)
