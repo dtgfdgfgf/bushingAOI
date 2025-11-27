@@ -888,9 +888,9 @@ namespace peilin
 
                         MessageBox.Show($"找不到料號 '{productType}' 站點 {station} 的 {cmbCircleType.Text} 參數！\n\n" +
                                       "請先使用以下步驟新增參數：\n" +
-                                      "1. 到主選單的「料號設定」\n" +
-                                      "2. 新增或複製類似料號的參數\n" +
-                                      "3. 設定基礎的圓心座標和半徑\n" +
+                                      "1. 到主選單的「檢測參數設定 -> 位置參數」\n" +
+                                      "2. 複製類似料號的參數到已新增區\n" +
+                                      "3. 右下角點擊儲存當前頁面\n" +
                                       "4. 回到此工具進行精確校正",
                                       "參數不存在", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
@@ -1012,7 +1012,7 @@ namespace peilin
 
 
         // 事件處理器
-        // 修改載入圖片方法，增加參數檢查
+        // 由 GitHub Copilot 產生 - 修改載入圖片方法，使用多選檔案對話框
         private void BtnLoadImages_Click(object sender, EventArgs e)
         {
             if (!hasValidParameters)
@@ -1021,42 +1021,34 @@ namespace peilin
                 return;
             }
 
-            // 使用 WindowsAPICodePack 的現代文件夾選擇對話框
-            string defaultPath = @".\image";
-            using (var folderDialog = new CommonOpenFileDialog())
+            // 由 GitHub Copilot 產生 - 使用多選檔案對話框讓使用者選擇圖片
+            string defaultPath = Path.GetFullPath(@".\image");
+            using (var openFileDialog = new OpenFileDialog())
             {
-                folderDialog.Title = "選擇包含校正圖片的資料夾";
-                folderDialog.IsFolderPicker = true;
-                folderDialog.InitialDirectory = Path.GetFullPath(defaultPath);
-                folderDialog.AddToMostRecentlyUsedList = false;
-                folderDialog.AllowNonFileSystemItems = false;
-                folderDialog.DefaultDirectory = Path.GetFullPath(defaultPath);
-                folderDialog.EnsureFileExists = true;
-                folderDialog.EnsurePathExists = true;
-                folderDialog.EnsureReadOnly = false;
-                folderDialog.EnsureValidNames = true;
-                folderDialog.Multiselect = false;
-                folderDialog.ShowPlacesList = true;
-
-                if (folderDialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+                openFileDialog.Title = "選擇校正用圖片（可多選）";
+                openFileDialog.Filter = "圖片檔案|*.jpg;*.jpeg;*.png;*.bmp|所有檔案|*.*";
+                openFileDialog.Multiselect = true;
+                if (Directory.Exists(defaultPath))
                 {
-                    LoadCalibrationImages(folderDialog.FileName);
+                    openFileDialog.InitialDirectory = defaultPath;
+                }
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    LoadCalibrationImages(openFileDialog.FileNames);
                 }
             }
         }
 
-        private void LoadCalibrationImages(string folderPath)
+        // 由 GitHub Copilot 產生 - 修改為接受檔案路徑陣列
+        private void LoadCalibrationImages(string[] imageFiles)
         {
             try
             {
                 calibrationImages.Clear();
                 imageListBox.Items.Clear();
 
-                string[] imageFiles = Directory.GetFiles(folderPath, "*.jpg")
-                                              .Concat(Directory.GetFiles(folderPath, "*.png"))
-                                              .Concat(Directory.GetFiles(folderPath, "*.bmp"))
-                                              .ToArray();
-
+                // 由 GitHub Copilot 產生 - 直接載入使用者選擇的檔案（最多 30 張）
                 foreach (string file in imageFiles.Take(30))
                 {
                     try
