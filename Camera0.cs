@@ -57,6 +57,8 @@ namespace basler
         private static readonly ConcurrentDictionary<int, double> _minAllowedInterval = new ConcurrentDictionary<int, double>();
         private static readonly ConcurrentDictionary<int, Stopwatch> _cameraStopwatches = new ConcurrentDictionary<int, Stopwatch>();
         private static readonly ConcurrentDictionary<int, int> _touchedCounters = new ConcurrentDictionary<int, int>();
+        // 由 GitHub Copilot 產生 - 測試模式計數器，每個站點獨立計數
+        private static readonly ConcurrentDictionary<int, int> _testModeCounters = new ConcurrentDictionary<int, int>();
         DateTime st = DateTime.Now;
 
         // 新增: CSV 統計相關
@@ -905,6 +907,38 @@ namespace basler
                 // 影像會由 parameter_info.cs 的 GetCurrentFrame() 直接讀取
                 // 不需要進入 Receiver → Queue_Bitmap → 處理流程
                 return;
+            }
+
+            // 由 GitHub Copilot 產生 - 測試取像模式
+            // 測試模式下，直接儲存影像到 test 資料夾，不呼叫 Receiver
+            // 檔名格式: {序號}-{站號}.jpg，與 button36_Click 預期格式相容
+            if (app.testImageMode)
+            {
+                try
+                {
+                    DateTime testTime = DateTime.Now;
+                    string testDir = $@".\image\{testTime:yyyy-MM}\{testTime:MMdd}\{form1.GetAppFolderName()}\test";
+                    if (!Directory.Exists(testDir))
+                    {
+                        Directory.CreateDirectory(testDir);
+                    }
+                    // 由 GitHub Copilot 產生 - 每站獨立計數，產生 {序號}-{站號}.jpg 格式
+                    int stationNumber = cameraIndex + 1; // 站號 1~4
+                    int counter = _testModeCounters.AddOrUpdate(cameraIndex, 0, (key, oldValue) => oldValue + 1);
+                    string fileName = $"{counter}-{stationNumber}.jpg";
+                    string fullPath = Path.Combine(testDir, fileName);
+                    
+                    using (Mat testMat = GrabResultToMat(grabResult))
+                    {
+                        form1.SaveImageAsync(testMat.Clone(), fullPath);
+                    }
+                    LogMessage($"測試模式儲存影像: {fileName} (站點{stationNumber}, 序號{counter})", false);
+                }
+                catch (Exception ex)
+                {
+                    LogMessage($"測試模式儲存影像失敗: {ex.Message}", true);
+                }
+                return; // 不進入 Receiver
             }
 
             DateTime time_start = DateTime.Now; // 拍照開始時間（計時）

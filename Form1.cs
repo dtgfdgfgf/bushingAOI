@@ -253,11 +253,74 @@ namespace peilin
                 .CreateLogger();
             lbAdd("開啟檢測程式", "inf", "");
             #endregion
-            #region 空間不足警告
-            if (100 > GetHardDiskFreeSpace("C"))
+            #region 空間不足警告與自動刪檔
+            // 由 GitHub Copilot 產生
+            // 先檢查磁碟空間，若不足200GB則詢問使用者是否刪除舊檔案
+            double freeSpaceBefore = GetHardDiskFreeSpace("C");
+            if (200 > freeSpaceBefore)
             {
-                MessageBox.Show("剩餘磁碟空間小於100G!");
-                lbAdd("剩餘磁碟空間小於100G。", "err", "");
+                // 詢問使用者是否要刪除舊檔案
+                DialogResult result = MessageBox.Show(
+                    $"磁碟剩餘空間不足 200GB（目前剩餘 {freeSpaceBefore:F1} GB）。\n\n" +
+                    $"是否要刪除超過保留天數的舊檔案？\n" +
+                    $"（將刪除 .\\image 資料夾中超過 KeepDay 天的檔案）",
+                    "磁碟空間不足",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
+                {
+                    // 執行刪檔作業
+                    try
+                    {
+                        int deletedFolders = 0;
+                        var dir = @".\image\";
+                        int days = 14; // 預設值
+                        if (app.param.ContainsKey("KeepDay") && int.TryParse(app.param["KeepDay"], out int parsedDays))
+                        {
+                            days = parsedDays;
+                        }
+
+                        if (Directory.Exists(dir) && days >= 1)
+                        {
+                            var now = DateTime.Now;
+                            foreach (var f in Directory.GetFileSystemEntries(dir).Where(f => Directory.Exists(f)))
+                            {
+                                var t = File.GetCreationTime(f);
+                                var elapsedTicks = now.Ticks - t.Ticks;
+                                var elapsedSpan = new TimeSpan(elapsedTicks);
+
+                                if (elapsedSpan.TotalDays > days)
+                                {
+                                    Directory.Delete(f, true);
+                                    deletedFolders++;
+                                }
+                            }
+                        }
+
+                        // 刪除完成後顯示剩餘空間
+                        double freeSpaceAfter = GetHardDiskFreeSpace("C");
+                        double freedSpace = freeSpaceAfter - freeSpaceBefore;
+                        MessageBox.Show(
+                            $"刪檔完成！\n\n" +
+                            $"刪除資料夾數量：{deletedFolders}\n" +
+                            $"釋放空間：{freedSpace:F1} GB\n" +
+                            $"目前剩餘空間：{freeSpaceAfter:F1} GB",
+                            "刪檔結果",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                        lbAdd($"自動刪檔完成，刪除 {deletedFolders} 個資料夾，目前剩餘空間 {freeSpaceAfter:F1} GB", "inf", "");
+                    }
+                    catch (Exception e1)
+                    {
+                        lbAdd("刪檔錯誤", "err", e1.ToString());
+                        MessageBox.Show($"刪檔過程發生錯誤：\n{e1.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    lbAdd($"磁碟空間不足 200GB（剩餘 {freeSpaceBefore:F1} GB），使用者選擇不刪除舊檔案。", "war", "");
+                }
             }
             #endregion
             #region sqlite
@@ -321,7 +384,13 @@ namespace peilin
 
                         updateLabel();
 
-                        PLC_SetM(30, true);   // 先開燈                    
+                        PLC_SetM(30, true);   // 先開燈
+
+                        // 由 GitHub Copilot 產生
+                        // 啟動時寫入出料卡料時間預設值到PLC
+                        PLC_SetD(8, app.DEFAULT_D8_VALUE);
+                        PLC_SetD(9, app.DEFAULT_D9_VALUE);
+                        Log.Information($"出料卡料時間已設定預設值: D8={app.DEFAULT_D8_VALUE}, D9={app.DEFAULT_D9_VALUE}");
                     }
                 }
                 catch (Exception e1)
@@ -467,58 +536,51 @@ namespace peilin
                     }
                 }
 
+                // 由 GitHub Copilot 產生
+                // 初始化時隱藏出料卡料時間設定選單（僅管理者/工程師可見）
+                出料卡料時間設定ToolStripMenuItem.Visible = false;
+                檔案留存天數設定ToolStripMenuItem.Visible = false;
+                開門示警ToolStripMenuItem.Visible = false;
+                蜂鳴器ToolStripMenuItem.Visible = false;
                 #endregion
                 #region 當日計數
                 //dailyCheck();
                 #endregion
                 #region 刪檔作業
-                //try
-                //{
-                //    var dir = @".\image\";
-                //    var days = int.Parse(app.param["KeepDay"]);
+                // 由 GitHub Copilot 產生
+                // 啟動時自動刪除超過保留天數的舊檔案（僅 .\image 資料夾）
+                // 注意：桌面 NG 備份資料夾不在此處理，由使用者手動管理
+                try
+                {
+                    var dir = @".\image\";
+                    int days = 14; // 預設值
+                    if (app.param.ContainsKey("KeepDay") && int.TryParse(app.param["KeepDay"], out int parsedDays))
+                    {
+                        days = parsedDays;
+                    }
 
-                //    if (!Directory.Exists(dir) || days < 1) return;
+                    if (Directory.Exists(dir) && days >= 1)
+                    {
+                        var now = DateTime.Now;
+                        foreach (var f in Directory.GetFileSystemEntries(dir).Where(f => Directory.Exists(f)))
+                        {
+                            var t = File.GetCreationTime(f);
 
-                //    var now = DateTime.Now;
-                //    foreach (var f in Directory.GetFileSystemEntries(dir).Where(f => Directory.Exists(f)))
-                //    {
-                //        var t = File.GetCreationTime(f);
+                            var elapsedTicks = now.Ticks - t.Ticks;
+                            var elapsedSpan = new TimeSpan(elapsedTicks);
 
-                //        var elapsedTicks = now.Ticks - t.Ticks;
-                //        var elapsedSpan = new TimeSpan(elapsedTicks);
-
-                //        if (elapsedSpan.TotalDays > days) Directory.Delete(f, true);
-                //    }
-                //}
-                //catch (Exception e1)
-                //{
-                //    lbAdd("刪檔錯誤", "err");
-                //    lbAdd(e1.ToString(), "err");
-                //}
-
-                //try
-                //{
-                //    var dir = @".\logs\";
-                //    var days = int.Parse(app.param["KeepDay"]);
-
-                //    if (!Directory.Exists(dir) || days < 1) return;
-
-                //    var now = DateTime.Now;
-                //    foreach (var f in Directory.GetFileSystemEntries(dir).Where(f => File.Exists(f)))
-                //    {
-                //        var t = File.GetCreationTime(f);
-
-                //        var elapsedTicks = now.Ticks - t.Ticks;
-                //        var elapsedSpan = new TimeSpan(elapsedTicks);
-
-                //        if (elapsedSpan.TotalDays > days) File.Delete(f);
-                //    }
-                //}
-                //catch (Exception e1)
-                //{
-                //    lbAdd("刪檔錯誤", "err");
-                //    lbAdd(e1.ToString(), "err");
-                //}
+                            if (elapsedSpan.TotalDays > days)
+                            {
+                                Directory.Delete(f, true);
+                                lbAdd($"刪除過期資料夾：{f}", "inf", "");
+                            }
+                        }
+                    }
+                }
+                catch (Exception e1)
+                {
+                    lbAdd("刪檔錯誤", "err", e1.ToString());
+                }
                 #endregion
                 //setNet();
                 //tasks.Add(Task.Factory.StartNew(() => buttonM9()));
@@ -1343,8 +1405,8 @@ namespace peilin
                                     
                                             foreach (var defect in defectDetection.detections)
                                             {
-                                                // 檢查這個瑕疵是否需要檢測
-                                                if (!defectsToDetect.Contains(defect.class_name))
+                                                // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                                if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                                 {
                                                     continue;  // 跳過不需要檢測的瑕疵
                                                 }
@@ -1716,7 +1778,7 @@ namespace peilin
                                             IsNG = isObjectNG,
                                             OkNgScore = 0.0f,
                                             FinalMap = ObjResult.Clone(),
-                                            DefectName = "NULL_Invalid_Obj",
+                                            DefectName = "NULL_Invalid_ObjPos",
                                             DefectScore = 1.0f,
                                             OriName = input.name
                                         };
@@ -1881,8 +1943,8 @@ namespace peilin
 
                                             foreach (var defect in defectDetection.detections)
                                             {
-                                                // 檢查這個瑕疵是否需要檢測
-                                                if (!defectsToDetect.Contains(defect.class_name))
+                                                // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                                if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                                 {
                                                     continue;  // 跳過不需要檢測的瑕疵
                                                 }                                    
@@ -2466,8 +2528,8 @@ namespace peilin
 
                                         foreach (var defect in defectDetection.detections)
                                         {
-                                            // 檢查這個瑕疵是否需要檢測
-                                            if (!defectsToDetect.Contains(defect.class_name))
+                                            // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                            if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                             {
                                                 continue;  // 跳過不需要檢測的瑕疵
                                             }
@@ -3114,8 +3176,8 @@ namespace peilin
                                         }
                                         foreach (var defect in defectDetection.detections)
                                         {
-                                            // 檢查這個瑕疵是否需要檢測
-                                            if (!defectsToDetect.Contains(defect.class_name))
+                                            // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                            if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                             {
                                                 continue;  // 跳過不需要檢測的瑕疵
                                             }
@@ -5266,6 +5328,37 @@ namespace peilin
         {
             if (status) //停止狀態的邏輯
             {
+                // 由 GitHub Copilot 產生 - testImageMode 簡化停止流程
+                // 只停止 PLC 和相機，跳過報表儲存等需要料號/LotID 的操作
+                if (app.testImageMode)
+                {
+                    Invoke(new Action(() => label46.Text = "停止中"));
+                    Invoke(new Action(() => label46.BackColor = Color.Red));
+                    
+                    if (!app.offline)
+                    {
+                        cam.Stop();
+                        System.Threading.Thread.Sleep(100);
+                        
+                        PLC_SetM(0, false);  // 進料停
+                        PLC_SetM(2, false);  // 轉盤停
+                        PLC_SetM(5, false);  // 拍照停
+                        PLC_SetM(30, false); // 燈具
+                    }
+                    
+                    app.status = false;
+                    
+                    #region 介面變更
+                    Invoke(new Action(() => 設定ToolStripMenuItem.Enabled = true));
+                    Invoke(new Action(() => 使用者ToolStripMenuItem.Enabled = true));
+                    Invoke(new Action(() => 模式切換ToolStripMenuItem.Enabled = true));
+                    
+                    uiLock(true);
+                    #endregion
+                    
+                    return; // testImageMode 下不需要後續的報表儲存等操作
+                }
+                
                 if (app.DetectMode == 0)
                 {
                     Invoke(new Action(() => label46.Text = "停止中"));
@@ -5423,6 +5516,31 @@ namespace peilin
                 try
                 {
                     app.status = true; // 系統整體狀態標記為「正在運行中」
+                    
+                    // 由 GitHub Copilot 產生 - testImageMode 簡化啟動流程
+                    // 只啟動 PLC 和相機，跳過料號/LotID 相關初始化
+                    if (app.testImageMode)
+                    {
+                        Invoke(new Action(() => label46.Text = "測試取像中"));
+                        Invoke(new Action(() => label46.BackColor = Color.LimeGreen));
+                        
+                        if (!app.offline)
+                        {
+                            trigger(1); // 將相機觸發模式切換為硬體觸發
+                            PLC_SetM(21, false); // 急停解除
+                            PLC_SetM(3, false);  // 轉盤單獨運作、清空訊號
+
+                            PLC_SetM(0, true);   // 進料
+                            PLC_SetM(2, true);   // 轉盤
+                            PLC_SetM(5, true);   // 拍照
+
+                            PLC_SetM(30, true);  // 燈具
+                        }
+                        
+                        uiLock(false);
+                        return; // testImageMode 下不需要後續的瑕疵計數等初始化
+                    }
+                    
                     var result = new DialogResult();
                     if (app.DetectMode == 0) //正式生產模式
                     {
@@ -5680,6 +5798,44 @@ namespace peilin
         }
         #endregion
         #region 資料儲存
+        // 由 GitHub Copilot 產生 - 測試取像模式選單事件
+        private void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!testToolStripMenuItem.Checked)
+            {
+                // 開啟測試模式（資料夾由 Camera0.cs OnImageGrabbed 自動建立）
+                lbAdd("測試取像模式開啟", "inf", "");
+                testToolStripMenuItem.Checked = true;
+                app.testImageMode = true;
+                labelTestMode.Visible = true;
+                // 由 GitHub Copilot 產生 - 開啟 testImageMode 時將狀態設為 Stopped，確保可直接開始
+                app.currentState = app.SystemState.Stopped;
+                UpdateButtonStates();
+                using (var db = new MydbDB())
+                {
+                    // 嘗試更新，若無記錄則插入
+                    int updated = db.Parameters.Where(p => p.Name == "test").Set(p => p.Value, "true").Update();
+                    if (updated == 0)
+                    {
+                        db.Parameters.Value(p => p.Name, "test").Value(p => p.Value, "true").Insert();
+                    }
+                }
+            }
+            else
+            {
+                // 關閉測試模式
+                testToolStripMenuItem.Checked = false;
+                app.testImageMode = false;
+                labelTestMode.Visible = false;
+                lbAdd("測試取像模式關閉", "inf", "");
+                // 由 GitHub Copilot 產生 - 關閉 testImageMode 時更新按鈕狀態
+                UpdateButtonStates();
+                using (var db = new MydbDB())
+                {
+                    db.Parameters.Where(p => p.Name == "test").Set(p => p.Value, "false").Update();
+                }
+            }
+        }
         private void 原圖ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!原圖ToolStripMenuItem.Checked)
@@ -5934,7 +6090,28 @@ namespace peilin
             }
 
         }
-
+        private void 開門示警ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!開門示警ToolStripMenuItem.Checked)
+            {
+                lbAdd("開門示警開啟", "inf", "");
+                開門示警ToolStripMenuItem.Checked = true;
+                using (var db = new MydbDB())
+                {
+                    db.Parameters.Where(p => p.Name == "dooralert").Set(p => p.Value, "true").Update();
+                }
+                PLC_SetM(22, true);
+            }
+            else
+            {
+                開門示警ToolStripMenuItem.Checked = false;
+                using (var db = new MydbDB())
+                {
+                    db.Parameters.Where(p => p.Name == "dooralert").Set(p => p.Value, "false").Update();
+                }
+                PLC_SetM(22, false);
+            }
+        }
         #endregion
         #region 設定
 
@@ -6668,6 +6845,17 @@ namespace peilin
                 return;
             }
 
+            // 由 GitHub Copilot 產生 - testImageMode 優先檢查，不受狀態限制
+            // testImageMode 下跳過所有限制，直接啟動轉盤和相機
+            if (app.testImageMode)
+            {
+                app.currentState = app.SystemState.Running;
+                switchButton(false);
+                lbAdd("開始測試取像", "inf", "");
+                UpdateButtonStates();
+                return;
+            }
+
             // 檢測模式：需要檢查狀態
             if (app.currentState != app.SystemState.Stopped)
             {
@@ -6789,6 +6977,18 @@ namespace peilin
                 app.isAdjustmentMode = false;
                 switchButton(true);
                 lbAdd("停止調機", "inf", "");
+                return;
+            }
+
+            // 由 GitHub Copilot 產生 - testImageMode 優先檢查，不受狀態限制
+            // testImageMode 下跳過狀態檢查，直接停止並設為 Stopped 狀態
+            if (app.testImageMode)
+            {
+                switchButton(true);
+                lbAdd("停止測試取像", "inf", "");
+                // 直接設為 Stopped，下次可直接開始，不需走更新計數→異常復歸流程
+                app.currentState = app.SystemState.Stopped;
+                UpdateButtonStates();
                 return;
             }
 
@@ -7099,9 +7299,6 @@ namespace peilin
                                     {
                                         Invoke(new Action(() => label35.Text = c.UserName + "(工程師)"));
                                         lbAdd(app.username + "已登入，權限為:工程師", "inf", "");
-
-                                        button26.Visible = true;
-                                        label52.Visible = true;
                                     }
                                     else if (app.user == 1)
                                     {
@@ -7129,10 +7326,22 @@ namespace peilin
                     if (app.user < 2)
                     {
                         管理使用者ToolStripMenuItem.Enabled = true;
+                        // 由 GitHub Copilot 產生
+                        // 工程師/管理者可見出料卡料時間設定選單
+                        出料卡料時間設定ToolStripMenuItem.Visible = true;
+                        檔案留存天數設定ToolStripMenuItem.Visible = true;
+                        開門示警ToolStripMenuItem.Visible = true;
+                        蜂鳴器ToolStripMenuItem.Visible = true;
                     }
                     else
                     {
                         管理使用者ToolStripMenuItem.Enabled = false;
+                        // 由 GitHub Copilot 產生
+                        // 作業員隱藏出料卡料時間設定選單
+                        出料卡料時間設定ToolStripMenuItem.Visible = false;
+                        檔案留存天數設定ToolStripMenuItem.Visible = false;
+                        開門示警ToolStripMenuItem.Visible = false;
+                        蜂鳴器ToolStripMenuItem.Visible = false;
                     }
 
                 }
@@ -7153,6 +7362,9 @@ namespace peilin
             comboBox2.Enabled = true;
             管理使用者ToolStripMenuItem.Enabled = false;
             設定ToolStripMenuItem.Enabled = false;
+            // 由 GitHub Copilot 產生
+            // 登出時隱藏出料卡料時間設定選單
+            出料卡料時間設定ToolStripMenuItem.Visible = false;
 
             label52.Visible = false;
         }
@@ -8808,8 +9020,6 @@ namespace peilin
                 Mat roi_full = new Mat();
                 try
                 {
-
-
                     // 從資料庫讀取預設圓心和半徑
                     int knownOuterCenterX = int.Parse(app.param[$"known_outer_center_x_{stop}"]);
                     int knownOuterCenterY = int.Parse(app.param[$"known_outer_center_y_{stop}"]);
@@ -8817,128 +9027,6 @@ namespace peilin
                     int knownInnerCenterX = int.Parse(app.param[$"known_inner_center_x_{stop}"]);
                     int knownInnerCenterY = int.Parse(app.param[$"known_inner_center_y_{stop}"]);
                     int knownInnerRadius = int.Parse(app.param[$"known_inner_radius_{stop}"]);
-
-
-                    #region 不霍夫
-                    /*
-                    logInfo.AppendLine($"參數設置:");
-                    logInfo.AppendLine($"  外圈半徑範圍: {outerMinRadius}-{outerMaxRadius}, 內圈半徑範圍: {innerMinRadius}-{innerMaxRadius}");
-                    logInfo.AppendLine($"  預設外圓圓心: ({knownOuterCenterX}, {knownOuterCenterY})");
-                    logInfo.AppendLine($"  預設內圓圓心: ({knownInnerCenterX}, {knownInnerCenterY})");
-                    logInfo.AppendLine($"  預設半徑: 外圈={knownOuterRadius}, 內圈={knownInnerRadius}");
-
-                    int centerTolerance = 50; // 圓心容許偏差
-                    */
-
-
-                    /*
-                    // 篩選和驗證檢測到的圓
-                    CircleSegment? bestOuterCircle = null;
-                    CircleSegment? bestInnerCircle = null;
-                    double minCenterDistance = double.MaxValue;
-
-                    foreach (var outerCircle in outerCircles)
-                    {
-                        foreach (var innerCircle in innerCircles)
-                        {
-                            // 計算圓心距離
-                            double centerDistance = Math.Sqrt(Math.Pow(outerCircle.Center.X - innerCircle.Center.X, 2) + Math.Pow(outerCircle.Center.Y - innerCircle.Center.Y, 2));
-
-                            // 檢查圓心距離和半徑比
-                            if (centerDistance <= centerTolerance && centerDistance < minCenterDistance)
-                            {
-                                double radiusRatio = outerCircle.Radius / innerCircle.Radius;
-                                //if (radiusRatio > 1.5 && radiusRatio < 3.0) // 假設合理的半徑比範圍
-                                {
-                                    bestOuterCircle = outerCircle;
-                                    bestInnerCircle = innerCircle;
-                                    minCenterDistance = centerDistance;
-                                }
-                            }
-                        }
-                    }
-
-                    if (bestOuterCircle == null || bestInnerCircle == null)
-                    {
-                        throw new Exception("找不到有效的內外圓！");
-                    }
-
-                    // 直接寫入圓心半徑
-
-                    // 檢測到的圓心和半徑
-                    Point detectedOuterCenter = new Point((int)bestOuterCircle.Value.Center.X, (int)bestOuterCircle.Value.Center.Y);
-                    int detectedOuterRadius = (int)bestOuterCircle.Value.Radius;
-                    Point detectedInnerCenter = new Point((int)bestInnerCircle.Value.Center.X, (int)bestInnerCircle.Value.Center.Y);
-                    int detectedInnerRadius = (int)bestInnerCircle.Value.Radius;
-
-                    detectedInnerCenter.X = int.Parse(app.param[]);
-                    detectedInnerCenter.Y = 943;
-                    detectedInnerRadius = 545;
-
-                    if (stop == 1)
-                    {
-                        detectedInnerCenter.X = 1157;
-                        detectedInnerCenter.Y = 943;
-                        detectedInnerRadius = 545;
-                    }
-                    else if (stop == 3)
-                    {
-
-                    }
-                    */
-                    /*
-                    // 記錄檢測到的圓形信息
-                    logInfo.AppendLine("檢測到的圓形信息:");
-                    logInfo.AppendLine($"  外圈圓心: ({detectedOuterCenter.X}, {detectedOuterCenter.Y}), 半徑: {detectedOuterRadius}");
-                    logInfo.AppendLine($"  內圈圓心: ({detectedInnerCenter.X}, {detectedInnerCenter.Y}), 半徑: {detectedInnerRadius}");
-
-                    // 計算與預設值的偏差
-                    int outerCenterXDiff = Math.Abs(detectedOuterCenter.X - knownOuterCenterX);
-                    int outerCenterYDiff = Math.Abs(detectedOuterCenter.Y - knownOuterCenterY);
-                    int innerCenterXDiff = Math.Abs(detectedInnerCenter.X - knownInnerCenterX);
-                    int innerCenterYDiff = Math.Abs(detectedInnerCenter.Y - knownInnerCenterY);
-                    int outerRadiusDiff = Math.Abs(detectedOuterRadius - knownOuterRadius);
-                    int innerRadiusDiff = Math.Abs(detectedInnerRadius - knownInnerRadius);
-
-                    logInfo.AppendLine("與預設值的偏差:");
-                    logInfo.AppendLine($"  外圈圓心偏差: X={outerCenterXDiff}, Y={outerCenterYDiff}, 半徑偏差: {outerRadiusDiff}");
-                    logInfo.AppendLine($"  內圈圓心偏差: X={innerCenterXDiff}, Y={innerCenterYDiff}, 半徑偏差: {innerRadiusDiff}");
-
-                    // 圓心間距離
-                    double centerDistance0 = Math.Sqrt(Math.Pow(detectedOuterCenter.X - detectedInnerCenter.X, 2) + Math.Pow(detectedOuterCenter.Y - detectedInnerCenter.Y, 2));
-                    logInfo.AppendLine($"  內外圓圓心距離: {centerDistance0:F2} 像素");
-
-                    // 預設外圓圓心 (用於整體圖像平移)
-                    Point knownOuterCenter = new Point(knownOuterCenterX, knownOuterCenterY);
-
-                    // 預設內圓圓心 (用於特殊內環檢測模式)
-                    Point knownInnerCenter = new Point(knownInnerCenterX, knownInnerCenterY);
-
-                    // 計算平移向量 (從檢測圓心到預設圓心)
-                    int shiftX = knownInnerCenterX - detectedInnerCenter.X; //如果檢測不準確 平移向量就不對 造成圖片歪斜
-                    int shiftY = knownInnerCenterY - detectedInnerCenter.Y; //其實檢測圓心/半徑 可以預設定值
-                    logInfo.AppendLine($"應用平移向量: ({shiftX}, {shiftY})"); //只是一為訓練一為檢測
-
-                    // 建立平移矩陣
-                    Mat translationMatrix = new Mat(2, 3, MatType.CV_64FC1);
-                    double[] translationData = new double[] { 1, 0, shiftX, 0, 1, shiftY };
-                    Marshal.Copy(translationData, 0, translationMatrix.Data, translationData.Length);
-
-                    // 使用平移矩陣進行整個圖像平移
-                    Mat shiftedImage = new Mat();
-                    Cv2.WarpAffine(inputImage, shiftedImage, translationMatrix, inputImage.Size());
-
-                    // 建立遮罩
-                    Mat mask = new Mat(shiftedImage.Size(), MatType.CV_8UC1, Scalar.Black);
-
-                    // 取實際檢測半徑和預設半徑中較小者
-                    //int finalOuterRadius = Math.Min(detectedOuterRadius, knownOuterRadius);
-                    //int finalInnerRadius = Math.Max(detectedInnerRadius, knownInnerRadius);
-                    int finalOuterRadius = detectedOuterRadius;
-                    int finalInnerRadius = detectedInnerRadius;
-                    logInfo.AppendLine($"最終使用的半徑: 外圈={finalOuterRadius}, 內圈={finalInnerRadius}");
-                    */
-                    #endregion
 
                     //直接用座標去被 如果動到光纖、延遲時間、轉盤轉速 會直接跑掉
                     // 如果跑掉 但是ROI範圍尚可 可以用平移補救 但要記錄訓練時的座標
@@ -17739,6 +17827,21 @@ namespace peilin
                     return; // 調機模式下直接返回，不執行後續的狀態限制
                 }
 
+                // 由 GitHub Copilot 產生 - testImageMode 下不限制按鈕，所有按鈕都可正常使用
+                if (app.testImageMode)
+                {
+                    button1.Enabled = true;
+                    button2.Enabled = true;
+                    button47.Enabled = true;
+                    button17.Enabled = true;
+
+                    // 保持測試模式的文字顯示
+                    button1.Text = "開始檢測";
+                    button2.Text = "停止檢測";
+
+                    return; // testImageMode 下直接返回，不執行後續的狀態限制
+                }
+
                 switch (app.currentState)
                 {
                     case app.SystemState.Stopped: //復歸完
@@ -18141,6 +18244,7 @@ namespace peilin
                 button25.Enabled = true;
             }
         }
+
     }
     /// <summary>
     /// 管理瑕疵計數的寫入、讀取和更新
@@ -18996,6 +19100,30 @@ public class ResultManager
 
                         // 保存原有路徑圖像（需要 Clone 因為 using 會釋放）
                         app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), savePath));
+
+                        // 由 GitHub Copilot 產生
+                        // 新增功能：NG 圖像額外備份至桌面（永久保存，不受自動刪檔影響）
+                        // 路徑格式：C:\Users\Chernger\Desktop\NG\{yyyy-MM}\{MMdd}\{foldername}\
+                        if (isNG && !isNull)
+                        {
+                            try
+                            {
+                                string desktopNgBasePath = @"C:\Users\Chernger\Desktop\NG";
+                                string desktopNgPath = Path.Combine(
+                                    desktopNgBasePath,
+                                    timestamp.ToString("yyyy-MM"),
+                                    timestamp.ToString("MMdd"),
+                                    app.foldername
+                                );
+                                if (!Directory.Exists(desktopNgPath)) Directory.CreateDirectory(desktopNgPath);
+                                string desktopSavePath = Path.Combine(desktopNgPath, fname);
+                                app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), desktopSavePath));
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Warning($"NG 圖像備份至桌面失敗：{ex.Message}");
+                            }
+                        }
 
                         // 新增功能：依據站點存放
                         string stationFolder = Path.Combine(stationBasePath, $"Station{stationResult.Stop}");
@@ -20500,6 +20628,7 @@ public class app
     public static int DetectMode = 0, user = 3; //user:(0=工程師、1=管理者、2=作業員、3=未登入)
     public static bool status = false, live = false, paramUpdate = false; //機台運行狀態
     public static bool SoftTriggerMode = false;
+    public static bool testImageMode = false;
     public static bool Mode = false;
     
     // 由 GitHub Copilot 產生 - 新增調機模式旗標
@@ -20526,6 +20655,11 @@ public class app
     public static int postPackNullQuota = 0; // 滿箱後強制NULL的剩餘配額
     public static int lastD98Accepted = -1;
     public static int ProductiveTimeoutSec = 10;
+
+    // 由 GitHub Copilot 產生
+    // 出料卡料時間預設值（單位：0.1秒，6000 = 600秒）
+    public const int DEFAULT_D8_VALUE = 6000;  // 卡料倒數時間長度預設值
+    public const int DEFAULT_D9_VALUE = 6000;  // 沒料倒數時間長度預設值
 
     public static bool offlinetest =true;
     public static bool testc = false;
