@@ -29,6 +29,9 @@ namespace peilin
         // 由 GitHub Copilot 產生 - 參數區域快取（用於加速顏色查詢，避免重複 LINQ 查詢）
         private Dictionary<string, ParameterZone> _parameterZoneCache = new Dictionary<string, ParameterZone>();
 
+        // 由 GitHub Copilot 產生 - 防止 UpdateReferenceRowVisual 重入（避免 CellFormatting 無限循環）
+        private bool _isUpdatingReferenceRowVisual = false;
+
         // 【新增】參數狀態列舉
         public enum ParameterStatus
         {
@@ -82,6 +85,18 @@ namespace peilin
             this.btnCameraSelectNone = new Button();
             this.btnCameraSelectInvert = new Button();
 
+            // 由 GitHub Copilot 產生 - 建立相機參數頁面提示標籤
+            this.lblCameraHint = new Label();
+            this.lblCameraHint.Text = "所有相機參數皆採取自動導入\n請按需求自行測試、微調";
+            this.lblCameraHint.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
+            this.lblCameraHint.BackColor = Color.Orange;
+            this.lblCameraHint.ForeColor = Color.White;
+            this.lblCameraHint.AutoSize = false;
+            this.lblCameraHint.Size = new Size(440, 45);
+            this.lblCameraHint.Location = new Point(10, 5);
+            this.lblCameraHint.TextAlign = ContentAlignment.MiddleCenter;
+            this.tabCamera.Controls.Add(this.lblCameraHint);
+
             SetupThreeZones(this.tabCamera, "Camera",
                 this.grpCameraUnmodified, this.grpCameraModified, this.grpCameraFixed,
                 this.dgvCameraUnmodified, this.dgvCameraModified, this.dgvCameraFixed,
@@ -105,7 +120,18 @@ namespace peilin
             this.btnPositionSelectNone = new Button();
             this.btnPositionSelectInvert = new Button();
             this.btnOpenPositionCalibration = new Button();
-            this.lblPositionHint = new Label();
+
+            // 由 GitHub Copilot 產生 - 建立位置參數頁面提示標籤
+            this.lblPositionPageHint = new Label();
+            this.lblPositionPageHint.Text = "所有位置參數皆已先自動導入\n若設定新料號，請務必點擊右方「圓心校正工具」按鈕進行調整";
+            this.lblPositionPageHint.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
+            this.lblPositionPageHint.BackColor = Color.Orange;
+            this.lblPositionPageHint.ForeColor = Color.White;
+            this.lblPositionPageHint.AutoSize = false;
+            this.lblPositionPageHint.Size = new Size(700, 45);
+            this.lblPositionPageHint.Location = new Point(10, 5);
+            this.lblPositionPageHint.TextAlign = ContentAlignment.MiddleCenter;
+            this.tabPosition.Controls.Add(this.lblPositionPageHint);
 
             SetupThreeZones(this.tabPosition, "Position",
                 this.grpPositionUnmodified, this.grpPositionModified, this.grpPositionFixed,
@@ -113,20 +139,15 @@ namespace peilin
                 this.btnPositionMoveToModified, this.btnPositionMoveToFixed, this.btnPositionMoveToUnmodified,
                 this.btnPositionSelectAll, this.btnPositionSelectNone, this.btnPositionSelectInvert);
 
-            // 位置Tab的特殊按鈕
-            this.btnOpenPositionCalibration.Text = "🔧 開啟位置校正工具";
-            this.btnOpenPositionCalibration.Location = new Point(300, 20);
-            this.btnOpenPositionCalibration.Size = new Size(200, 30);
+            // 位置Tab的特殊按鈕 - 調整位置避免與提示標籤重疊
+            this.btnOpenPositionCalibration.Text = "圓心校正工具";
+            this.btnOpenPositionCalibration.Location = new Point(720, 10);
+            this.btnOpenPositionCalibration.Size = new Size(150, 35);
             this.btnOpenPositionCalibration.BackColor = Color.LightBlue;
+            this.btnOpenPositionCalibration.Font  = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
             this.btnOpenPositionCalibration.Click += btnOpenPositionCalibration_Click;
 
-            this.lblPositionHint.Text = "💡 位置參數需要使用專用的校正工具進行設定";
-            this.lblPositionHint.Location = new Point(520, 25);
-            this.lblPositionHint.Size = new Size(400, 20);
-            this.lblPositionHint.ForeColor = Color.Blue;
-
             this.tabPosition.Controls.Add(this.btnOpenPositionCalibration);
-            this.tabPosition.Controls.Add(this.lblPositionHint);
         }
         // 【新增方法】：建立檢測參數Tab的控件
         private void CreateDetectionTabControls()
@@ -169,8 +190,17 @@ namespace peilin
             this.btnTimingSelectNone = new Button();
             this.btnTimingSelectInvert = new Button();
 
-            // 【新增】建立智能計算助手面板
-            CreateTimingCalculatorPanel();
+            // 由 GitHub Copilot 產生 - 建立時間參數頁面提示標籤
+            this.lblTimingHint = new Label();
+            this.lblTimingHint.Text = "所有時間參數皆採取自動導入\n請按需求自行測試、微調";
+            this.lblTimingHint.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
+            this.lblTimingHint.BackColor = Color.Orange;
+            this.lblTimingHint.ForeColor = Color.White;
+            this.lblTimingHint.AutoSize = false;
+            this.lblTimingHint.Size = new Size(440, 45);
+            this.lblTimingHint.Location = new Point(10, 5);
+            this.lblTimingHint.TextAlign = ContentAlignment.MiddleCenter;
+            this.tabTiming.Controls.Add(this.lblTimingHint);
 
             SetupThreeZones(this.tabTiming, "Timing",
                 this.grpTimingUnmodified, this.grpTimingModified, this.grpTimingFixed,
@@ -185,7 +215,11 @@ namespace peilin
             Button btnMoveToModified, Button btnMoveToFixed, Button btnMoveToUnmodified,
             Button btnSelectAll, Button btnSelectNone, Button btnSelectInvert)
         {
-            // 視窗1600x1000，Tab可用空間更大，調整為更寬敞的佈局
+            // 由 GitHub Copilot 產生 - 調整三區佈局尺寸配合 TabPage 可用空間 (1452x594)
+            // 三區 GroupBox 寬度 = 460，間距 = 10，總寬 = 10 + 460 + 10 + 460 + 10 + 460 + 10 = 1420 (小於 1452)
+            // 三區 GroupBox 高度 = 460，頂部 Y=55，底部 = 55 + 460 = 515
+            // 按鈕 Y = 520，總高 = 520 + 35 = 555 (小於 594)
+            
             // 【重新命名】三個區域
             // 來源料號顯示（若 currentSession.SourceType 有值則顯示）
             string sourceTypeText = currentSession != null && !string.IsNullOrEmpty(currentSession.SourceType)
@@ -193,15 +227,18 @@ namespace peilin
                 : "參考區（來源料號）";
             grpUnmodified.Text = sourceTypeText;
             grpUnmodified.Location = new Point(10, 55);
-            grpUnmodified.Size = new Size(510, 720);  
+            grpUnmodified.Size = new Size(460, 460);
+            grpUnmodified.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             grpModified.Text = "已新增未修改區";
-            grpModified.Location = new Point(530, 55);  
-            grpModified.Size = new Size(510, 720);  
+            grpModified.Location = new Point(480, 55);
+            grpModified.Size = new Size(460, 460);
+            grpModified.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             grpFixed.Text = "已新增已修改區";
-            grpFixed.Location = new Point(1050, 55);  
-            grpFixed.Size = new Size(510, 720);  
+            grpFixed.Location = new Point(950, 55);
+            grpFixed.Size = new Size(460, 460);
+            grpFixed.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             // DataGridView設定
             SetupDataGridView(dgvUnmodified);
@@ -211,9 +248,10 @@ namespace peilin
             // 【重新設計】移動按鈕 - 符合新邏輯
             // 參考區 → 已新增未修改區（複製參數）
             btnMoveToModified.Text = "複製到新增區 →";
-            btnMoveToModified.Location = new Point(10, 785);
+            btnMoveToModified.Location = new Point(10, 520);
             btnMoveToModified.Size = new Size(130, 30);  
             btnMoveToModified.Tag = prefix;
+            btnMoveToModified.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnMoveToModified.Click += btnCopyToAddedUnmodified_Click;
 
             // 【隱藏】不再需要的按鈕 - 參考區不能直接到已修改區
@@ -225,23 +263,27 @@ namespace peilin
 
             // 已新增未修改區 → 已新增已修改區（編輯後移動）
             btnModifiedToFixed.Text = "標記為已修改 →";
-            btnModifiedToFixed.Location = new Point(530, 785);
+            btnModifiedToFixed.Location = new Point(480, 520);
             btnModifiedToFixed.Size = new Size(140, 30);
             btnModifiedToFixed.Tag = prefix;
+            btnModifiedToFixed.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnModifiedToFixed.Click += btnMoveToAddedModified_Click;
+
 
             // 已新增已修改區 → 已新增未修改區（復原修改）
             btnFixedToModified.Text = "← 復原修改";
-            btnFixedToModified.Location = new Point(1050, 785);
+            btnFixedToModified.Location = new Point(950, 520);
             btnFixedToModified.Size = new Size(100, 30);
             btnFixedToModified.Tag = prefix;
+            btnFixedToModified.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnFixedToModified.Click += btnRevertToAddedUnmodified_Click;
 
             // 刪除按鈕（從已新增區域移除，回到未複製狀態）
             btnMoveToUnmodified.Text = "← 移除選取項目";
-            btnMoveToUnmodified.Location = new Point(730, 840);
+            btnMoveToUnmodified.Location = new Point(630, 555);
             btnMoveToUnmodified.Size = new Size(140, 30);  
             btnMoveToUnmodified.Tag = prefix;
+            btnMoveToUnmodified.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnMoveToUnmodified.Click += btnRemoveFromAdded_Click;
 
             // 選擇按鈕
@@ -327,8 +369,11 @@ namespace peilin
         // 由 GitHub Copilot 產生 - 在 SetupDataGridView 加入 commit handler 呼叫
         private void SetupDataGridView(DataGridView dgv)
         {
-            dgv.Location = new System.Drawing.Point(8, 28);
-            dgv.Size = new System.Drawing.Size(494, 680);
+            // 由 GitHub Copilot 產生 - 調整 DataGridView 尺寸配合新的 GroupBox (460x460)
+            // DataGridView 寬度 = GroupBox 寬度 - 左右邊距 (8+8) = 460 - 16 = 444
+            // DataGridView 高度 = GroupBox 高度 - 頂部標題區 (35) = 460 - 35 = 425
+            dgv.Location = new System.Drawing.Point(8, 25);
+            dgv.Size = new System.Drawing.Size(444, 425);
             dgv.AllowUserToAddRows = false;
             dgv.AllowUserToDeleteRows = false;
             dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -342,8 +387,12 @@ namespace peilin
             AddCheckboxCommitHandler(dgv); // ★ 新增
         }
         // 由 GitHub Copilot 產生 - CellFormatting 也同步（雙保險）
+        // 修正：加入重入檢查，避免 UpdateReferenceRowVisual 修改 BackColor 觸發無限循環
         private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
+            // 重入保護：若正在更新視覺樣式，則跳過以避免無限循環
+            if (_isUpdatingReferenceRowVisual) return;
+
             var dgv = sender as DataGridView;
             if (dgv?.DataSource is List<ParameterItem> list &&
                 e.RowIndex >= 0 && e.RowIndex < list.Count &&
@@ -357,14 +406,27 @@ namespace peilin
             }
         }
         // 由 GitHub Copilot 產生 - 勾選選取框後立即套色（避免看到閃爍或變白）
+        // 修正：只更新當前被修改的那一列，而非遍歷所有 DataGridView（避免 UI 卡頓）
         private void AddCheckboxCommitHandler(DataGridView dgv)
         {
             dgv.CurrentCellDirtyStateChanged += (s, e) =>
             {
                 if (dgv.IsCurrentCellDirty)
                 {
+                    // 記住當前修改的列索引
+                    int rowIndex = dgv.CurrentCell?.RowIndex ?? -1;
+                    
                     dgv.CommitEdit(DataGridViewDataErrorContexts.Commit);
-                    ApplyReferenceZoneColors();
+                    
+                    // 只更新當前被修改的那一列（O(1) 複雜度）
+                    if (rowIndex >= 0 && dgv.DataSource is List<ParameterItem> list && rowIndex < list.Count)
+                    {
+                        var item = list[rowIndex];
+                        if (item.Zone == ParameterZone.Reference)
+                        {
+                            UpdateReferenceRowVisual(dgv.Rows[rowIndex], item);
+                        }
+                    }
                 }
             };
         }
@@ -412,46 +474,64 @@ namespace peilin
                 }
             }
         }
+        // 由 GitHub Copilot 產生 - 修正：使用重入保護旗標，只在顏色實際改變時才設定 BackColor
         private void UpdateReferenceRowVisual(DataGridViewRow row, ParameterItem item)
         {
             if (row == null || item == null) return;
             if (item.Zone != ParameterZone.Reference) return;
+            if (_isUpdatingReferenceRowVisual) return; // 重入保護
 
-            System.Drawing.Color baseColor = GetReferenceRowBackground(item);
-
-            // 基礎底色
-            row.DefaultCellStyle.BackColor = baseColor;
-
-            // 選取狀態：使用 IsSelected (checkbox 勾選) 來決定顯示
-            if (item.IsSelected)
+            _isUpdatingReferenceRowVisual = true;
+            try
             {
-                // 未新增(白底) → 改成淡黃色；其他保持原色但可加邊框提示
-                if (baseColor == System.Drawing.Color.White)
+                System.Drawing.Color baseColor = GetReferenceRowBackground(item);
+                System.Drawing.Color targetBackColor;
+                System.Drawing.Color targetSelectionBackColor;
+
+                // 選取狀態：使用 IsSelected (checkbox 勾選) 來決定顯示
+                if (item.IsSelected)
                 {
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.LightGoldenrodYellow;
+                    // 未新增(白底) → 改成淡黃色；其他保持原色
+                    targetBackColor = (baseColor == System.Drawing.Color.White)
+                        ? System.Drawing.Color.LightGoldenrodYellow
+                        : baseColor;
+                    targetSelectionBackColor = targetBackColor;
                 }
                 else
                 {
-                    // 對已新增(綠/藍)加微弱強調色（可選）：
-                    row.DefaultCellStyle.BackColor = baseColor; // 不變
+                    // 未勾選：維持狀態色
+                    targetBackColor = baseColor;
+                    targetSelectionBackColor = baseColor;
                 }
 
-                // 讓使用者仍可看見是選取：使用 SelectionBackColor 與 BackColor 區隔
-                row.DefaultCellStyle.SelectionBackColor = row.DefaultCellStyle.BackColor;
-                row.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+                // 只在顏色實際改變時才設定，避免觸發不必要的重繪事件
+                if (row.DefaultCellStyle.BackColor != targetBackColor)
+                {
+                    row.DefaultCellStyle.BackColor = targetBackColor;
+                }
+                if (row.DefaultCellStyle.SelectionBackColor != targetSelectionBackColor)
+                {
+                    row.DefaultCellStyle.SelectionBackColor = targetSelectionBackColor;
+                }
+                if (row.DefaultCellStyle.SelectionForeColor != System.Drawing.Color.Black)
+                {
+                    row.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+                }
             }
-            else
+            finally
             {
-                // 未勾選：維持狀態色；選取時不要反白造成干擾
-                row.DefaultCellStyle.SelectionBackColor = baseColor;
-                row.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+                _isUpdatingReferenceRowVisual = false;
             }
         }
 
         #region 參數狀態視覺化
         // 由 GitHub Copilot 產生 - RowPrePaint 保底
+        // 修正：加入重入檢查，避免重繪時的無限循環
         private void DataGridView_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
         {
+            // 重入保護：若正在更新視覺樣式，則跳過
+            if (_isUpdatingReferenceRowVisual) return;
+
             var dgv = sender as DataGridView;
             if (dgv?.DataSource is List<ParameterItem> parameters &&
                 e.RowIndex >= 0 && e.RowIndex < parameters.Count &&
@@ -586,7 +666,7 @@ namespace peilin
             lblOD.Text = $"🔍 當前料號OD: {GetCurrentTypeOD()} mm";
             lblOD.Location = new Point(10, 15);
             lblOD.Size = new Size(200, 20);
-            lblOD.Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold);
+            lblOD.Font = new Font("Microsoft JhengHei", 9F, FontStyle.Bold);
 
             // 計算按鈕
             var btnCalculateBasedOnOD = new Button();
@@ -709,6 +789,8 @@ namespace peilin
                 dialog.Text = "時間參數計算結果";
                 dialog.Size = new Size(900, 650);
                 dialog.StartPosition = FormStartPosition.CenterParent;
+                // 由 GitHub Copilot 產生 - 設定對話框統一字體
+                dialog.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 計算時間參數（fourTo複製 + delay線性預測）
                 var calculatedParams = CalculateTimingParameters(od);
@@ -728,14 +810,14 @@ namespace peilin
                 txtFormula.Multiline = true;
                 txtFormula.ReadOnly = true;
                 txtFormula.ScrollBars = ScrollBars.Vertical;
-                txtFormula.Font = new Font("Microsoft JhengHei", 9);
+                txtFormula.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 標題標籤
                 var lblFormula = new Label();
                 lblFormula.Text = $"📊 fourTo參數從來源料號複製 | delay參數根據OD線性預測 | 當前OD: {od:F2}mm";
                 lblFormula.Location = new Point(10, 200);
                 lblFormula.Size = new Size(700, 25);
-                lblFormula.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+                lblFormula.Font = new Font("Microsoft JhengHei", 9F, FontStyle.Bold);
                 lblFormula.ForeColor = Color.DarkBlue;
 
                 // 結果表格
@@ -769,6 +851,7 @@ namespace peilin
                 btnCancel.Text = "❌ 取消";
                 btnCancel.Location = new Point(810, 570);
                 btnCancel.Size = new Size(80, 30);
+                btnCancel.Font = new Font("Microsoft JhengHei", 11F, FontStyle.Bold);
                 btnCancel.Click += (s, args) => dialog.DialogResult = DialogResult.Cancel;
 
                 dialog.Controls.AddRange(new Control[] { txtFormula, lblFormula, dgvResults, btnOK, btnCancel });
@@ -959,6 +1042,8 @@ namespace peilin
                 dialog.Text = "參考參數數值";
                 dialog.Size = new Size(800, 500);
                 dialog.StartPosition = FormStartPosition.CenterParent;
+                // 由 GitHub Copilot 產生 - 設定對話框統一字體
+                dialog.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 讀取參考數據
                 var referenceData = LoadReferenceTimingData(paramPath);
@@ -1029,47 +1114,33 @@ namespace peilin
             grpCalibration.Location = new Point(10, 10);
             grpCalibration.Size = new Size(1550, 40);
             grpCalibration.BackColor = Color.LightCyan;
+            grpCalibration.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             // 校正類型下拉選單
             var lblCalibrationType = new Label();
             lblCalibrationType.Text = "校正類型：";
-            lblCalibrationType.Location = new Point(10, 15);
-            lblCalibrationType.Size = new Size(70, 20);
-            lblCalibrationType.Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold);
+            lblCalibrationType.Location = new Point(10, 17);
+            lblCalibrationType.Size = new Size(75, 20);
+            lblCalibrationType.Font = new Font("Microsoft JhengHei", 11F, FontStyle.Bold);
 
             var cmbCalibrationType = new ComboBox();
-            cmbCalibrationType.Location = new Point(80, 12);
+            cmbCalibrationType.Location = new Point(90, 14);
             cmbCalibrationType.Size = new Size(200, 25);
             cmbCalibrationType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCalibrationType.Font = new Font("Microsoft JhengHei", 11F, FontStyle.Bold);
 
             // 新增校正類型選項
             cmbCalibrationType.Items.AddRange(new object[] {
-                new CalibrationItem { Name = "物體偏移量校正 (objBias)", Type = CalibrationType.ObjectBias },
-                new CalibrationItem { Name = "開口閾值校正 (gapThreshold)", Type = CalibrationType.gapThresh },
-                new CalibrationItem { Name = "檢測精度校正 (Pixel)", Type = CalibrationType.Pixel },
-                new CalibrationItem { Name = "對比檢測校正 (Contrast)", Type = CalibrationType.Contrast },
-                new CalibrationItem { Name = "白色像素校正 (white)", Type = CalibrationType.White }
+                new CalibrationItem  { Name = "檢測精度校正 (Pixel)", Type = CalibrationType.Pixel },
+                new CalibrationItem { Name = "白色像素校正 (white)", Type = CalibrationType.White },
+                new CalibrationItem { Name = "對比檢測校正 (deepen)", Type = CalibrationType.Contrast }, 
+                new CalibrationItem { Name = "物體偏移校正 (objBias)", Type = CalibrationType.ObjectBias },
+                new CalibrationItem { Name = "開口閾值校正 (gapThreshold)", Type = CalibrationType.gapThresh }
             });
             cmbCalibrationType.DisplayMember = "Name";
             cmbCalibrationType.ValueMember = "Type";
             cmbCalibrationType.SelectedIndex = 0;
-
-            /*
-            改為選取參數後，進入介面再選站點
-            // 站點選擇下拉選單
-            var lblStation = new Label();
-            lblStation.Text = "站點：";
-            lblStation.Location = new Point(290, 15);
-            lblStation.Size = new Size(40, 20);
-            lblStation.Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold);
-
-            var cmbStation = new ComboBox();
-            cmbStation.Location = new Point(330, 12);
-            cmbStation.Size = new Size(80, 25);
-            cmbStation.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbStation.Items.AddRange(new object[] { "站點1", "站點2", "站點3", "站點4" });
-            cmbStation.SelectedIndex = 0;
-            */
+            cmbCalibrationType.Font = new Font("Microsoft JhengHei", 11F, FontStyle.Bold);
 
             // 開始校正按鈕
             var btnStartCalibration = new Button();
@@ -1077,15 +1148,17 @@ namespace peilin
             btnStartCalibration.Location = new Point(420, 12);
             btnStartCalibration.Size = new Size(120, 25);
             btnStartCalibration.BackColor = Color.LightGreen;
+            btnStartCalibration.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnStartCalibration.Click += (s, e) => StartCalibration(
               (CalibrationType)((CalibrationItem)cmbCalibrationType.SelectedItem).Type);
 
             // 參數預覽按鈕
             var btnPreviewParameters = new Button();
-            btnPreviewParameters.Text = "👁️ 參數預覽";
+            btnPreviewParameters.Text = "👁 參數預覽";
             btnPreviewParameters.Location = new Point(550, 12);
             btnPreviewParameters.Size = new Size(100, 25);
             btnPreviewParameters.BackColor = Color.LightBlue;
+            btnPreviewParameters.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnPreviewParameters.Click += (s, e) => PreviewCalibrationParameters(
               (CalibrationType)((CalibrationItem)cmbCalibrationType.SelectedItem).Type);
 
@@ -1095,6 +1168,7 @@ namespace peilin
             lblHint.Location = new Point(660, 15);
             lblHint.Size = new Size(400, 20);
             lblHint.ForeColor = Color.DarkBlue;
+            lblHint.Font = new Font("Microsoft JhengHei", 11F, FontStyle.Bold);
 
             // 組裝面板
             grpCalibration.Controls.AddRange(new Control[] {
@@ -1262,13 +1336,15 @@ namespace peilin
                 dialog.Text = $"{calibrationType} 校正參數預覽 - 所有站點";
                 dialog.Size = new Size(700, 500);
                 dialog.StartPosition = FormStartPosition.CenterParent;
+                // 由 GitHub Copilot 產生 - 設定對話框統一字體
+                dialog.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 說明標籤
                 var lblDescription = new Label();
                 lblDescription.Text = $"以下是 {calibrationType} 校正會影響的參數（所有站點）：";
                 lblDescription.Location = new Point(10, 10);
                 lblDescription.Size = new Size(500, 25);
-                lblDescription.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+                lblDescription.Font = new Font("Microsoft JhengHei", 9F, FontStyle.Bold);
 
                 // 參數列表 - 使用 DataGridView 更好顯示
                 var dgvParameters = new DataGridView();
@@ -1675,7 +1751,7 @@ namespace peilin
             notification.Text = "✅ 參數已更新";
             notification.BackColor = Color.LightGreen;
             notification.ForeColor = Color.DarkGreen;
-            notification.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            notification.Font = new Font("Microsoft JhengHei", 9F, FontStyle.Bold);
             notification.Size = new Size(120, 30);
             notification.Location = new Point(this.Width - 150, 50);
             notification.TextAlign = ContentAlignment.MiddleCenter;
@@ -1726,16 +1802,17 @@ namespace peilin
 
             var btn = new Button();
             btn.Name = "btnPartialAutoImport_" + (tab.Name ?? Guid.NewGuid().ToString("N"));
-            btn.Text = "🔄 部分自動導入";
-            btn.Size = new System.Drawing.Size(150, 30);
+            // 由 GitHub Copilot 產生 - 移除 emoji 以確保文字完整顯示，並統一按鈕大小與「圓心校正工具」一致
+            btn.Text = "部分自動導入";
+            btn.Size = new Size(150, 35);
 
-            // 放在每個 TabPage 的右上角（避開你現有的「全選/清除/反選」按鈕）
+            // 由 GitHub Copilot 產生 - 放在每個 TabPage 的右上角，Y 座標與「圓心校正工具」按鈕對齊
             var x = Math.Max(10, tab.ClientSize.Width - btn.Width - 15);
-            btn.Location = new System.Drawing.Point(x, 12);
+            btn.Location = new System.Drawing.Point(x, 10);
 
             btn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btn.BackColor = System.Drawing.Color.LightSalmon;
-            btn.Font = new System.Drawing.Font("Microsoft JhengHei", 9, System.Drawing.FontStyle.Bold);
+            btn.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
             btn.Click += BtnPartialAutoImport_Click;
 
             var toolTip = new ToolTip();
@@ -1811,6 +1888,9 @@ namespace peilin
 
                 // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（缺陷檢測項目，直接寫入資料庫）
                 processedCount += ProcessDefectChecksParameters(typeInfo, processedParameters);
+
+                // 由 GitHub Copilot 產生 - 複製來源料號的 AI 模型檔案
+                processedCount += CopyModelsFromSource(processedParameters);
 
                 // 更新顯示
                 RefreshCurrentTabDisplay();
@@ -2696,6 +2776,207 @@ namespace peilin
             }
         }
 
+        // 由 GitHub Copilot 產生 - 複製來源料號的 AI 模型檔案到目標料號
+        /// <summary>
+        /// 從來源料號複製 AI 模型檔案，並重新命名為目標料號的檔名
+        /// </summary>
+        /// <param name="processedParameters">處理過的參數清單（用於記錄複製結果）</param>
+        /// <returns>成功複製的模型數量</returns>
+        private int CopyModelsFromSource(List<string> processedParameters)
+        {
+            int copiedCount = 0;
+
+            try
+            {
+                // 檢查是否有來源料號
+                if (currentSession == null || string.IsNullOrEmpty(currentSession.SourceType))
+                {
+                    System.Diagnostics.Debug.WriteLine("[CopyModelsFromSource] 無來源料號，跳過模型複製");
+                    return 0;
+                }
+
+                // 若來源料號與目標料號相同，跳過複製
+                if (currentSession.SourceType == TargetType)
+                {
+                    System.Diagnostics.Debug.WriteLine("[CopyModelsFromSource] 來源與目標料號相同，跳過模型複製");
+                    return 0;
+                }
+
+                string sourceType = currentSession.SourceType;
+                string modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models");
+
+                // 檢查 models 資料夾是否存在
+                if (!Directory.Exists(modelPath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CopyModelsFromSource] models 資料夾不存在：{modelPath}");
+                    return 0;
+                }
+
+                // 定義所有模型類型後綴
+                var modelSuffixes = new[]
+                {
+                    "_in",       // 內環模型
+                    "_out",      // 外環模型
+                    "_in_NROI",  // 內環非ROI模型
+                    "_out_NROI", // 外環非ROI模型
+                    "_chamfer",  // 倒角模型
+                    "_1",        // 站1模型
+                    "_2"         // 站2模型
+                };
+
+                // 收集可複製的模型資訊
+                var modelsToCopy = new List<(string sourceFile, string targetFile, string suffix, bool targetExists)>();
+
+                foreach (var suffix in modelSuffixes)
+                {
+                    string sourceFileName = $"{sourceType}{suffix}.pt";
+                    string targetFileName = $"{TargetType}{suffix}.pt";
+                    string sourceFilePath = Path.Combine(modelPath, sourceFileName);
+                    string targetFilePath = Path.Combine(modelPath, targetFileName);
+
+                    if (File.Exists(sourceFilePath))
+                    {
+                        bool targetExists = File.Exists(targetFilePath);
+                        modelsToCopy.Add((sourceFilePath, targetFilePath, suffix, targetExists));
+                    }
+                }
+
+                // 若無可複製的模型，直接返回
+                if (modelsToCopy.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CopyModelsFromSource] 來源料號 {sourceType} 無任何模型檔案");
+                    processedParameters.Add($"[AI模型] 來源料號 {sourceType} 無模型檔案可複製");
+                    return 0;
+                }
+
+                // 建立確認訊息
+                var existingModels = modelsToCopy.Where(m => m.targetExists).ToList();
+                var newModels = modelsToCopy.Where(m => !m.targetExists).ToList();
+
+                var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine($"即將從來源料號 {sourceType} 複製 AI 模型到目標料號 {TargetType}");
+                messageBuilder.AppendLine();
+
+                if (newModels.Count > 0)
+                {
+                    messageBuilder.AppendLine($"將複製 {newModels.Count} 個新模型：");
+                    foreach (var model in newModels)
+                    {
+                        messageBuilder.AppendLine($"  • {Path.GetFileName(model.sourceFile)} → {Path.GetFileName(model.targetFile)}");
+                    }
+                    messageBuilder.AppendLine();
+                }
+
+                if (existingModels.Count > 0)
+                {
+                    messageBuilder.AppendLine($"以下 {existingModels.Count} 個模型已存在（將詢問是否覆寫）：");
+                    foreach (var model in existingModels)
+                    {
+                        messageBuilder.AppendLine($"  • {Path.GetFileName(model.targetFile)}");
+                    }
+                    messageBuilder.AppendLine();
+                }
+
+                messageBuilder.AppendLine("確定要複製嗎？");
+
+                // 顯示確認對話框
+                var confirmResult = MessageBox.Show(
+                    messageBuilder.ToString(),
+                    "確認複製 AI 模型",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmResult != DialogResult.Yes)
+                {
+                    processedParameters.Add("[AI模型] 使用者取消模型複製");
+                    return 0;
+                }
+
+                // 處理已存在的模型（詢問是否覆寫）
+                bool overwriteAll = false;
+                bool skipAll = false;
+
+                if (existingModels.Count > 0)
+                {
+                    var overwriteResult = MessageBox.Show(
+                        $"目標料號 {TargetType} 已存在 {existingModels.Count} 個模型檔案。\n\n" +
+                        "是否要覆寫這些檔案？\n\n" +
+                        "• [是] = 覆寫所有已存在的模型\n" +
+                        "• [否] = 跳過已存在的模型，只複製新模型",
+                        "模型檔案已存在",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    overwriteAll = (overwriteResult == DialogResult.Yes);
+                    skipAll = !overwriteAll;
+                }
+
+                // 執行複製
+                var copyResults = new List<string>();
+                int successCount = 0;
+                int skipCount = 0;
+                int errorCount = 0;
+
+                foreach (var model in modelsToCopy)
+                {
+                    try
+                    {
+                        if (model.targetExists)
+                        {
+                            if (skipAll)
+                            {
+                                copyResults.Add($"{model.suffix}: 跳過（已存在）");
+                                skipCount++;
+                                continue;
+                            }
+                            // overwriteAll = true，繼續執行複製
+                        }
+
+                        File.Copy(model.sourceFile, model.targetFile, overwrite: model.targetExists && overwriteAll);
+                        copyResults.Add($"{model.suffix}: 複製成功");
+                        successCount++;
+                        copiedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        copyResults.Add($"{model.suffix}: 複製失敗 - {ex.Message}");
+                        errorCount++;
+                        System.Diagnostics.Debug.WriteLine($"[CopyModelsFromSource] 複製失敗 {model.sourceFile}: {ex.Message}");
+                    }
+                }
+
+                // 記錄結果到 processedParameters
+                processedParameters.Add($"[AI模型複製] 成功: {successCount}, 跳過: {skipCount}, 失敗: {errorCount}");
+                foreach (var result in copyResults)
+                {
+                    processedParameters.Add($"  模型{result}");
+                }
+
+                // 若有錯誤，顯示警告
+                if (errorCount > 0)
+                {
+                    MessageBox.Show(
+                        $"模型複製過程中發生 {errorCount} 個錯誤。\n\n" +
+                        "請檢查：\n" +
+                        "• 檔案是否被其他程式佔用\n" +
+                        "• 磁碟空間是否足夠\n" +
+                        "• 是否有足夠的檔案權限",
+                        "模型複製警告",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[CopyModelsFromSource] 完成：成功={successCount}, 跳過={skipCount}, 失敗={errorCount}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CopyModelsFromSource] 發生錯誤：{ex.Message}");
+                processedParameters.Add($"[AI模型] 複製過程發生錯誤：{ex.Message}");
+            }
+
+            return copiedCount;
+        }
+
         // 由 GitHub Copilot 產生 - 料號資訊資料類別
         public class TypeInfo
         {
@@ -2717,10 +2998,12 @@ namespace peilin
 
         private void InitializeForm()
         {
+            // 由 GitHub Copilot 產生 - 設定表單統一字體為 Microsoft JhengHei 9F（適配 1920x1080 螢幕）
+            this.Font = new System.Drawing.Font("Microsoft JhengHei", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            
             this.Text = $"新料號參數設定 - {TargetType}";
-            this.Size = new Size(1600, 1050);
+            // 由 GitHub Copilot 產生 - 移除 this.Size 設定，改由 Designer 統一管理表單尺寸
             this.StartPosition = FormStartPosition.CenterParent;
-            this.MaximizeBox = true;
             
             // 建立部分自動導入按鈕
             CreatePartialAutoImportButton();
@@ -2728,27 +3011,8 @@ namespace peilin
             // 【修正1】：先更新進度顯示，但不要更新Tab狀態（避免TabControl還沒建立完成）
             UpdateProgressDisplayOnly();
 
-            if (File.Exists(sessionFilePath))
-            {
-                var result = MessageBox.Show(
-                    $"發現未完成的參數設定工作階段，是否要繼續？\n\n點擊「是」繼續之前的工作\n點擊「否」重新選擇來源料號（一樣會導入已設定完成的參數）",
-                    "發現未完成工作",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
-                {
-                    LoadExistingSession();
-                }
-                else
-                {
-                    ShowSourceSelectionDialog();
-                }
-            }
-            else
-            {
-                ShowSourceSelectionDialog();
-            }
+            // 由 GitHub Copilot 產生 - 移除「是否繼續上次設定」對話框，一律直接進入來源料號選擇介面
+            ShowSourceSelectionDialog();
 
             // 初始化Tab狀態
             // 確保 TabControl 已經完全初始化後才更新Tab狀態
@@ -3559,10 +3823,6 @@ namespace peilin
                 if (btnOpenPositionCalibration != null)
                 {
                     btnOpenPositionCalibration.Visible = (currentCategory == ParameterCategory.Position);
-                }
-                if (lblPositionHint != null)
-                {
-                    lblPositionHint.Visible = (currentCategory == ParameterCategory.Position);
                 }
             }
         }

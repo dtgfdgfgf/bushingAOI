@@ -141,7 +141,7 @@ namespace peilin
             // 顯示操作提示
             using (var brush = new SolidBrush(Color.FromArgb(200, Color.DarkBlue)))
             using (var textBrush = new SolidBrush(Color.White))
-            using (var font = new Font("微軟正黑體", 12, FontStyle.Bold))
+            using (var font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold))
             {
                 string hint = "放大模式 - ↑↓←→ 移動圓心，ESC 關閉";
                 var textSize = e.Graphics.MeasureString(hint, font);
@@ -324,53 +324,20 @@ namespace peilin
             this.SuspendLayout();
             this.AutoScaleDimensions = new SizeF(6F, 12F);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1400, 900);
+            this.ClientSize = new System.Drawing.Size(1118, 640);
             this.Text = "圓心校正工具";
             this.StartPosition = FormStartPosition.CenterParent;
             this.ResumeLayout(false);
         }
+        // 由 GitHub Copilot 產生 - 移除關閉確認對話框，直接允許關閉
         private void CircleCalibrationForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            try
-            {
-                // 只在使用者主動關閉時提示（避免系統關機等情況卡住）
-                if (e.CloseReason == CloseReason.UserClosing)
-                {
-                    var saved = MessageBox.Show(
-                        "是否已儲存參數？",
-                        "提醒",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question,
-                        MessageBoxDefaultButton.Button2);
-
-                    if (saved == DialogResult.Yes)
-                    {
-                        var confirm = MessageBox.Show(
-                            "是否確定關閉介面？",
-                            "確認關閉",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Warning,
-                            MessageBoxDefaultButton.Button2);
-
-                        if (confirm == DialogResult.No)
-                        {
-                            e.Cancel = true; // 取消關閉
-                        }
-                    }
-                    else
-                    {
-                        e.Cancel = true; // 未儲存 -> 返回介面
-                    }
-                }
-            }
-            catch
-            {
-                // 保守處理：若提示流程出錯，避免關閉造成資料流失
-                e.Cancel = true;
-            }
+            // 直接允許關閉，不顯示確認對話框
         }
         private void SetupUI()
         {
+            // 由 GitHub Copilot 產生 - 設定表單預設字體
+            this.Font = new Font("Microsoft JhengHei", 10F);
             this.KeyPreview = true;
             // 圖像顯示區域
             imageDisplay = new PictureBox
@@ -418,7 +385,7 @@ namespace peilin
             var panel = new Panel
             {
                 Location = new System.Drawing.Point(820, 10),
-                Size = new System.Drawing.Size(300, 700),
+                Size = new System.Drawing.Size(300, 750),
                 BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             };
 
@@ -429,29 +396,29 @@ namespace peilin
             {
                 Text = "=== 參數確認 ===",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(120, 20),
-                Font = new Font("微軟正黑體", 9, FontStyle.Bold)
+                Size = new System.Drawing.Size(140, 22),
+                Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold)
             });
-            yPos += 25;
+            yPos += 28;
 
             // 料號輸入
-            panel.Controls.Add(new Label { Text = "料號:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(50, 20) });
+            panel.Controls.Add(new Label { Text = "料號:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(55, 22) });
             txtProductType = new TextBox
             {
-                Location = new System.Drawing.Point(65, yPos),
-                Size = new System.Drawing.Size(120, 20),
+                Location = new System.Drawing.Point(70, yPos),
+                Size = new System.Drawing.Size(120, 24),
                 Text = app.produce_No ?? ""
             };
             txtProductType.TextChanged += TxtProductType_TextChanged; // 新增事件
             panel.Controls.Add(txtProductType);
-            yPos += 30;
+            yPos += 32;
 
             // 站點選擇
-            panel.Controls.Add(new Label { Text = "站點:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(50, 20) });
+            panel.Controls.Add(new Label { Text = "站點:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(55, 22) });
             cmbStation = new ComboBox
             {
-                Location = new System.Drawing.Point(65, yPos),
-                Size = new System.Drawing.Size(80, 20),
+                Location = new System.Drawing.Point(70, yPos),
+                Size = new System.Drawing.Size(90, 24),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             for (int i = 1; i <= 4; i++)
@@ -461,63 +428,63 @@ namespace peilin
             cmbStation.SelectedIndex = 0;
             cmbStation.SelectedIndexChanged += CmbStation_SelectedIndexChanged; // 新增事件
             panel.Controls.Add(cmbStation);
-            yPos += 30;
+            yPos += 32;
 
             // 圓類型選擇
-            panel.Controls.Add(new Label { Text = "圓類型:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(50, 20) });
+            panel.Controls.Add(new Label { Text = "圓類型:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(60, 22) });
             cmbCircleType = new ComboBox
             {
-                Location = new System.Drawing.Point(65, yPos),
-                Size = new System.Drawing.Size(80, 20),
+                Location = new System.Drawing.Point(70, yPos),
+                Size = new System.Drawing.Size(90, 24),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             cmbCircleType.Items.AddRange(new string[] { "外圓", "內圓", "倒角圓" });
             cmbCircleType.SelectedIndex = 0;
             cmbCircleType.SelectedIndexChanged += CmbCircleType_SelectedIndexChanged; // 新增事件
             panel.Controls.Add(cmbCircleType);
-            yPos += 40;
+            yPos += 42;
 
             // 參數檢查按鈕
             var btnCheckParams = new Button
             {
                 Text = "檢查參數是否存在",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(140, 30),
+                Size = new System.Drawing.Size(150, 32),
                 BackColor = Color.Orange
             };
             btnCheckParams.Click += BtnCheckParams_Click;
             panel.Controls.Add(btnCheckParams);
-            yPos += 40;
+            yPos += 42;
 
             // 當前設定顯示
             lblCurrentSettings = new Label
             {
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(280, 60),
+                Size = new System.Drawing.Size(280, 80),
                 BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle,
                 Text = "請先檢查參數是否存在",
                 TextAlign = ContentAlignment.TopLeft,
                 BackColor = Color.LightGray
             };
             panel.Controls.Add(lblCurrentSettings);
-            yPos += 70;
+            yPos += 90;
 
             // 分隔線
             panel.Controls.Add(new Label
             {
                 Text = "=== 圓心校正 ===",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(120, 20),
-                Font = new Font("微軟正黑體", 9, FontStyle.Bold)
+                Size = new System.Drawing.Size(140, 22),
+                Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold)
             });
-            yPos += 25;
+            yPos += 28;
 
             // 載入圖片按鈕（初始禁用）
             btnLoadImages = new Button
             {
                 Text = "載入校正圖片",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(120, 35),
+                Size = new System.Drawing.Size(130, 35),
                 Enabled = false // 初始禁用
             };
             btnLoadImages.Click += BtnLoadImages_Click;
@@ -525,11 +492,11 @@ namespace peilin
             yPos += 45;
 
             // 圓心座標輸入（初始禁用）
-            panel.Controls.Add(new Label { Text = "圓心X:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(50, 20) });
+            panel.Controls.Add(new Label { Text = "圓心X:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(60, 22) });
             centerXInput = new NumericUpDown
             {
-                Location = new System.Drawing.Point(65, yPos),
-                Size = new System.Drawing.Size(80, 20),
+                Location = new System.Drawing.Point(75, yPos),
+                Size = new System.Drawing.Size(85, 24),
                 Maximum = 3000,
                 Minimum = 0,
                 Value = circleCenter.X,
@@ -537,13 +504,13 @@ namespace peilin
             };
             centerXInput.ValueChanged += CenterInput_ValueChanged;
             panel.Controls.Add(centerXInput);
-            yPos += 30;
+            yPos += 32;
 
-            panel.Controls.Add(new Label { Text = "圓心Y:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(50, 20) });
+            panel.Controls.Add(new Label { Text = "圓心Y:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(60, 22) });
             centerYInput = new NumericUpDown
             {
-                Location = new System.Drawing.Point(65, yPos),
-                Size = new System.Drawing.Size(80, 20),
+                Location = new System.Drawing.Point(75, yPos),
+                Size = new System.Drawing.Size(85, 24),
                 Maximum = 3000,
                 Minimum = 0,
                 Value = circleCenter.Y,
@@ -551,14 +518,14 @@ namespace peilin
             };
             centerYInput.ValueChanged += CenterInput_ValueChanged;
             panel.Controls.Add(centerYInput);
-            yPos += 30;
+            yPos += 32;
 
             // 半徑輸入（初始禁用）
-            panel.Controls.Add(new Label { Text = "半徑:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(50, 20) });
+            panel.Controls.Add(new Label { Text = "半徑:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(55, 22) });
             radiusInput = new NumericUpDown
             {
-                Location = new System.Drawing.Point(65, yPos),
-                Size = new System.Drawing.Size(80, 20),
+                Location = new System.Drawing.Point(75, yPos),
+                Size = new System.Drawing.Size(85, 24),
                 Maximum = 1000,
                 Minimum = 50,
                 Value = circleRadius,
@@ -566,11 +533,11 @@ namespace peilin
             };
             radiusInput.ValueChanged += RadiusInput_ValueChanged;
             panel.Controls.Add(radiusInput);
-            yPos += 30;
+            yPos += 32;
 
             // 半徑調整滑桿（初始禁用）
-            panel.Controls.Add(new Label { Text = "半徑微調:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(70, 20) });
-            yPos += 25;
+            panel.Controls.Add(new Label { Text = "半徑微調:", Location = new System.Drawing.Point(10, yPos), Size = new System.Drawing.Size(75, 22) });
+            yPos += 26;
             radiusTrackBar = new TrackBar
             {
                 Location = new System.Drawing.Point(10, yPos),
@@ -589,33 +556,33 @@ namespace peilin
             statusLabel = new Label
             {
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(280, 60),
+                Size = new System.Drawing.Size(280, 65),
                 BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle,
                 Text = "請先檢查參數是否存在",
                 TextAlign = ContentAlignment.TopLeft
             };
             panel.Controls.Add(statusLabel);
-            yPos += 70;
+            yPos += 75;
 
             // 顯示選項（初始禁用）
             chkShowAllCircles = new CheckBox
             {
                 Text = "顯示所有圖片適配度",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(150, 20),
+                Size = new System.Drawing.Size(170, 22),
                 Enabled = false, // 初始禁用
                 Visible = false
             };
             chkShowAllCircles.CheckedChanged += ChkShowAllCircles_CheckedChanged;
             panel.Controls.Add(chkShowAllCircles);
-            yPos += 30;
+            yPos += 32;
 
             // 套用到所有圖片（初始禁用）
             btnApplyToAll = new Button
             {
                 Text = "分析所有圖片",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(120, 35),
+                Size = new System.Drawing.Size(130, 35),
                 BackColor = Color.LightBlue,
                 Enabled = false, // 初始禁用
                 Visible = false
@@ -627,9 +594,9 @@ namespace peilin
             // 儲存設定（初始禁用）
             btnSaveSettings = new Button
             {
-                Text = "儲存參數到資料庫",
+                Text = "套用推薦值",
                 Location = new System.Drawing.Point(10, yPos),
-                Size = new System.Drawing.Size(120, 35),
+                Size = new System.Drawing.Size(150, 35),
                 BackColor = Color.LightGreen,
                 Enabled = false // 初始禁用
             };
@@ -643,7 +610,7 @@ namespace peilin
             imageListBox = new ListBox
             {
                 Location = new System.Drawing.Point(1130, 10),
-                Size = new System.Drawing.Size(250, 600),
+                Size = new System.Drawing.Size(350, 600),
                 TabStop = true // 允許接收焦點
             };
             imageListBox.SelectedIndexChanged += ImageListBox_SelectedIndexChanged;
@@ -880,19 +847,35 @@ namespace peilin
                         hasValidParameters = false;
                         EnableCalibrationControls(false);
 
-                        lblCurrentSettings.BackColor = Color.LightCoral;
-                        lblCurrentSettings.Text = $"❌ 參數不存在\n料號: {productType}\n站點: {station}, 類型: {cmbCircleType.Text}\n" +
-                                                "請先使用料號設定功能新增基礎參數";
+                        // 由 GitHub Copilot 產生 - 站點3/4的倒角圓不需要設定
+                        bool isChamferOnStation3Or4 = (station == 3 || station == 4) && cmbCircleType.SelectedIndex == 2;
 
-                        statusLabel.Text = "參數不存在，無法進行校正";
+                        if (isChamferOnStation3Or4)
+                        {
+                            // 站點3/4的倒角圓不需要設定
+                            lblCurrentSettings.BackColor = Color.LightGray;
+                            lblCurrentSettings.Text = $"目前不須設定此參數\n料號: {productType}\n站點: {station}, 類型: {cmbCircleType.Text}";
 
-                        MessageBox.Show($"找不到料號 '{productType}' 站點 {station} 的 {cmbCircleType.Text} 參數！\n\n" +
-                                      "請先使用以下步驟新增參數：\n" +
-                                      "1. 到主選單的「檢測參數設定 -> 位置參數」\n" +
-                                      "2. 複製類似料號的參數到已新增區\n" +
-                                      "3. 右下角點擊儲存當前頁面\n" +
-                                      "4. 回到此工具進行精確校正",
-                                      "參數不存在", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            statusLabel.Text = "目前不須設定此參數";
+
+                            MessageBox.Show("目前不須設定此參數", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            lblCurrentSettings.BackColor = Color.LightCoral;
+                            lblCurrentSettings.Text = $"❌ 參數不存在\n料號: {productType}\n站點: {station}, 類型: {cmbCircleType.Text}\n" +
+                                                    "請先使用料號設定功能新增基礎參數";
+
+                            statusLabel.Text = "參數不存在，無法進行校正";
+
+                            MessageBox.Show($"找不到料號 '{productType}' 站點 {station} 的 {cmbCircleType.Text} 參數！\n\n" +
+                                          "請先使用以下步驟新增參數：\n" +
+                                          "1. 到主選單的「檢測參數設定 -> 位置參數」\n" +
+                                          "2. 複製類似料號的參數到已新增區\n" +
+                                          "3. 右下角點擊儲存當前頁面\n" +
+                                          "4. 回到此工具進行精確校正",
+                                          "參數不存在", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
                     }
                 }
             }
@@ -1360,7 +1343,7 @@ namespace peilin
             {
                 using (var brush = new SolidBrush(Color.FromArgb(200, Color.LightBlue)))
                 using (var textBrush = new SolidBrush(Color.Black))
-                using (var font = new Font("微軟正黑體", 10, FontStyle.Bold))
+                using (var font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold))
                 {
                     string hint = "圖片焦點 - ↑↓←→ 移動圓心";
                     var textSize = e.Graphics.MeasureString(hint, font);
@@ -1669,6 +1652,8 @@ namespace peilin
 
         private void InitializeEnlargedForm()
         {
+            // 由 GitHub Copilot 產生 - 設定放大視窗預設字體
+            this.Font = new Font("Microsoft JhengHei", 10F);
             this.Text = "放大圖片 - 使用方向鍵移動圓心";
             this.Size = new System.Drawing.Size(1200, 900);
             this.StartPosition = FormStartPosition.CenterScreen;

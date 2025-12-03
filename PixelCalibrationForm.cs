@@ -65,6 +65,7 @@ namespace peilin
         {
             // 由 GitHub Copilot 產生 - 設定主視窗大小與屬性
             this.Text = "檢測精度校正";
+            this.Font = new System.Drawing.Font("Microsoft JhengHei", 10F);  // 統一字體
             this.Size = new System.Drawing.Size(1500, 1050);    // 螢幕適配
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -88,8 +89,8 @@ namespace peilin
             grpImagePreview.Size = new System.Drawing.Size(1200, 1000);
 
             imagePreview = new PictureBox();
-            imagePreview.Location = new System.Drawing.Point(15, 25);
-            imagePreview.Size = new System.Drawing.Size(1170, 1010);
+            imagePreview.Location = new System.Drawing.Point(15, 30);
+            imagePreview.Size = new System.Drawing.Size(1170, 955);
             imagePreview.SizeMode = PictureBoxSizeMode.Zoom;
             imagePreview.BorderStyle = BorderStyle.FixedSingle;
             imagePreview.BackColor = System.Drawing.Color.LightGray;
@@ -110,25 +111,25 @@ namespace peilin
             var grpRight = new GroupBox();
             grpRight.Text = "校正參數";
             grpRight.Location = new System.Drawing.Point(1230, 15);
-            grpRight.Size = new System.Drawing.Size(250, 1050);
+            grpRight.Size = new System.Drawing.Size(250, 1000);
 
             // 載入圖片按鈕
             btnLoadImage = new Button();
             btnLoadImage.Text = "載入圖片";
-            btnLoadImage.Location = new System.Drawing.Point(40, 30);
-            btnLoadImage.Size = new System.Drawing.Size(160, 40);
+            btnLoadImage.Location = new System.Drawing.Point(40, 35);
+            btnLoadImage.Size = new System.Drawing.Size(160, 35);
             btnLoadImage.BackColor = System.Drawing.Color.LightBlue;
             btnLoadImage.Click += BtnLoadImage_Click;
 
             // 站點
             var lblStation = new Label();
             lblStation.Text = "站點：";
-            lblStation.Location = new System.Drawing.Point(20, 100);
-            lblStation.Size = new System.Drawing.Size(60, 22);
+            lblStation.Location = new System.Drawing.Point(20, 95);
+            lblStation.Size = new System.Drawing.Size(55, 20);
 
             cmbStation = new ComboBox();
-            cmbStation.Location = new System.Drawing.Point(90, 97);
-            cmbStation.Size = new System.Drawing.Size(120, 25);
+            cmbStation.Location = new System.Drawing.Point(80, 92);
+            cmbStation.Size = new System.Drawing.Size(130, 24);
             cmbStation.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbStation.Items.AddRange(new object[] { "請選擇", "站點1", "站點2", "站點3", "站點4" });
             cmbStation.SelectedIndex = 0;
@@ -138,55 +139,54 @@ namespace peilin
             // 像素長度
             var lblLineLenTitle = new Label();
             lblLineLenTitle.Text = "線段像素：";
-            lblLineLenTitle.Location = new System.Drawing.Point(20, 160);
-            lblLineLenTitle.Size = new System.Drawing.Size(90, 22);
+            lblLineLenTitle.Location = new System.Drawing.Point(20, 140);
+            lblLineLenTitle.Size = new System.Drawing.Size(80, 20);
 
             lblLineLength = new Label();
             lblLineLength.Text = "0.0000";
-            lblLineLength.Location = new System.Drawing.Point(120, 156);
-            lblLineLength.Size = new System.Drawing.Size(100, 30);
-            lblLineLength.Font = new System.Drawing.Font("Microsoft JhengHei", 14, System.Drawing.FontStyle.Bold);
+            lblLineLength.Location = new System.Drawing.Point(105, 138);
+            lblLineLength.Size = new System.Drawing.Size(110, 22);
+            lblLineLength.Font = new System.Drawing.Font("Microsoft JhengHei", 10F, System.Drawing.FontStyle.Bold);
             lblLineLength.ForeColor = System.Drawing.Color.Blue;
 
             // OD
             var lblODTitle = new Label();
             lblODTitle.Text = "OD(mm)：";
-            lblODTitle.Location = new System.Drawing.Point(20, 210);
-            lblODTitle.Size = new System.Drawing.Size(90, 22);
+            lblODTitle.Location = new System.Drawing.Point(20, 180);
+            lblODTitle.Size = new System.Drawing.Size(80, 20);
 
             lblOD = new Label();
             lblOD.Text = "0.00";
-            lblOD.Location = new System.Drawing.Point(120, 206);
-            lblOD.Size = new System.Drawing.Size(100, 30);
-            lblOD.Font = new System.Drawing.Font("Microsoft JhengHei", 14, System.Drawing.FontStyle.Bold);
+            lblOD.Location = new System.Drawing.Point(105, 178);
+            lblOD.Size = new System.Drawing.Size(110, 22);
+            lblOD.Font = new System.Drawing.Font("Microsoft JhengHei", 10F, System.Drawing.FontStyle.Bold);
             lblOD.ForeColor = System.Drawing.Color.DarkGreen;
 
             // 檢測精度
             var lblDpTitle = new Label();
             lblDpTitle.Text = "PixelToMM：";
-            lblDpTitle.Location = new System.Drawing.Point(20, 260);
-            lblDpTitle.Size = new System.Drawing.Size(100, 22);
+            lblDpTitle.Location = new System.Drawing.Point(20, 220);
+            lblDpTitle.Size = new System.Drawing.Size(85, 20);
 
             lblDetectionPrecision = new Label();
             lblDetectionPrecision.Text = "0.0000";
-            lblDetectionPrecision.Location = new System.Drawing.Point(120, 256);
-            lblDetectionPrecision.Size = new System.Drawing.Size(100, 30);
-            lblDetectionPrecision.Font = new System.Drawing.Font("Microsoft JhengHei", 16, System.Drawing.FontStyle.Bold);
+            lblDetectionPrecision.Location = new System.Drawing.Point(105, 218);
+            lblDetectionPrecision.Size = new System.Drawing.Size(110, 22);
+            lblDetectionPrecision.Font = new System.Drawing.Font("Microsoft JhengHei", 10F, System.Drawing.FontStyle.Bold);
             lblDetectionPrecision.ForeColor = System.Drawing.Color.Red;
 
             // 狀態
             lblStatus = new Label();
             lblStatus.Text = "請載入圖片並畫線";
-            lblStatus.Location = new System.Drawing.Point(20, 320);
-            lblStatus.Size = new System.Drawing.Size(200, 70);
-            lblStatus.Font = new System.Drawing.Font("Microsoft JhengHei", 9);
+            lblStatus.Location = new System.Drawing.Point(20, 260);
+            lblStatus.Size = new System.Drawing.Size(210, 60);
             lblStatus.ForeColor = System.Drawing.Color.Gray;
 
             // 套用按鈕
             btnApplyValues = new Button();
-            btnApplyValues.Text = "套用數值";
-            btnApplyValues.Location = new System.Drawing.Point(30, 420);
-            btnApplyValues.Size = new System.Drawing.Size(80, 40);
+            btnApplyValues.Text = "套用推薦值";
+            btnApplyValues.Location = new System.Drawing.Point(25, 340);
+            btnApplyValues.Size = new System.Drawing.Size(90, 35);
             btnApplyValues.BackColor = System.Drawing.Color.LightGreen;
             btnApplyValues.Enabled = false;
             btnApplyValues.Click += BtnApplyValues_Click;
@@ -194,8 +194,8 @@ namespace peilin
             // 取消按鈕
             btnCancel = new Button();
             btnCancel.Text = "關閉";
-            btnCancel.Location = new System.Drawing.Point(140, 420);
-            btnCancel.Size = new System.Drawing.Size(80, 40);
+            btnCancel.Location = new System.Drawing.Point(130, 340);
+            btnCancel.Size = new System.Drawing.Size(90, 35);
             btnCancel.BackColor = System.Drawing.Color.LightCoral;
             btnCancel.Click += BtnCancel_Click;
 

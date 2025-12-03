@@ -63,6 +63,7 @@ namespace peilin
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.Font = new Font("Microsoft JhengHei", 10F);
         }
 
         private void SetupUI()
@@ -80,19 +81,21 @@ namespace peilin
             var grpStationAndControl = new GroupBox();
             grpStationAndControl.Text = "站點選擇與參數調整";
             grpStationAndControl.Location = new System.Drawing.Point(20, 20);
-            grpStationAndControl.Size = new System.Drawing.Size(800, 120);
+            grpStationAndControl.Size = new System.Drawing.Size(820, 120);
+            grpStationAndControl.Font = new Font("Microsoft JhengHei", 10F);
 
             // 站點選擇
             var lblStation = new Label();
             lblStation.Text = "選擇站點：";
             lblStation.Location = new System.Drawing.Point(15, 30);
-            lblStation.Size = new System.Drawing.Size(80, 20);
-            lblStation.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            lblStation.Size = new System.Drawing.Size(90, 22);
+            lblStation.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             cmbStation = new ComboBox();
-            cmbStation.Location = new System.Drawing.Point(100, 28);
-            cmbStation.Size = new System.Drawing.Size(80, 25);
+            cmbStation.Location = new System.Drawing.Point(110, 28);
+            cmbStation.Size = new System.Drawing.Size(90, 25);
             cmbStation.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbStation.Font = new Font("Microsoft JhengHei", 10F);
             cmbStation.Items.AddRange(new object[] { "請選擇", "站點1", "站點2", "站點3", "站點4" });
             cmbStation.SelectedIndex = 0;
             selectedStation = 0;
@@ -101,13 +104,13 @@ namespace peilin
             // 對比度調整
             var lblContrast = new Label();
             lblContrast.Text = "對比度(Contrast)：";
-            lblContrast.Location = new System.Drawing.Point(200, 30);
-            lblContrast.Size = new System.Drawing.Size(130, 20);
-            lblContrast.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            lblContrast.Location = new System.Drawing.Point(215, 30);
+            lblContrast.Size = new System.Drawing.Size(150, 22);
+            lblContrast.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             trackContrast = new TrackBar();
-            trackContrast.Location = new System.Drawing.Point(340, 25);
-            trackContrast.Size = new System.Drawing.Size(300, 45);
+            trackContrast.Location = new System.Drawing.Point(370, 25);
+            trackContrast.Size = new System.Drawing.Size(280, 45);
             trackContrast.Minimum = -100;
             trackContrast.Maximum = 100;
             trackContrast.Value = 0;
@@ -116,21 +119,21 @@ namespace peilin
 
             lblContrastValue = new Label();
             lblContrastValue.Text = "0";
-            lblContrastValue.Location = new System.Drawing.Point(650, 30);
-            lblContrastValue.Size = new System.Drawing.Size(40, 20);
-            lblContrastValue.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            lblContrastValue.Location = new System.Drawing.Point(655, 30);
+            lblContrastValue.Size = new System.Drawing.Size(50, 22);
+            lblContrastValue.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
             lblContrastValue.ForeColor = System.Drawing.Color.Blue;
 
             // 亮度調整
             var lblBrightness = new Label();
             lblBrightness.Text = "亮度(Brightness)：";
-            lblBrightness.Location = new System.Drawing.Point(200, 75);
-            lblBrightness.Size = new System.Drawing.Size(130, 20);
-            lblBrightness.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            lblBrightness.Location = new System.Drawing.Point(215, 75);
+            lblBrightness.Size = new System.Drawing.Size(150, 22);
+            lblBrightness.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
             trackBrightness = new TrackBar();
-            trackBrightness.Location = new System.Drawing.Point(340, 70);
-            trackBrightness.Size = new System.Drawing.Size(300, 45);
+            trackBrightness.Location = new System.Drawing.Point(370, 70);
+            trackBrightness.Size = new System.Drawing.Size(280, 45);
             trackBrightness.Minimum = -100;
             trackBrightness.Maximum = 100;
             trackBrightness.Value = 0;
@@ -139,18 +142,18 @@ namespace peilin
 
             lblBrightnessValue = new Label();
             lblBrightnessValue.Text = "0";
-            lblBrightnessValue.Location = new System.Drawing.Point(650, 75);
-            lblBrightnessValue.Size = new System.Drawing.Size(40, 20);
-            lblBrightnessValue.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            lblBrightnessValue.Location = new System.Drawing.Point(655, 75);
+            lblBrightnessValue.Size = new System.Drawing.Size(50, 22);
+            lblBrightnessValue.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
             lblBrightnessValue.ForeColor = System.Drawing.Color.Green;
 
             // 導入按鈕
             btnApplyProcessing = new Button();
             btnApplyProcessing.Text = "導入";
-            btnApplyProcessing.Location = new System.Drawing.Point(710, 45);
-            btnApplyProcessing.Size = new System.Drawing.Size(70, 35);
+            btnApplyProcessing.Location = new System.Drawing.Point(720, 45);
+            btnApplyProcessing.Size = new System.Drawing.Size(80, 35);
             btnApplyProcessing.BackColor = System.Drawing.Color.LightBlue;
-            btnApplyProcessing.Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            btnApplyProcessing.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
             btnApplyProcessing.Enabled = false;
             btnApplyProcessing.Click += BtnApplyProcessing_Click;
 
@@ -171,6 +174,7 @@ namespace peilin
             grpImagePreview.Text = "圖片預覽";
             grpImagePreview.Location = new System.Drawing.Point(20, 160);
             grpImagePreview.Size = new System.Drawing.Size(1200, 700);
+            grpImagePreview.Font = new Font("Microsoft JhengHei", 10F);
 
             // 載入圖片按鈕
             btnLoadImage = new Button();
@@ -178,7 +182,7 @@ namespace peilin
             btnLoadImage.Location = new System.Drawing.Point(15, 25);
             btnLoadImage.Size = new System.Drawing.Size(120, 35);
             btnLoadImage.BackColor = System.Drawing.Color.LightGreen;
-            btnLoadImage.Font = new System.Drawing.Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            btnLoadImage.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
             btnLoadImage.Click += BtnLoadImage_Click;
 
             // 顯示原圖按鈕
@@ -187,7 +191,7 @@ namespace peilin
             btnShowOriginal.Location = new System.Drawing.Point(145, 25);
             btnShowOriginal.Size = new System.Drawing.Size(120, 35);
             btnShowOriginal.BackColor = System.Drawing.Color.LightYellow;
-            btnShowOriginal.Font = new System.Drawing.Font("Microsoft JhengHei", 10, FontStyle.Bold);
+            btnShowOriginal.Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
             btnShowOriginal.Enabled = false;
             btnShowOriginal.MouseDown += BtnShowOriginal_MouseDown;
             btnShowOriginal.MouseUp += BtnShowOriginal_MouseUp;
@@ -218,42 +222,43 @@ namespace peilin
             var grpParameters = new GroupBox();
             grpParameters.Text = "當前參數值";
             grpParameters.Location = new System.Drawing.Point(1240, 160);
-            grpParameters.Size = new System.Drawing.Size(320, 400);
+            grpParameters.Size = new System.Drawing.Size(330, 400);
+            grpParameters.Font = new Font("Microsoft JhengHei", 10F);
 
             // 對比度顯示
             var lblContrastTitle = new Label();
             lblContrastTitle.Text = "對比度(Contrast)：";
             lblContrastTitle.Location = new System.Drawing.Point(15, 40);
-            lblContrastTitle.Size = new System.Drawing.Size(150, 25);
-            lblContrastTitle.Font = new Font("Microsoft JhengHei", 12, FontStyle.Bold);
+            lblContrastTitle.Size = new System.Drawing.Size(165, 28);
+            lblContrastTitle.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
 
             lblContrastDisplay = new Label();
             lblContrastDisplay.Text = "0";
-            lblContrastDisplay.Location = new System.Drawing.Point(170, 40);
-            lblContrastDisplay.Size = new System.Drawing.Size(140, 25);
-            lblContrastDisplay.Font = new Font("Microsoft JhengHei", 16, FontStyle.Bold);
+            lblContrastDisplay.Location = new System.Drawing.Point(185, 38);
+            lblContrastDisplay.Size = new System.Drawing.Size(130, 32);
+            lblContrastDisplay.Font = new Font("Microsoft JhengHei", 16F, FontStyle.Bold);
             lblContrastDisplay.ForeColor = System.Drawing.Color.Blue;
 
             // 亮度顯示
             var lblBrightnessTitle = new Label();
             lblBrightnessTitle.Text = "亮度(Brightness)：";
-            lblBrightnessTitle.Location = new System.Drawing.Point(15, 90);
-            lblBrightnessTitle.Size = new System.Drawing.Size(150, 25);
-            lblBrightnessTitle.Font = new Font("Microsoft JhengHei", 12, FontStyle.Bold);
+            lblBrightnessTitle.Location = new System.Drawing.Point(15, 95);
+            lblBrightnessTitle.Size = new System.Drawing.Size(165, 28);
+            lblBrightnessTitle.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
 
             lblBrightnessDisplay = new Label();
             lblBrightnessDisplay.Text = "0";
-            lblBrightnessDisplay.Location = new System.Drawing.Point(170, 90);
-            lblBrightnessDisplay.Size = new System.Drawing.Size(140, 25);
-            lblBrightnessDisplay.Font = new Font("Microsoft JhengHei", 16, FontStyle.Bold);
+            lblBrightnessDisplay.Location = new System.Drawing.Point(185, 93);
+            lblBrightnessDisplay.Size = new System.Drawing.Size(130, 32);
+            lblBrightnessDisplay.Font = new Font("Microsoft JhengHei", 16F, FontStyle.Bold);
             lblBrightnessDisplay.ForeColor = System.Drawing.Color.Green;
 
             // 狀態顯示
             lblStatus = new Label();
             lblStatus.Text = "請載入圖片並調整參數";
-            lblStatus.Location = new System.Drawing.Point(15, 140);
-            lblStatus.Size = new System.Drawing.Size(290, 80);
-            lblStatus.Font = new Font("Microsoft JhengHei", 10);
+            lblStatus.Location = new System.Drawing.Point(15, 145);
+            lblStatus.Size = new System.Drawing.Size(300, 80);
+            lblStatus.Font = new Font("Microsoft JhengHei", 10F);
             lblStatus.ForeColor = System.Drawing.Color.Gray;
 
             grpParameters.Controls.AddRange(new Control[] {
@@ -269,20 +274,20 @@ namespace peilin
         {
             // 由 GitHub Copilot 產生 - 動作按鈕
             btnApplyValues = new Button();
-            btnApplyValues.Text = "套用參數";
+            btnApplyValues.Text = "套用推薦值";
             btnApplyValues.Location = new System.Drawing.Point(1280, 900);
-            btnApplyValues.Size = new System.Drawing.Size(120, 40);
+            btnApplyValues.Size = new System.Drawing.Size(130, 40);
             btnApplyValues.BackColor = System.Drawing.Color.LightGreen;
-            btnApplyValues.Font = new Font("Microsoft JhengHei", 12, FontStyle.Bold);
+            btnApplyValues.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnApplyValues.Enabled = false;
             btnApplyValues.Click += BtnApplyValues_Click;
 
             btnCancel = new Button();
             btnCancel.Text = "取消";
-            btnCancel.Location = new System.Drawing.Point(1420, 900);
-            btnCancel.Size = new System.Drawing.Size(100, 40);
+            btnCancel.Location = new System.Drawing.Point(1425, 900);
+            btnCancel.Size = new System.Drawing.Size(110, 40);
             btnCancel.BackColor = System.Drawing.Color.LightCoral;
-            btnCancel.Font = new Font("Microsoft JhengHei", 12, FontStyle.Bold);
+            btnCancel.Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold);
             btnCancel.Click += BtnCancel_Click;
 
             this.Controls.Add(btnApplyValues);

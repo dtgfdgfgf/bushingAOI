@@ -22,6 +22,14 @@ namespace peilin
         private bool isAnalyzing = false;
         private bool eventsInitialized = false;
         private bool isUpdatingImage = false; // 防止遞迴更新
+        
+        // 由 GitHub Copilot 產生 - 統計分析結果
+        private double _overallStdX = 0;
+        private double _overallStdY = 0;
+        private int _medianX = 0;
+        private int _medianY = 0;
+        private string _stabilityLevel = "---";  // 整體穩定性等級文字
+        private double _maxStd = 0;               // 最大標準差值
 
         // 控件成員變數
         private PictureBox picPreviewControl;
@@ -60,8 +68,8 @@ namespace peilin
 
         private void InitializeUI()
         {
-            this.Text = $"物體偏移量校正 - {targetType} (請選擇站點)";
-            this.Size = new System.Drawing.Size(1000, 800);
+            this.Text = $"物體偏移校正 - {targetType} (請選擇站點)";
+            this.Size = new System.Drawing.Size(1005, 805);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -89,43 +97,57 @@ namespace peilin
                 Font = new Font("Microsoft JhengHei", 10),
                 ForeColor = Color.Red
             };
+            // 由 GitHub Copilot 產生 - 顯示此介面只須設定站點2的提示
+            var lblStationNotice = new Label
+            {
+                Text = "⚠️ 此介面只須設定站點2",
+                Location = new System.Drawing.Point(410, 68),
+                Size = new System.Drawing.Size(200, 29),
+                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Orange,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
             // 【新增】：站點選擇
             var lblStation = new Label
             {
                 Text = "選擇站點：",
                 Location = new System.Drawing.Point(10, 70),
                 Size = new System.Drawing.Size(70, 25),
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
             };
 
+            // 由 GitHub Copilot 產生 - 修正只保留站點2
             var cmbStation = new ComboBox
             {
                 Location = new System.Drawing.Point(85, 70),
                 Size = new System.Drawing.Size(80, 25),
-                DropDownStyle = ComboBoxStyle.DropDownList
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Microsoft JhengHei", 10)
             };
-            cmbStation.Items.AddRange(new object[] { "請選擇", "站點1", "站點2", "站點3", "站點4" });
-            cmbStation.SelectedIndex = 0;
+            cmbStation.Items.AddRange(new object[] { "請選擇", "站點2" });
             cmbStation.SelectedIndexChanged += (s, e) =>
             {
-                targetStation = cmbStation.SelectedIndex;
+                // 站點2 對應 targetStation = 2
+                targetStation = cmbStation.SelectedIndex == 1 ? 2 : 0;
                 if (targetStation <= 0)
                 {
-                    this.Text = $"物體偏移量校正 - {targetType} (請選擇站點)";
+                    this.Text = $"物體偏移校正 - {targetType} (請選擇站點)";
                     btnAnalyzeControl.Enabled = false;
                     btnApplyControl.Enabled = false;
                     return;
                 }
-                this.Text = $"物體偏移量校正 - {targetType} 站點{targetStation}";
+                this.Text = $"物體偏移校正 - {targetType} 站點{targetStation}";
                 btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
             };
 
             // 選擇照片按鈕
             var btnSelectImages = new Button
             {
-                Text = "📂 選擇樣品照片",
+                Text = "📂 載入圖片",
                 Location = new System.Drawing.Point(175, 68),
-                Size = new System.Drawing.Size(110, 29)
+                Size = new System.Drawing.Size(110, 29),
+                Font = new Font("Microsoft JhengHei", 10)
             };
             btnSelectImages.Click += BtnSelectImages_Click;
 
@@ -136,15 +158,19 @@ namespace peilin
                 Location = new System.Drawing.Point(290, 68),
                 Size = new System.Drawing.Size(100, 29),
                 BackColor = Color.LightGreen,
+                Font = new Font("Microsoft JhengHei", 10),
                 Enabled = false
             };
             btnAnalyzeControl.Click += BtnAnalyze_Click;
 
-            // 進度條
+            // 由 GitHub Copilot 產生 - 預設選擇站點2（必須在 btnAnalyzeControl 初始化之後）
+            cmbStation.SelectedIndex = 1;
+
+            // 進度條 - 由 GitHub Copilot 產生 - 修正位置移到按鈕右側
             progressBarControl = new ProgressBar
             {
-                Location = new System.Drawing.Point(295, 60),
-                Size = new System.Drawing.Size(120, 35),
+                Location = new System.Drawing.Point(400, 68),
+                Size = new System.Drawing.Size(150, 29),
                 Visible = false
             };
 
@@ -156,15 +182,17 @@ namespace peilin
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                Font = new Font("Microsoft JhengHei", 10)
             };
 
             // 統計資訊面板
             grpStatisticsControl = new GroupBox
             {
                 Text = "📊 統計分析結果",
-                Location = new System.Drawing.Point(620, 110),
-                Size = new System.Drawing.Size(360, 400)
+                Location = new System.Drawing.Point(620, 95),
+                Size = new System.Drawing.Size(360, 425),
+                Font = new Font("Microsoft JhengHei", 10)
             };
             CreateStatisticsLabels(grpStatisticsControl);
 
@@ -173,7 +201,8 @@ namespace peilin
             {
                 Text = "📷 檢測結果預覽",
                 Location = new System.Drawing.Point(10, 520),
-                Size = new System.Drawing.Size(970, 200)
+                Size = new System.Drawing.Size(970, 200),
+                Font = new Font("Microsoft JhengHei", 10)
             };
 
             // 預覽圖片
@@ -192,6 +221,7 @@ namespace peilin
                 Text = "◀ 上一張",
                 Location = new System.Drawing.Point(340, 30),
                 Size = new System.Drawing.Size(90, 35),
+                Font = new Font("Microsoft JhengHei", 10),
                 Enabled = false
             };
             btnPreviousControl.Click += BtnPrevious_Click;
@@ -201,6 +231,7 @@ namespace peilin
                 Text = "下一張 ▶",
                 Location = new System.Drawing.Point(340, 75),
                 Size = new System.Drawing.Size(90, 35),
+                Font = new Font("Microsoft JhengHei", 10),
                 Enabled = false
             };
             btnNextControl.Click += BtnNext_Click;
@@ -211,6 +242,7 @@ namespace peilin
                 Text = "🔍 全螢幕預覽",
                 Location = new System.Drawing.Point(340, 120),
                 Size = new System.Drawing.Size(90, 35),
+                Font = new Font("Microsoft JhengHei", 10),
                 BackColor = Color.LightBlue
             };
             btnFullScreen.Click += BtnFullScreen_Click;
@@ -249,9 +281,10 @@ namespace peilin
             // 套用按鈕
             btnApplyControl = new Button
             {
-                Text = "✅ 套用建議值",
+                Text = "✅ 套用推薦值",
                 Location = new System.Drawing.Point(520, 730),
                 Size = new System.Drawing.Size(120, 30),
+                Font = new Font("Microsoft JhengHei", 10),
                 BackColor = Color.Orange,
                 Enabled = false
             };
@@ -262,13 +295,14 @@ namespace peilin
             {
                 Text = "❌ 取消",
                 Location = new System.Drawing.Point(650, 730),
-                Size = new System.Drawing.Size(80, 30)
+                Size = new System.Drawing.Size(80, 30),
+                Font = new Font("Microsoft JhengHei", 10)
             };
             btnCancel.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
             // 加入所有控件
             this.Controls.AddRange(new Control[] {
-                lblDescription,  lblDescription2, lblStation, cmbStation, btnSelectImages, btnAnalyzeControl, progressBarControl,
+                lblDescription,  lblDescription2, lblStationNotice, lblStation, cmbStation, btnSelectImages, btnAnalyzeControl, progressBarControl,
                 dgvResultsControl, grpStatisticsControl, grpImagePreview,
                 lblRecommendationControl, btnApplyControl, btnCancel
             }); 
@@ -278,7 +312,8 @@ namespace peilin
         {
             var labels = new[] {
                 "樣品數量：", "有效樣品：", "平均X偏移：", "平均Y偏移：",
-                "X標準差：", "Y標準差：", "最大偏移距離：", "建議objBias_X：", "建議objBias_Y："
+                "X標準差：", "Y標準差：", "最大偏移距離：", "建議objBias_X：", "建議objBias_Y：",
+                "整體穩定性："
             };
 
             for (int i = 0; i < labels.Length; i++)
@@ -288,16 +323,19 @@ namespace peilin
                     Text = labels[i],
                     Location = new System.Drawing.Point(10, 25 + i * 35),
                     Size = new System.Drawing.Size(120, 25),
-                    Name = $"lblStat{i}"
+                    Name = $"lblStat{i}",
+                    Font = new Font("Microsoft JhengHei", 10)
                 };
 
+                // 由 GitHub Copilot 產生 - 整體穩定性欄位需要較大高度以顯示多行文字
+                bool isStabilityRow = (i == labels.Length - 1);
                 var lblValue = new Label
                 {
                     Text = "---",
                     Location = new System.Drawing.Point(140, 25 + i * 35),
-                    Size = new System.Drawing.Size(200, 25),
+                    Size = isStabilityRow ? new System.Drawing.Size(210, 75) : new System.Drawing.Size(200, 25),
                     Name = $"lblStatValue{i}",
-                    Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                    Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
                 };
 
                 parent.Controls.AddRange(new Control[] { lbl, lblValue });
@@ -722,6 +760,9 @@ namespace peilin
         }
         
 
+        // 由 GitHub Copilot 產生 - 修正穩定性評估邏輯
+        // 穩定性應基於「整體標準差大小」，而非單一樣本離群程度
+        // 標準差小 = 所有樣本位置一致 = 穩定；標準差大 = 樣本間位置變化大 = 不穩定
         private void UpdateImageInfo(ObjectCenterResult currentResult)
         {
             string info = $"📷 圖片 {currentImageIndex + 1}/{centerResults.Count}: {currentResult.ImagePath}\r\n\r\n";
@@ -735,12 +776,8 @@ namespace peilin
                 info += $"📏 Y軸偏移量: {currentResult.Offset.Y} 像素\r\n";
                 info += $"📐 總偏移距離: {currentResult.Distance:F1} 像素\r\n\r\n";
 
-                if (currentResult.Distance <= 30)
-                    info += "✅ 偏移程度: 輕微 (良好)";
-                else if (currentResult.Distance <= 60)
-                    info += "⚠️ 偏移程度: 中等 (可接受)";
-                else
-                    info += "❌ 偏移程度: 嚴重 (需調整)";
+                // 顯示整體穩定性結論（所有圖片共用同一評估結果）
+                info += $"📊 整體穩定性: {_stabilityLevel}";
             }
             else
             {
@@ -779,6 +816,23 @@ namespace peilin
             int medianX = GetMedian(xOffsets);
             int medianY = GetMedian(yOffsets);
 
+            // 由 GitHub Copilot 產生 - 儲存統計結果供 UpdateImageInfo 使用
+            _overallStdX = stdX;
+            _overallStdY = stdY;
+            _medianX = medianX;
+            _medianY = medianY;
+
+            // 由 GitHub Copilot 產生 - 計算整體穩定性等級（基於最大標準差）
+            _maxStd = Math.Max(stdX, stdY);
+            if (_maxStd < 1)
+                _stabilityLevel = $"位置非常穩定 (std={_maxStd:F1}) - \n結果可信，直接套用";
+            else if (_maxStd < 2)
+                _stabilityLevel = $"位置正常 (std={_maxStd:F1}) - \n結果可信，直接套用";
+            else if (_maxStd < 3)
+                _stabilityLevel = $"樣品太少，或位置有些不穩定 (std={_maxStd:F1}) - 可以套用，建議增加樣品";
+            else
+                _stabilityLevel = $"樣品太少，或位置很不穩定 (std={_maxStd:F1}) - 可以套用，建議增加樣品";
+
             var statValues = new string[] {
                 totalCount.ToString(),
                 validCount.ToString(),
@@ -788,7 +842,8 @@ namespace peilin
                 stdY.ToString("F1"),
                 maxDistance.ToString("F1"),
                 medianX.ToString(),
-                medianY.ToString()
+                medianY.ToString(),
+                _stabilityLevel
             };
 
             for (int i = 0; i < statValues.Length; i++)

@@ -202,10 +202,11 @@ namespace peilin
         private void InitializeUI()
         {
             this.Text = $"白色像素占比校正 - {targetType}";
-            this.Size = new System.Drawing.Size(1400, 1150); // 由 GitHub Copilot 產生 - 優化視窗高度以容納完整介面
+            this.Size = new System.Drawing.Size(1450, 1200); // 由 GitHub Copilot 產生 - 調整視窗大小以適應 10F 字體
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            this.Font = new Font("Microsoft JhengHei", 10F); // 由 GitHub Copilot 產生 - 設定表單預設字體
             CreateControls();
         }
         #endregion
@@ -213,6 +214,10 @@ namespace peilin
         #region 控件建立和布局
         private void CreateControls()
         {
+            // 由 GitHub Copilot 產生 - 定義統一字體
+            var normalFont = new Font("Microsoft JhengHei", 10F);
+            var boldFont = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
+
             // 初始化工具提示
             toolTip = new ToolTip();
 
@@ -221,8 +226,8 @@ namespace peilin
             {
                 Text = " 請選擇多張照片分析白色像素占比，系統將計算統計數據並提供推薦的 white 參數值",
                 Location = new System.Drawing.Point(10, 10),
-                Size = new System.Drawing.Size(1160, 40),
-                Font = new Font("Microsoft JhengHei", 10),
+                Size = new System.Drawing.Size(1200, 40),
+                Font = normalFont,
                 ForeColor = Color.Blue
             };
             
@@ -230,16 +235,17 @@ namespace peilin
             var lblStation = new Label
             {
                 Text = "選擇站點：",
-                Location = new System.Drawing.Point(10, 55),
-                Size = new System.Drawing.Size(80, 25),
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Location = new System.Drawing.Point(10, 58),
+                Size = new System.Drawing.Size(90, 28),
+                Font = boldFont
             };
 
             cmbStation = new ComboBox
             {
-                Location = new System.Drawing.Point(90, 55),
-                Size = new System.Drawing.Size(100, 25),
-                DropDownStyle = ComboBoxStyle.DropDownList
+                Location = new System.Drawing.Point(100, 55),
+                Size = new System.Drawing.Size(110, 28),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = normalFont
             };
             cmbStation.Items.AddRange(new object[] { "請選擇","站點1", "站點2", "站點3", "站點4" });
             cmbStation.SelectedIndex = 0;
@@ -250,20 +256,22 @@ namespace peilin
             // 選擇正常樣品照片按鈕
             var btnSelectImages = new Button
             {
-                Text = " 選擇正常照片",
-                Location = new System.Drawing.Point(210, 55),
-                Size = new System.Drawing.Size(130, 30),
-                BackColor = Color.LightBlue
+                Text = "選擇正常照片",
+                Location = new System.Drawing.Point(230, 55),
+                Size = new System.Drawing.Size(140, 32),
+                BackColor = Color.LightBlue,
+                Font = normalFont
             };
             btnSelectImages.Click += BtnSelectImages_Click;
 
             // 選擇誤觸樣品照片按鈕
             btnSelectFalseImagesControl = new Button
             {
-                Text = " 選擇誤觸照片",
-                Location = new System.Drawing.Point(350, 55),
-                Size = new System.Drawing.Size(130, 30),
-                BackColor = Color.LightCoral
+                Text = "選擇誤觸照片",
+                Location = new System.Drawing.Point(380, 55),
+                Size = new System.Drawing.Size(140, 32),
+                BackColor = Color.LightCoral,
+                Font = normalFont
             };
             btnSelectFalseImagesControl.Click += BtnSelectFalseImages_Click;
 
@@ -271,9 +279,9 @@ namespace peilin
             var lblThreshold = new Label
             {
                 Text = "二值化閾值：",
-                Location = new System.Drawing.Point(210, 95),
-                Size = new System.Drawing.Size(100, 25),
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Location = new System.Drawing.Point(230, 98),
+                Size = new System.Drawing.Size(110, 28),
+                Font = boldFont
             };
 
             // 二值化閾值滑桿
@@ -284,7 +292,7 @@ namespace peilin
                 TickFrequency = 25,
                 Value = 180,
                 Size = new System.Drawing.Size(200, 45),
-                Location = new System.Drawing.Point(310, 90)
+                Location = new System.Drawing.Point(340, 93)
             };
             trackBarThreshold.ValueChanged += TrackBarThreshold_ValueChanged;
 
@@ -292,9 +300,9 @@ namespace peilin
             lblThresholdValue = new Label
             {
                 Text = "180",
-                Location = new System.Drawing.Point(520, 95),
-                Size = new System.Drawing.Size(50, 25),
-                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold),
+                Location = new System.Drawing.Point(550, 98),
+                Size = new System.Drawing.Size(50, 28),
+                Font = boldFont,
                 ForeColor = Color.DarkBlue
             };
             toolTip.SetToolTip(trackBarThreshold, "調整二值化閾值 (0-255)，影響白色像素的判定標準");
@@ -303,38 +311,43 @@ namespace peilin
             btnAnalyzeControl = new Button
             {
                 Text = "開始分析",
-                Location = new System.Drawing.Point(580, 90),
-                Size = new System.Drawing.Size(180, 30),
+                Location = new System.Drawing.Point(610, 93),
+                Size = new System.Drawing.Size(210, 32),
                 BackColor = Color.LightGreen,
-                Enabled = false
+                Enabled = false,
+                Font = normalFont
             };
             btnAnalyzeControl.Click += BtnAnalyze_Click;
 
             // 進度條
             progressBarControl = new ProgressBar
             {
-                Location = new System.Drawing.Point(770, 93),
-                Size = new System.Drawing.Size(250, 25),
+                Location = new System.Drawing.Point(810, 96),
+                Size = new System.Drawing.Size(260, 26),
                 Visible = false
             };
 
             // 結果顯示區域
             dgvResultsControl = new DataGridView
             {
-                Location = new System.Drawing.Point(10, 140),
-                Size = new System.Drawing.Size(580, 445), // 由 GitHub Copilot 產生 - 增加高度使底部與折線圖對齊（原305）
+                Location = new System.Drawing.Point(10, 145),
+                Size = new System.Drawing.Size(600, 460), // 由 GitHub Copilot 產生 - 調整大小以適應 10F 字體
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                Font = normalFont,
+                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle { Font = boldFont },
+                RowTemplate = { Height = 26 } // 由 GitHub Copilot 產生 - 調整列高以適應 10F 字體
             };
 
             // 統計資訊面板
             grpStatisticsControl = new GroupBox
             {
                 Text = "統計分析結果",
-                Location = new System.Drawing.Point(600, 140),
-                Size = new System.Drawing.Size(760, 285) // 由 GitHub Copilot 產生 - 增加高度以容納完整的雙組統計資訊
+                Location = new System.Drawing.Point(620, 145),
+                Size = new System.Drawing.Size(800, 310), // 由 GitHub Copilot 產生 - 調整大小以適應 10F 字體
+                Font = boldFont
             };
             CreateStatisticsLabels(grpStatisticsControl);
 
@@ -342,9 +355,9 @@ namespace peilin
             lblWarningControl = new Label
             {
                 Text = "",
-                Location = new System.Drawing.Point(600, 430),
-                Size = new System.Drawing.Size(760, 35),
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold),
+                Location = new System.Drawing.Point(620, 460),
+                Size = new System.Drawing.Size(800, 38),
+                Font = boldFont,
                 ForeColor = Color.DarkRed,
                 BackColor = Color.LightYellow,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -358,9 +371,10 @@ namespace peilin
             // 折線圖
             chartWhitePixelRatio = new Chart
             {
-                Location = new System.Drawing.Point(600, 470), // 由 GitHub Copilot 產生 - 調整位置為警告標籤留出空間（原435）
-                Size = new System.Drawing.Size(760, 115), // 由 GitHub Copilot 產生 - 調整高度以維持整體布局（原150）
-                BackColor = Color.White
+                Location = new System.Drawing.Point(620, 503), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(800, 105), // 由 GitHub Copilot 產生 - 調整大小以適應整體布局
+                BackColor = Color.White,
+                Font = normalFont
             };
             InitializeChart();
 
@@ -369,16 +383,17 @@ namespace peilin
             var grpNormalPreview = new GroupBox
             {
                 Text = "正常樣品預覽",
-                Location = new System.Drawing.Point(10, 595), // 由 GitHub Copilot 產生 - 調整位置配合折線圖高度增加（原510）
-                Size = new System.Drawing.Size(670, 300),
-                ForeColor = Color.Blue
+                Location = new System.Drawing.Point(10, 618), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(700, 320),
+                ForeColor = Color.Blue,
+                Font = boldFont
             };
 
             // 正常樣品原圖標註預覽
             picPreviewControl = new PictureBox
             {
-                Location = new System.Drawing.Point(10, 20),
-                Size = new System.Drawing.Size(280, 170),
+                Location = new System.Drawing.Point(10, 25),
+                Size = new System.Drawing.Size(290, 175),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.Black
@@ -386,17 +401,17 @@ namespace peilin
             var lblNormalAnnotated = new Label
             {
                 Text = "原圖標註",
-                Location = new System.Drawing.Point(10, 195),
-                Size = new System.Drawing.Size(280, 20),
+                Location = new System.Drawing.Point(10, 205),
+                Size = new System.Drawing.Size(290, 24),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Font = boldFont
             };
 
             // 正常樣品二值化預覽
             picBinaryPreviewControl = new PictureBox
             {
-                Location = new System.Drawing.Point(300, 20),
-                Size = new System.Drawing.Size(280, 170),
+                Location = new System.Drawing.Point(310, 25),
+                Size = new System.Drawing.Size(290, 175),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.Black
@@ -404,38 +419,41 @@ namespace peilin
             var lblNormalBinary = new Label
             {
                 Text = "二值化圖",
-                Location = new System.Drawing.Point(300, 195),
-                Size = new System.Drawing.Size(280, 20),
+                Location = new System.Drawing.Point(310, 205),
+                Size = new System.Drawing.Size(290, 24),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Font = boldFont
             };
 
             // 正常樣品導航按鈕
             btnPreviousControl = new Button
             {
                 Text = "上一張",
-                Location = new System.Drawing.Point(590, 30),
-                Size = new System.Drawing.Size(70, 30),
-                Enabled = false
+                Location = new System.Drawing.Point(610, 30),
+                Size = new System.Drawing.Size(80, 32),
+                Enabled = false,
+                Font = normalFont
             };
             btnPreviousControl.Click += BtnPrevious_Click;
 
             btnNextControl = new Button
             {
                 Text = "下一張",
-                Location = new System.Drawing.Point(590, 70),
-                Size = new System.Drawing.Size(70, 30),
-                Enabled = false
+                Location = new System.Drawing.Point(610, 70),
+                Size = new System.Drawing.Size(80, 32),
+                Enabled = false,
+                Font = normalFont
             };
             btnNextControl.Click += BtnNext_Click;
 
             // 全螢幕預覽按鈕
             var btnFullScreen = new Button
             {
-                Text = " 全螢幕",
-                Location = new System.Drawing.Point(590, 110),
-                Size = new System.Drawing.Size(70, 30),
-                BackColor = Color.LightBlue
+                Text = "全螢幕",
+                Location = new System.Drawing.Point(610, 110),
+                Size = new System.Drawing.Size(80, 32),
+                BackColor = Color.LightBlue,
+                Font = normalFont
             };
             btnFullScreen.Click += BtnFullScreen_Click;
 
@@ -443,9 +461,9 @@ namespace peilin
             lblImageInfoControl = new TextBox
             {
                 Text = "尚未選擇正常樣品",
-                Location = new System.Drawing.Point(10, 230),
-                Size = new System.Drawing.Size(650, 60),
-                Font = new Font("Microsoft JhengHei", 9),
+                Location = new System.Drawing.Point(10, 235),
+                Size = new System.Drawing.Size(680, 75),
+                Font = normalFont,
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
                 Multiline = true,
@@ -465,16 +483,17 @@ namespace peilin
             var grpFalsePreview = new GroupBox
             {
                 Text = "誤觸樣品預覽",
-                Location = new System.Drawing.Point(690, 595), // 由 GitHub Copilot 產生 - 調整位置配合折線圖高度增加（原510）
-                Size = new System.Drawing.Size(670, 300),
-                ForeColor = Color.Red
+                Location = new System.Drawing.Point(720, 618), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(700, 320),
+                ForeColor = Color.Red,
+                Font = boldFont
             };
 
             // 誤觸樣品原圖標註預覽
             picFalsePreviewControl = new PictureBox
             {
-                Location = new System.Drawing.Point(10, 20),
-                Size = new System.Drawing.Size(280, 170),
+                Location = new System.Drawing.Point(10, 25),
+                Size = new System.Drawing.Size(290, 175),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.Black
@@ -482,17 +501,17 @@ namespace peilin
             var lblFalseAnnotated = new Label
             {
                 Text = "原圖標註",
-                Location = new System.Drawing.Point(10, 195),
-                Size = new System.Drawing.Size(280, 20),
+                Location = new System.Drawing.Point(10, 205),
+                Size = new System.Drawing.Size(290, 24),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Font = boldFont
             };
 
             // 誤觸樣品二值化預覽
             picFalseBinaryPreviewControl = new PictureBox
             {
-                Location = new System.Drawing.Point(300, 20),
-                Size = new System.Drawing.Size(280, 170),
+                Location = new System.Drawing.Point(310, 25),
+                Size = new System.Drawing.Size(290, 175),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.Black
@@ -500,28 +519,30 @@ namespace peilin
             var lblFalseBinary = new Label
             {
                 Text = "二值化圖",
-                Location = new System.Drawing.Point(300, 195),
-                Size = new System.Drawing.Size(280, 20),
+                Location = new System.Drawing.Point(310, 205),
+                Size = new System.Drawing.Size(290, 24),
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Font = boldFont
             };
 
             // 誤觸樣品導航按鈕
             btnFalsePreviousControl = new Button
             {
                 Text = "上一張",
-                Location = new System.Drawing.Point(590, 30),
-                Size = new System.Drawing.Size(70, 30),
-                Enabled = false
+                Location = new System.Drawing.Point(610, 30),
+                Size = new System.Drawing.Size(80, 32),
+                Enabled = false,
+                Font = normalFont
             };
             btnFalsePreviousControl.Click += BtnFalsePrevious_Click;
 
             btnFalseNextControl = new Button
             {
                 Text = "下一張",
-                Location = new System.Drawing.Point(590, 70),
-                Size = new System.Drawing.Size(70, 30),
-                Enabled = false
+                Location = new System.Drawing.Point(610, 70),
+                Size = new System.Drawing.Size(80, 32),
+                Enabled = false,
+                Font = normalFont
             };
             btnFalseNextControl.Click += BtnFalseNext_Click;
 
@@ -529,9 +550,9 @@ namespace peilin
             lblFalseImageInfoControl = new TextBox
             {
                 Text = "尚未選擇誤觸樣品",
-                Location = new System.Drawing.Point(10, 230),
-                Size = new System.Drawing.Size(650, 60),
-                Font = new Font("Microsoft JhengHei", 9),
+                Location = new System.Drawing.Point(10, 235),
+                Size = new System.Drawing.Size(680, 75),
+                Font = normalFont,
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
                 Multiline = true,
@@ -550,10 +571,10 @@ namespace peilin
             // 建議值顯示
             lblRecommendationControl = new Label
             {
-                Text = " 推薦的參數值將在分析完成後顯示",
-                Location = new System.Drawing.Point(10, 905), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原835）
-                Size = new System.Drawing.Size(700, 50),
-                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold),
+                Text = "推薦的參數值將在分析完成後顯示",
+                Location = new System.Drawing.Point(10, 948), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(720, 55),
+                Font = boldFont,
                 ForeColor = Color.DarkGreen
             };
 
@@ -561,11 +582,11 @@ namespace peilin
             btnApplyControl = new Button
             {
                 Text = "套用推薦值",
-                Location = new System.Drawing.Point(720, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
-                Size = new System.Drawing.Size(120, 40),
+                Location = new System.Drawing.Point(740, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(130, 42),
                 BackColor = Color.Orange,
                 Enabled = false,
-                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
+                Font = boldFont
             };
             btnApplyControl.Click += BtnApply_Click;
 
@@ -573,9 +594,9 @@ namespace peilin
             var btnCancel = new Button
             {
                 Text = "取消",
-                Location = new System.Drawing.Point(850, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
-                Size = new System.Drawing.Size(80, 40),
-                Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
+                Location = new System.Drawing.Point(880, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(90, 42),
+                Font = boldFont
             };
             btnCancel.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
@@ -583,9 +604,10 @@ namespace peilin
             var btnExport = new Button
             {
                 Text = "匯出數據",
-                Location = new System.Drawing.Point(940, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
-                Size = new System.Drawing.Size(100, 40),
-                BackColor = Color.LightCyan
+                Location = new System.Drawing.Point(980, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(110, 42),
+                BackColor = Color.LightCyan,
+                Font = normalFont
             };
             btnExport.Click += BtnExport_Click;
 
@@ -593,9 +615,10 @@ namespace peilin
             var btnClearResults = new Button
             {
                 Text = "清除結果",
-                Location = new System.Drawing.Point(1050, 910), // 由 GitHub Copilot 產生 - 調整位置配合預覽區位置變更（原840）
-                Size = new System.Drawing.Size(100, 40),
-                BackColor = System.Drawing.Color.LightPink
+                Location = new System.Drawing.Point(1100, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(110, 42),
+                BackColor = System.Drawing.Color.LightPink,
+                Font = normalFont
             };
             btnClearResults.Click += BtnClearResults_Click;
             toolTip.SetToolTip(btnClearResults, "清除目前的分析結果，可重新選擇照片分析");
@@ -657,6 +680,10 @@ namespace peilin
         }
         private void CreateStatisticsLabels(GroupBox parent)
         {
+            // 由 GitHub Copilot 產生 - 定義統一字體
+            var normalFont = new Font("Microsoft JhengHei", 10F);
+            var boldFont = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
+
             // 由 GitHub Copilot 產生 - 分為正常樣品和誤觸樣品兩組統計標籤
             var normalLabels = new[] {
                 "正常樣品數：", "有效樣品：", "平均占比：", "中位數占比：",
@@ -674,59 +701,61 @@ namespace peilin
                 var lbl = new Label
                 {
                     Text = normalLabels[i],
-                    Location = new System.Drawing.Point(10, 25 + (i % 5) * 25),
-                    Size = new System.Drawing.Size(100, 25),
+                    Location = new System.Drawing.Point(10, 28 + (i % 5) * 28),
+                    Size = new System.Drawing.Size(115, 28),
                     Name = $"lblNormalStat{i}",
-                    ForeColor = Color.Blue
+                    ForeColor = Color.Blue,
+                    Font = normalFont
                 };
 
                 var lblValue = new Label
                 {
                     Text = "---",
-                    Location = new System.Drawing.Point(120, 25 + (i % 5) * 25),
-                    Size = new System.Drawing.Size(120, 25),
+                    Location = new System.Drawing.Point(125, 28 + (i % 5) * 28),
+                    Size = new System.Drawing.Size(140, 28),
                     Name = $"lblStatValue{i}",
-                    Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                    Font = boldFont
                 };
 
                 // 第二列
                 if (i >= 5)
                 {
-                    lbl.Location = new System.Drawing.Point(270, 25 + (i - 5) * 25);
-                    lblValue.Location = new System.Drawing.Point(380, 25 + (i - 5) * 25);
+                    lbl.Location = new System.Drawing.Point(290, 28 + (i - 5) * 28);
+                    lblValue.Location = new System.Drawing.Point(405, 28 + (i - 5) * 28);
                 }
 
                 parent.Controls.AddRange(new Control[] { lbl, lblValue });
             }
 
-            // 由 GitHub Copilot 產生 - 誤觸樣品統計（下半部，留10px間距）
-            int falseStartY = 155; // 正常樣品結束於 25 + 5*25 = 150，留5px間距
+            // 由 GitHub Copilot 產生 - 誤觸樣品統計（下半部，留間距）
+            int falseStartY = 170; // 由 GitHub Copilot 產生 - 調整起始 Y 以適應 10F 字體
             for (int i = 0; i < falseLabels.Length; i++)
             {
                 var lbl = new Label
                 {
                     Text = falseLabels[i],
-                    Location = new System.Drawing.Point(10, falseStartY + (i % 5) * 25),
-                    Size = new System.Drawing.Size(100, 25),
+                    Location = new System.Drawing.Point(10, falseStartY + (i % 5) * 28),
+                    Size = new System.Drawing.Size(115, 28),
                     Name = $"lblFalseStat{i}",
-                    ForeColor = Color.Red
+                    ForeColor = Color.Red,
+                    Font = normalFont
                 };
 
                 var lblValue = new Label
                 {
                     Text = "---",
-                    Location = new System.Drawing.Point(120, falseStartY + (i % 5) * 25),
-                    Size = new System.Drawing.Size(120, 25),
+                    Location = new System.Drawing.Point(125, falseStartY + (i % 5) * 28),
+                    Size = new System.Drawing.Size(140, 28),
                     Name = $"lblFalseStatValue{i}",
-                    Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold),
+                    Font = boldFont,
                     ForeColor = Color.Red // 由 GitHub Copilot 產生 - 誤觸樣品數據用紅色顯示
                 };
 
                 // 第二列
                 if (i >= 5)
                 {
-                    lbl.Location = new System.Drawing.Point(270, falseStartY + (i - 5) * 25);
-                    lblValue.Location = new System.Drawing.Point(380, falseStartY + (i - 5) * 25);
+                    lbl.Location = new System.Drawing.Point(290, falseStartY + (i - 5) * 28);
+                    lblValue.Location = new System.Drawing.Point(405, falseStartY + (i - 5) * 28);
                 }
 
                 parent.Controls.AddRange(new Control[] { lbl, lblValue });
@@ -740,6 +769,9 @@ namespace peilin
         {
             if (chartInitialized) return; // 避免重複初始化
 
+            // 由 GitHub Copilot 產生 - 定義圖表統一字體
+            var chartFont = new Font("Microsoft JhengHei", 10F);
+
             chartWhitePixelRatio.Series.Clear();
             chartWhitePixelRatio.ChartAreas.Clear();
             chartWhitePixelRatio.Legends.Clear();
@@ -747,8 +779,18 @@ namespace peilin
 
             var chartArea = new ChartArea("MainArea")
             {
-                AxisX = { Title = "圖片順序", MajorGrid = { Enabled = true, LineColor = Color.LightGray } },
-                AxisY = { Title = "白色像素占比 (%)", MajorGrid = { Enabled = true, LineColor = Color.LightGray } }
+                AxisX = { 
+                    Title = "圖片順序", 
+                    MajorGrid = { Enabled = true, LineColor = Color.LightGray },
+                    TitleFont = chartFont,
+                    LabelStyle = { Font = chartFont }
+                },
+                AxisY = { 
+                    Title = "白色像素占比 (%)", 
+                    MajorGrid = { Enabled = true, LineColor = Color.LightGray },
+                    TitleFont = chartFont,
+                    LabelStyle = { Font = chartFont }
+                }
             };
             chartWhitePixelRatio.ChartAreas.Add(chartArea);
 
@@ -846,7 +888,8 @@ namespace peilin
             var legend = new Legend("MainLegend")
             {
                 Docking = Docking.Top,
-                Alignment = StringAlignment.Center
+                Alignment = StringAlignment.Center,
+                Font = new Font("Microsoft JhengHei", 10F) // 由 GitHub Copilot 產生 - 設定圖例字體
             };
             chartWhitePixelRatio.Legends.Add(legend);
 
@@ -984,7 +1027,7 @@ namespace peilin
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
                     if (btnAnalyzeControl.Enabled)
                     {
-                        btnAnalyzeControl.Text = $" 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                        btnAnalyzeControl.Text = $" 開始分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                     }
                     else if (selectedImagePaths.Count > 0)
                     {
@@ -1067,7 +1110,7 @@ namespace peilin
             {
                 isAnalyzing = false;
                 btnAnalyzeControl.Enabled = true;
-                btnAnalyzeControl.Text = $" 分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                btnAnalyzeControl.Text = $" 開始分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                 progressBarControl.Visible = false;
             }
         }
@@ -1396,7 +1439,7 @@ namespace peilin
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
                     if (btnAnalyzeControl.Enabled)
                     {
-                        btnAnalyzeControl.Text = $"分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
+                        btnAnalyzeControl.Text = $"開始分析 (正常:{selectedImagePaths.Count} / 誤觸:{selectedFalseImagePaths.Count})";
                     }
                     else if (selectedFalseImagePaths.Count > 0)
                     {
@@ -2638,7 +2681,8 @@ namespace peilin
                     WindowState = FormWindowState.Maximized,
                     KeyPreview = true,
                     BackColor = System.Drawing.Color.Black,
-                    FormBorderStyle = FormBorderStyle.None
+                    FormBorderStyle = FormBorderStyle.None,
+                    Font = new Font("Microsoft JhengHei", 10F) // 由 GitHub Copilot 產生 - 設定全螢幕表單字體
                 };
 
                 picFullScreen = new PictureBox
