@@ -1204,7 +1204,13 @@ namespace peilin
                                         }
                                         // 執行非 ROI 區域檢測
                                         string nonRoiServerUrl = app.produce_inner_NROI_ServerUrl;
-                                        DetectionResponse nonRoiDetection = await _yoloDetection.PerformObjectDetection(roi, $"{nonRoiServerUrl}/detect");
+                                        // 由 GitHub Copilot 產生
+                                        // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                        DetectionResponse nonRoiDetection;
+                                        using (Mat roiForNroi = roi.Clone())
+                                        {
+                                            nonRoiDetection = await _yoloDetection.PerformObjectDetection(roiForNroi, $"{nonRoiServerUrl}/detect");
+                                        }
 
                                         // 檢查非 ROI 檢測結果
                                         if (nonRoiDetection.detections != null && nonRoiDetection.detections.Count > 0)
@@ -1376,7 +1382,13 @@ namespace peilin
                                         {
                                             PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference1");
                                         }
-                                        DetectionResponse defectDetection = await _yoloDetection.PerformObjectDetection(roi, $"{defectServerUrl}/detect");
+                                        // 由 GitHub Copilot 產生
+                                        // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                        DetectionResponse defectDetection;
+                                        using (Mat roiForYolo = roi.Clone())
+                                        {
+                                            defectDetection = await _yoloDetection.PerformObjectDetection(roiForYolo, $"{defectServerUrl}/detect");
+                                        }
                                         if (app.enableProfiling && app.profilingStations.Contains(1))
                                         {
                                             PerformanceProfiler.StopMeasure($"{input.count}_yolo_Inference1");
@@ -1875,7 +1887,13 @@ namespace peilin
                                         }
                                         // 執行非 ROI 區域檢測
                                         string nonRoiServerUrl = app.produce_inner_NROI_ServerUrl;
-                                        DetectionResponse nonRoiDetection = await _yoloDetection.PerformObjectDetection(roi, $"{nonRoiServerUrl}/detect");
+                                        // 由 GitHub Copilot 產生
+                                        // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                        DetectionResponse nonRoiDetection;
+                                        using (Mat roiForNroi = roi.Clone())
+                                        {
+                                            nonRoiDetection = await _yoloDetection.PerformObjectDetection(roiForNroi, $"{nonRoiServerUrl}/detect");
+                                        }
 
                                         // 檢查非 ROI 檢測結果
                                         if (nonRoiDetection.detections != null && nonRoiDetection.detections.Count > 0)
@@ -1914,7 +1932,13 @@ namespace peilin
                                         {
                                             PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference2");
                                         }
-                                        DetectionResponse defectDetection = await _yoloDetection.PerformObjectDetection(roi, $"{defectServerUrl}/detect");
+                                        // 由 GitHub Copilot 產生
+                                        // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                        DetectionResponse defectDetection;
+                                        using (Mat roiForYolo = roi.Clone())
+                                        {
+                                            defectDetection = await _yoloDetection.PerformObjectDetection(roiForYolo, $"{defectServerUrl}/detect");
+                                        }
                                         if (app.enableProfiling && app.profilingStations.Contains(2))
                                         {
                                             PerformanceProfiler.StopMeasure($"{input.count}_yolo_Inference2");
@@ -2383,7 +2407,13 @@ namespace peilin
                                     }
                                     // 執行非 ROI 區域檢測
                                     string nonRoiServerUrl = app.produce_outer_NROI_ServerUrl;
-                                    DetectionResponse nonRoiDetection = await _yoloDetection.PerformObjectDetection(roi, $"{nonRoiServerUrl}/detect");
+                                    // 由 GitHub Copilot 產生
+                                    // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                    DetectionResponse nonRoiDetection;
+                                    using (Mat roiForNroi = roi.Clone())
+                                    {
+                                        nonRoiDetection = await _yoloDetection.PerformObjectDetection(roiForNroi, $"{nonRoiServerUrl}/detect");
+                                    }
 
                                     // 檢查非 ROI 檢測結果
                                     if (nonRoiDetection.detections != null && nonRoiDetection.detections.Count > 0)
@@ -2500,7 +2530,13 @@ namespace peilin
                                     {
                                         PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference3");
                                     }
-                                    DetectionResponse defectDetection = await _yoloDetection.PerformObjectDetection(roi, $"{defectServerUrl}/detect");
+                                    // 由 GitHub Copilot 產生
+                                    // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                    DetectionResponse defectDetection;
+                                    using (Mat roiForYolo = roi.Clone())
+                                    {
+                                        defectDetection = await _yoloDetection.PerformObjectDetection(roiForYolo, $"{defectServerUrl}/detect");
+                                    }
                                     if (app.enableProfiling && app.profilingStations.Contains(3))
                                     {
                                         PerformanceProfiler.StopMeasure($"{input.count}_yolo_Inference3");
@@ -3033,7 +3069,13 @@ namespace peilin
                                     }
                                     // 執行非 ROI 區域檢測
                                     string nonRoiServerUrl = app.produce_outer_NROI_ServerUrl;
-                                    DetectionResponse nonRoiDetection = await _yoloDetection.PerformObjectDetection(roi, $"{nonRoiServerUrl}/detect");
+                                    // 由 GitHub Copilot 產生
+                                    // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                    DetectionResponse nonRoiDetection;
+                                    using (Mat roiForNroi = roi.Clone())
+                                    {
+                                        nonRoiDetection = await _yoloDetection.PerformObjectDetection(roiForNroi, $"{nonRoiServerUrl}/detect");
+                                    }
 
                                     // 檢查非 ROI 檢測結果
                                     if (nonRoiDetection.detections != null && nonRoiDetection.detections.Count > 0)
@@ -3149,7 +3191,13 @@ namespace peilin
                                     {
                                         PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference4");
                                     }
-                                    DetectionResponse defectDetection = await _yoloDetection.PerformObjectDetection(roi, $"{defectServerUrl}/detect");
+                                    // 由 GitHub Copilot 產生
+                                    // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
+                                    DetectionResponse defectDetection;
+                                    using (Mat roiForYolo = roi.Clone())
+                                    {
+                                        defectDetection = await _yoloDetection.PerformObjectDetection(roiForYolo, $"{defectServerUrl}/detect");
+                                    }
                                     if (app.enableProfiling && app.profilingStations.Contains(4))
                                     {
                                         PerformanceProfiler.StopMeasure($"{input.count}_yolo_Inference4");
@@ -9154,16 +9202,19 @@ namespace peilin
 
                     if (shouldSaveROI)
                     {
+                        // 由 GitHub Copilot 產生
+                        // 緊急修正: 必須使用 Clone，否則 sv() 執行緒釋放後會導致返回的 roi_final 失效
+                        // 這是隨機發生 "roiImage 為 null 或已被釋放" 錯誤的根本原因
                         if (chamfer == false)
                         {
                             string visImgPath = $@".\image\{st.ToString("yyyy-MM")}\{st.ToString("MMdd")}\{app.foldername}\ROI_{stop}\{count}_{stop}_roi.png";
-                            app.Queue_Save.Enqueue(new ImageSave(roi_final, visImgPath));
+                            app.Queue_Save.Enqueue(new ImageSave(roi_final.Clone(), visImgPath));
                             app._sv.Set();
                         }
                         else
                         {
                             string visImgPath = $@".\image\{st.ToString("yyyy-MM")}\{st.ToString("MMdd")}\{app.foldername}\chamferROI_{stop}\{count}_{stop}_chamferRoi.png";
-                            app.Queue_Save.Enqueue(new ImageSave(roi_final, visImgPath));
+                            app.Queue_Save.Enqueue(new ImageSave(roi_final.Clone(), visImgPath));
                             app._sv.Set();
                         }
                     }
