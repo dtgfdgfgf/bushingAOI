@@ -63,13 +63,15 @@ namespace peilin
             InitializeUI();
         }
 
+        // 由 GitHub Copilot 產生 - 更新視窗標題預設顯示站點2
         private void InitializeUI()
         {
-            this.Text = $"gapThresh 參數視覺化調校 - {targetType}";
+            this.Text = $"gapThresh 參數視覺化調校 - {targetType} 站點2";
             this.Size = new System.Drawing.Size(1200, 800);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            targetStation = 2;  // 預設站點2
             CreateControls();
             LoadCurrentGapThreshFromDatabase();
         }
@@ -109,10 +111,10 @@ namespace peilin
         #region 控件建立和布局
         private void CreateControls()
         {
-            // 說明標籤
+            // 由 GitHub Copilot 產生 - 說明標籤（更新為標示僅站點2使用）
             var lblDescription = new Label
             {
-                Text = "📋 請選擇測試圖片，調整 gapThresh 參數並觀察 Gap 檢測效果",
+                Text = "📋 請選擇測試圖片，調整 gapThresh 參數並觀察 Gap 檢測效果（此參數僅適用於站點 2）",
                 Location = new System.Drawing.Point(10, 10),
                 Size = new System.Drawing.Size(1160, 30),
                 Font = new Font("Microsoft JhengHei", 10),
@@ -124,27 +126,42 @@ namespace peilin
             {
                 Text = "選擇站點：",
                 Location = new System.Drawing.Point(10, 50),
-                Size = new System.Drawing.Size(80, 25),
-                Font = new Font("Microsoft JhengHei", 9, FontStyle.Bold)
+                Size = new System.Drawing.Size(90, 25),
+                Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold)
             };
 
+            // 由 GitHub Copilot 產生 - 修改為只顯示站點2並預設選中
             cmbStation = new ComboBox
             {
-                Location = new System.Drawing.Point(90, 50),
+                Location = new System.Drawing.Point(100, 50),
                 Size = new System.Drawing.Size(100, 25),
-                DropDownStyle = ComboBoxStyle.DropDownList
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
-            cmbStation.Items.AddRange(new object[] { "請選擇", "站點1", "站點2", "站點3", "站點4" });
+            cmbStation.Items.AddRange(new object[] { "站點2" });
             cmbStation.SelectedIndex = 0;
-            targetStation = 0;
+            targetStation = 2;  // 直接設定為站點2
             cmbStation.SelectedIndexChanged += CmbStation_SelectedIndexChanged;
+
+            // 由 GitHub Copilot 產生 - 新增醒目提示標籤
+            var lblStation2Only = new Label
+            {
+                Text = "此參數僅需設定站點 2",
+                Location = new System.Drawing.Point(210, 50),
+                Size = new System.Drawing.Size(180, 25),
+                Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.OrangeRed,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
 
             // 選擇照片按鈕
             var btnSelectImages = new Button
             {
-                Text = "📂 選擇測試圖片",
-                Location = new System.Drawing.Point(210, 50),
-                Size = new System.Drawing.Size(120, 30)
+                Text = "📂 載入圖片",
+                Location = new System.Drawing.Point(400, 50),
+                Size = new System.Drawing.Size(130, 30),
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnSelectImages.Click += BtnSelectImages_Click;
 
@@ -153,26 +170,29 @@ namespace peilin
             {
                 Text = "🎛️ gapThresh 參數調整",
                 Location = new System.Drawing.Point(10, 90),
-                Size = new System.Drawing.Size(1160, 80)
+                Size = new System.Drawing.Size(1160, 80),
+                Font = new Font("Microsoft JhengHei", 10F)
             };
 
             var lblGapThresh = new Label
             {
                 Text = "gapThresh 值：",
                 Location = new System.Drawing.Point(20, 25),
-                Size = new System.Drawing.Size(100, 25)
+                Size = new System.Drawing.Size(110, 25),
+                Font = new Font("Microsoft JhengHei", 10F)
             };
 
             trackBarGapThresh = new TrackBar
             {
-                Location = new System.Drawing.Point(120, 20),
-                Size = new System.Drawing.Size(800, 45),
+                Location = new System.Drawing.Point(130, 20),
+                Size = new System.Drawing.Size(790, 45),
                 Minimum = 0,
                 Maximum = 254,
                 Value = 127,
                 TickFrequency = 25,
                 LargeChange = 10,
-                SmallChange = 1
+                SmallChange = 1,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             trackBarGapThresh.ValueChanged += TrackBarGapThresh_ValueChanged;
 
@@ -181,17 +201,18 @@ namespace peilin
                 Text = "127",
                 Location = new System.Drawing.Point(930, 25),
                 Size = new System.Drawing.Size(50, 25),
-                Font = new Font("Microsoft JhengHei", 12, FontStyle.Bold),
+                Font = new Font("Microsoft JhengHei", 12F, FontStyle.Bold),
                 ForeColor = Color.Red
             };
 
             btnAnalyzeControl = new Button
             {
-                Text = "🔄 重新分析",
+                Text = "🔄 開始分析",
                 Location = new System.Drawing.Point(1000, 20),
                 Size = new System.Drawing.Size(100, 35),
                 BackColor = Color.LightGreen,
-                Enabled = false
+                Enabled = false,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnAnalyzeControl.Click += BtnAnalyze_Click;
 
@@ -204,7 +225,8 @@ namespace peilin
             {
                 Text = "📷 圖片預覽與分析結果",
                 Location = new System.Drawing.Point(10, 180),
-                Size = new System.Drawing.Size(1160, 450)
+                Size = new System.Drawing.Size(1160, 450),
+                Font = new Font("Microsoft JhengHei", 10F)
             };
 
             // 原始圖片
@@ -250,8 +272,9 @@ namespace peilin
             {
                 Text = "◀ 上一張",
                 Location = new System.Drawing.Point(620, 50),
-                Size = new System.Drawing.Size(80, 35),
-                Enabled = false
+                Size = new System.Drawing.Size(85, 35),
+                Enabled = false,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnPreviousControl.Click += BtnPrevious_Click;
 
@@ -259,8 +282,9 @@ namespace peilin
             {
                 Text = "下一張 ▶",
                 Location = new System.Drawing.Point(620, 95),
-                Size = new System.Drawing.Size(80, 35),
-                Enabled = false
+                Size = new System.Drawing.Size(85, 35),
+                Enabled = false,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnNextControl.Click += BtnNext_Click;
 
@@ -269,8 +293,9 @@ namespace peilin
             {
                 Text = "🔍 全螢幕預覽",
                 Location = new System.Drawing.Point(620, 140),
-                Size = new System.Drawing.Size(80, 35),
-                BackColor = Color.LightBlue
+                Size = new System.Drawing.Size(85, 35),
+                BackColor = Color.LightBlue,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnFullScreen.Click += BtnFullScreen_Click;
 
@@ -280,7 +305,7 @@ namespace peilin
                 Text = "請選擇圖片並調整 gapThresh 參數",
                 Location = new System.Drawing.Point(720, 50),
                 Size = new System.Drawing.Size(420, 350),
-                Font = new Font("Microsoft JhengHei", 9),
+                Font = new Font("Microsoft JhengHei", 10F),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
                 Multiline = true,
@@ -308,11 +333,12 @@ namespace peilin
             // 套用按鈕
             btnApplyControl = new Button
             {
-                Text = "✅ 套用當前參數值",
+                Text = "✅ 套用推薦值",
                 Location = new System.Drawing.Point(620, 640),
-                Size = new System.Drawing.Size(140, 30),
+                Size = new System.Drawing.Size(145, 30),
                 BackColor = Color.Orange,
-                Enabled = false
+                Enabled = false,
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnApplyControl.Click += BtnApply_Click;
 
@@ -320,14 +346,15 @@ namespace peilin
             var btnCancel = new Button
             {
                 Text = "❌ 取消",
-                Location = new System.Drawing.Point(770, 640),
-                Size = new System.Drawing.Size(80, 30)
+                Location = new System.Drawing.Point(775, 640),
+                Size = new System.Drawing.Size(80, 30),
+                Font = new Font("Microsoft JhengHei", 10F)
             };
             btnCancel.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
-            // 加入所有控件
+            // 由 GitHub Copilot 產生 - 加入所有控件（包含新增的站點2提示標籤）
             this.Controls.AddRange(new Control[] {
-                lblDescription, lblStation, cmbStation, btnSelectImages,
+                lblDescription, lblStation, cmbStation, lblStation2Only, btnSelectImages,
                 grpGapThreshControl, grpImageDisplay,
                 lblRecommendationControl, btnApplyControl, btnCancel
             });
@@ -335,17 +362,12 @@ namespace peilin
         #endregion
 
         #region 事件處理器
+        // 由 GitHub Copilot 產生 - 修改事件處理邏輯以配合只有站點2的選項結構
         private void CmbStation_SelectedIndexChanged(object sender, EventArgs e)
         {
-            targetStation = cmbStation.SelectedIndex;
-            if (targetStation <= 0)
-            {
-                this.Text = $"gapThresh 參數視覺化調校 - {targetType} (請選擇站點)";
-                btnAnalyzeControl.Enabled = false;
-                btnApplyControl.Enabled = false;
-                return;
-            }
-            this.Text = $"gapThresh 參數視覺化調校 - {targetType} 站點{targetStation}";
+            // 由於下拉選單只有「站點2」一個選項，索引0對應站點2
+            targetStation = 2;
+            this.Text = $"gapThresh 參數視覺化調校 - {targetType} 站點2";
             LoadCurrentGapThreshFromDatabase();
             btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
             btnApplyControl.Enabled = selectedImagePaths.Count > 0;
