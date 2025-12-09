@@ -14686,6 +14686,17 @@ namespace peilin
             PLC_SetD(805, 0);
             PLC_SetD(807, d807);
 
+            // 由 GitHub Copilot 產生 - 修復：更新計數時也重置同步狀態，避免滿料急停後殘留同步模式
+            lock (ResultManager.okLock)
+            {
+                ResultManager.counter["OK1"] = 0;
+                ResultManager.counter["OK2"] = 0;
+                app.isInSyncMode = false;
+                app.syncStartTime = DateTime.MinValue;
+                app.syncWaitTimeMs = 0;
+                Log.Information($"[更新計數] 軟體計數器已重置，同步模式已關閉");
+            }
+
             updateLabel();
             // **新增：狀態變更為更新後需要復歸**
             app.currentState = app.SystemState.UpdatedNeedReset;
@@ -18972,7 +18983,8 @@ public class ResultManager
         counter.TryAdd("stop2", 0);
         counter.TryAdd("stop3", 0);
     }
-    private static readonly object okLock = new object();
+    // 由 GitHub Copilot 產生 - 修正: 改為 public 以允許 Form1 類別在更新計數時存取
+    public static readonly object okLock = new object();
     private static string activeOkCounter = "OK1"; //一開始先從OK1 之後都在函數內變動
 
     public void AddResult(int sampleId, StationResult stationResult) //stationResult是一整個結構，包含所有結果
@@ -18997,7 +19009,8 @@ public class ResultManager
     private void CombineResults(SampleResult sampleResult)
     {
         // 檢查是否有任何站點結果被標記為 NULL
-        bool hasNullResult = sampleResult.StationResults.Values.Any(r => r.DefectName == "NULL_invalid");
+        bool hasNullResult = sampleResult.StationResults.Values.Any(r => 
+            r.DefectName != null && r.DefectName.StartsWith("NULL_", StringComparison.OrdinalIgnoreCase));
 
         if (hasNullResult)
         {
@@ -19155,6 +19168,7 @@ public class ResultManager
                         // 由 GitHub Copilot 產生
                         // 新增功能：NG 圖像額外備份至桌面（永久保存，不受自動刪檔影響）
                         // 路徑格式：C:\Users\Chernger\Desktop\NG\{yyyy-MM}\{MMdd}\{foldername}\
+                        /*
                         if (isNG && !isNull)
                         {
                             try
@@ -19175,6 +19189,7 @@ public class ResultManager
                                 Log.Warning($"NG 圖像備份至桌面失敗：{ex.Message}");
                             }
                         }
+                        */
 
                         // 新增功能：依據站點存放
                         string stationFolder = Path.Combine(stationBasePath, $"Station{stationResult.Stop}");
@@ -19300,54 +19315,65 @@ public class ResultManager
                     try
                     {
                         // 由 GitHub Copilot 產生
-                        // 修正: 讀取 PLC 並覆蓋計數
-                        string lane = ResultManager.activeOkCounter;
+                        // 修正: 讀取 PLC 並覆蓋計數，整個同步邏輯包在 okLock 中避免競態條件
+                        string lane;
                         int plcCount;
+                        int softwareCount;
+                        bool shouldSwitch = false;
+                        string newLane = "";
 
-                        if (lane == "OK1")
+                        lock (ResultManager.okLock)
                         {
-                            plcCount = Form1.PLC_CheckD(803);
-                        }
-                        else // OK2
-                        {
-                            plcCount = Form1.PLC_CheckD(805);
-                        }
+                            lane = ResultManager.activeOkCounter;
 
-                        // ✅ 檢查讀取是否成功
-                        if (plcCount < 0)
-                        {
-                            Log.Error($"[同步失敗] PLC 讀取失敗，觸發停機");
-                            app.plc_stop = true;
-                            return;
-                        }
-
-                        // 計算實際包數
-
-                        int softwareCount = ResultManager.counter[lane];
-                        // 覆蓋軟體計數
-                        if (softwareCount != plcCount)
-                        {
-                            lock (ResultManager.okLock)
+                            if (lane == "OK1")
                             {
+                                plcCount = Form1.PLC_CheckD(803);
+                            }
+                            else // OK2
+                            {
+                                plcCount = Form1.PLC_CheckD(805);
+                            }
+
+                            // ✅ 檢查讀取是否成功
+                            if (plcCount < 0)
+                            {
+                                Log.Error($"[同步失敗] PLC 讀取失敗，觸發停機");
+                                app.plc_stop = true;
+                                return;
+                            }
+
+                            softwareCount = ResultManager.counter[lane];
+
+                            // 由 GitHub Copilot 產生 - 修復：明確檢查 plcCount == app.pack，避免兩者都為 0 時誤判為滿箱
+                            if (softwareCount != plcCount)
+                            {
+                                // 覆蓋軟體計數
                                 ResultManager.counter[lane] = plcCount;
                             }
+                            else if (plcCount == app.pack && plcCount > 0)
+                            {
+                                // 只有在 plcCount 確實等於 app.pack 且大於 0 時才切換
+                                // 重置當前計數器
+                                ResultManager.counter[lane] = 0;
+
+                                // 切換到另一個計數器
+                                newLane = (lane == "OK1") ? "OK2" : "OK1";
+                                ResultManager.activeOkCounter = newLane;
+                                shouldSwitch = true;
+                            }
+                            // else: softwareCount == plcCount 但不等於 app.pack（例如復歸後都是 0），不做切換
+
+                            // ✅ 關閉同步模式
+                            app.isInSyncMode = false;
                         }
-                        else // softwareCount == plcCount == app.pack
+
+                        // Log 在鎖外執行，避免長時間持有鎖
+                        if (shouldSwitch)
                         {
-                            // 重置當前計數器
-                            ResultManager.counter[lane] = 0;
-
-                            // 切換到另一個計數器
-                            ResultManager.activeOkCounter = (lane == "OK1") ? "OK2" : "OK1";
-
-                            Log.Information($"[同步] {lane} 達到 {plcCount} 顆（== {app.pack}），重置為 0 並切換至 {ResultManager.activeOkCounter}");
-
+                            Log.Information($"[同步] {lane} 達到 {plcCount} 顆（== {app.pack}），重置為 0 並切換至 {newLane}");
                         }
-
                         Log.Information($"[同步完成] {lane}: 軟體計數 {softwareCount} → PLC實際值 {plcCount}");
-
-                        // ✅ 關閉同步模式
-                        app.isInSyncMode = false;
 
                         // 這個樣品恢復正常處理（NG 送 NG，OK 送 OK）
                         isNull = false;
@@ -19640,10 +19666,15 @@ public class ResultManager
                 counter["OK1"] = 0;
                 counter["OK2"] = 0;
 
+                // 由 GitHub Copilot 產生 - 修復：重置同步模式狀態，避免滿料急停後復歸時誤入同步邏輯
+                app.isInSyncMode = false;
+                app.syncStartTime = DateTime.MinValue;
+                app.syncWaitTimeMs = 0;
+
                 // 如果需要重置總計數,可以取消以下註解:
                 // counter["OK"] = 0;
 
-                Log.Information($"OK 計數器已重置，當前活躍計數器: {activeOkCounter}");
+                Log.Information($"OK 計數器已重置，同步模式已關閉，當前活躍計數器: {activeOkCounter}");
             }
             catch (Exception ex)
             {
