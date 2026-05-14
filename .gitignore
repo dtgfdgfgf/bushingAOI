@@ -365,3 +365,21 @@ packages.zip
 bin/x64/Release/models/
 Release/opencv_world455.dll
 bin/x64/Release/opencv_world455.dll
+
+# 排除 PVS 自動備份
+*.PVS.BAK
+
+# 排除根目錄與 logs/ 內的執行期日誌
+/peilin_log-*.txt
+/LOG1.txt
+logs/peilin_log-*.txt
+logs/CameraLog_*.txt
+logs/CameraWarning_*.txt
+
+# 排除執行期產出的瑕疵統計 CSV
+bin/x64/Release/Statistics/
+
+# 敏感檔 / 授權資訊(僅本機保留)
+secret.txt
+SHA256.txt
+SerialNum.txt
