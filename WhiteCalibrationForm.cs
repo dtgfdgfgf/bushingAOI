@@ -224,7 +224,7 @@ namespace peilin
             // 說明標籤
             var lblDescription = new Label
             {
-                Text = " 請選擇多張照片分析白色像素占比，系統將計算統計數據並提供推薦的 white 參數值",
+                Text = " 請選擇多張照片分析白色像素占比，系統將計算統計數據並提供推薦的 white 系列參數值",
                 Location = new System.Drawing.Point(10, 10),
                 Size = new System.Drawing.Size(1200, 40),
                 Font = normalFont,
@@ -1033,6 +1033,9 @@ namespace peilin
                     {
                         btnAnalyzeControl.Text = $" 開始分析 (需選擇誤觸照片)";
                     }
+                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    btnApplyControl.Text = "套用推薦值";
+                    btnApplyControl.BackColor = Color.Orange;
                 }
             }
         }
@@ -1284,7 +1287,7 @@ namespace peilin
                 btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0 && selectedFalseImagePaths.Count > 0;
 
                 // 可選：更新按鈕文字提示已套用
-                btnApplyControl.Text = "已套用 (可重新套用)";
+                btnApplyControl.Text = "✅ 已套用";
                 btnApplyControl.BackColor = System.Drawing.Color.LightGreen;
 
                 // 重置提示訊息顏色
@@ -1445,6 +1448,9 @@ namespace peilin
                     {
                         btnAnalyzeControl.Text = $"開始分析 (需選擇正常照片)";
                     }
+                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    btnApplyControl.Text = "套用推薦值";
+                    btnApplyControl.BackColor = Color.Orange;
                 }
             }
         }

@@ -1011,26 +1011,10 @@ namespace peilin
         // 由 GitHub Copilot 產生 - 將計算結果加入到已修改區
         private void AddCalculatedParametersToModified(List<ParameterItem> calculatedParams)
         {
+            // 由 GitHub Copilot 產生 - 使用 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
             foreach (var calcParam in calculatedParams)
             {
-                // 檢查是否已存在相同的參數（需要同時比對 Name 和 Stop）
-                var existingParam = allParameters.FirstOrDefault(p =>
-                    p.Name == calcParam.Name && p.Stop == calcParam.Stop);
-
-                if (existingParam != null)
-                {
-                    // 更新現有參數的值和區域
-                    existingParam.Value = calcParam.Value;
-                    existingParam.Zone = ParameterZone.AddedModified;
-                }
-                else
-                {
-                    // 新增新參數
-                    calcParam.Type = TargetType;
-                    calcParam.Zone = ParameterZone.AddedModified;
-                    calcParam.IsSelected = false;
-                    allParameters.Add(calcParam);
-                }
+                UpdateOrAddModifiedParameter(calcParam.Name, calcParam.Value, calcParam.Stop, calcParam.ChineseName);
             }
         }
 
@@ -1704,43 +1688,8 @@ namespace peilin
         // 由 GitHub Copilot 產生 - 更新或新增參數到本地集合
         private void UpdateOrAddParameter(string name, string value, int? stop, string chineseName, bool isCameraParam)
         {
-            // 尋找現有參數
-            var existingParam = allParameters.FirstOrDefault(p =>
-                p.Name == name && p.Stop == stop);
-
-            if (existingParam != null)
-            {
-                // 更新現有參數
-                existingParam.Value = value;
-                existingParam.ChineseName = chineseName;
-
-                // 標記為已修改（校正後的參數）
-                if (existingParam.Zone == ParameterZone.Reference)
-                {
-                    // 如果原本在參考區，移動到已新增已修改區
-                    existingParam.Zone = ParameterZone.AddedModified;
-                }
-                else if (existingParam.Zone == ParameterZone.AddedUnmodified)
-                {
-                    // 如果原本在已新增未修改區，移動到已新增已修改區
-                    existingParam.Zone = ParameterZone.AddedModified;
-                }
-                // 如果已經在已修改區，保持不變
-            }
-            else
-            {
-                // 新增新參數（校正新增的參數）
-                allParameters.Add(new ParameterItem
-                {
-                    Type = TargetType,
-                    Name = name,
-                    Value = value,
-                    Stop = stop,
-                    ChineseName = chineseName,
-                    Zone = ParameterZone.AddedModified, // 新校正的參數直接進入已修改區
-                    IsSelected = false
-                });
-            }
+            // 由 GitHub Copilot 產生 - 委派至 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
+            UpdateOrAddModifiedParameter(name, value, stop, chineseName);
         }
 
         // 由 GitHub Copilot 產生 - 顯示參數更新通知
@@ -1819,6 +1768,7 @@ namespace peilin
             toolTip.SetToolTip(btn,
                 "根據料號特性自動調整特定參數值\n" +
                 "• 無油溝料號：find_NROI 站1 設為 0\n" +
+                "• DefectChecks 缺陷檢測項目全量複製\n" +
                 "• 其他條件式參數自動處理");
 
             tab.Controls.Add(btn);
@@ -1886,8 +1836,8 @@ namespace peilin
                 // 由 GitHub Copilot 產生 - 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
                 processedCount += ProcessPositionParameters(typeInfo, processedParameters);
 
-                // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（缺陷檢測項目，直接寫入資料庫）
-                processedCount += ProcessDefectChecksParameters(typeInfo, processedParameters);
+                // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（全量複製來源料號的缺陷檢測項目）
+                processedCount += ProcessAllDefectChecksFromSource(processedParameters);
 
                 // 由 GitHub Copilot 產生 - 複製來源料號的 AI 模型檔案
                 processedCount += CopyModelsFromSource(processedParameters);
@@ -2306,8 +2256,8 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（缺陷檢測項目，從來源料號複製到目標料號）
-        private int ProcessDefectChecksParameters(TypeInfo typeInfo, List<string> processedParameters)
+        // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（條件式複製，僅複製特定項目，保留作為備用）
+        private int ProcessConditionalDefectChecks(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
             var skippedItems = new List<string>();
@@ -2417,7 +2367,102 @@ namespace peilin
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ProcessDefectChecksParameters] 處理 DefectChecks 時發生錯誤：{ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ProcessConditionalDefectChecks] 處理 DefectChecks 時發生錯誤：{ex.Message}");
+            }
+
+            return count;
+        }
+
+        // 由 GitHub Copilot 產生 - 從來源料號全量複製 DefectChecks 資料表到目標料號
+        /// <summary>
+        /// 從來源料號全量複製 DefectChecks 資料表的所有項目到目標料號
+        /// 採用「不覆寫已存在項目」策略，與相機參數複製邏輯一致
+        /// </summary>
+        /// <param name="processedParameters">處理過的參數清單（用於記錄複製結果）</param>
+        /// <returns>成功複製的項目數量</returns>
+        private int ProcessAllDefectChecksFromSource(List<string> processedParameters)
+        {
+            int count = 0;
+            int skippedCount = 0;
+            int sourceCount = 0;
+
+            // 檢查是否有來源料號
+            if (currentSession == null || string.IsNullOrEmpty(currentSession.SourceType))
+            {
+                System.Diagnostics.Debug.WriteLine("[ProcessAllDefectChecksFromSource] 無來源料號，跳過 DefectChecks 複製");
+                return 0;
+            }
+
+            try
+            {
+                using (var db = new MydbDB())
+                {
+                    // 從來源料號讀取所有 DefectChecks 項目
+                    var sourceDefectChecks = db.DefectChecks
+                        .Where(d => d.Type == currentSession.SourceType)
+                        .ToList();
+
+                    sourceCount = sourceDefectChecks.Count;
+
+                    if (sourceCount == 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ProcessAllDefectChecksFromSource] 來源料號 {currentSession.SourceType} 無 DefectChecks 項目");
+                        processedParameters?.Add($"[DefectChecks] 來源料號無缺陷檢測項目");
+                        return 0;
+                    }
+
+                    // 讀取目標料號已存在的 DefectChecks 項目
+                    var existingTargetChecks = db.DefectChecks
+                        .Where(d => d.Type == TargetType)
+                        .ToList();
+
+                    // 逐筆處理每個來源項目
+                    foreach (var item in sourceDefectChecks)
+                    {
+                        // 檢查目標料號是否已存在相同 (Type, Stop, Name) 的項目
+                        bool exists = existingTargetChecks.Any(d =>
+                            d.Name == item.Name && d.Stop == item.Stop);
+
+                        if (exists)
+                        {
+                            // 已存在則跳過（不覆寫）
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // 使用 update-first, insert-if-none 模式寫入資料庫
+                        int updatedRows = db.DefectChecks
+                            .Where(d => d.Type == TargetType && d.Name == item.Name && d.Stop == item.Stop)
+                            .Set(d => d.Threshold, item.Threshold)
+                            .Set(d => d.Yn, item.Yn)
+                            .Set(d => d.ChineseName, item.ChineseName)
+                            .Update();
+
+                        if (updatedRows == 0)
+                        {
+                            db.DefectChecks
+                                .Value(d => d.Type, TargetType)
+                                .Value(d => d.Stop, item.Stop)
+                                .Value(d => d.Name, item.Name)
+                                .Value(d => d.Threshold, item.Threshold)
+                                .Value(d => d.Yn, item.Yn)
+                                .Value(d => d.ChineseName, item.ChineseName)
+                                .Insert();
+                        }
+
+                        count++;
+                    }
+                }
+
+                // 記錄統計結果到 processedParameters
+                processedParameters?.Add($"[DefectChecks] 來源: {sourceCount} 筆, 跳過: {skippedCount} 筆(已存在), 新增: {count} 筆");
+
+                System.Diagnostics.Debug.WriteLine($"[ProcessAllDefectChecksFromSource] 完成：來源={sourceCount}, 跳過={skippedCount}, 新增={count}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ProcessAllDefectChecksFromSource] 處理 DefectChecks 時發生錯誤：{ex.Message}");
+                processedParameters?.Add($"[DefectChecks] 複製過程發生錯誤：{ex.Message}");
             }
 
             return count;
@@ -2428,8 +2473,8 @@ namespace peilin
         {
             int count = 0;
 
-            // 若目標料號與來源料號材質相同，則複製來源料號的相機參數 (exposure, gain)
-            if (!string.IsNullOrEmpty(typeInfo.Material) && 
+            // 若目標料號與來源料號PTFE顏色相同，則複製來源料號的相機參數 (exposure, gain)
+            if (!string.IsNullOrEmpty(typeInfo.PTFEColor) && 
                 currentSession != null && 
                 !string.IsNullOrEmpty(currentSession.SourceType))
             {
@@ -2438,8 +2483,8 @@ namespace peilin
                     // 取得來源料號的 TypeInfo
                     var sourceTypeInfo = GetTypeInfo(currentSession.SourceType);
                     if (sourceTypeInfo != null && 
-                        !string.IsNullOrEmpty(sourceTypeInfo.Material) &&
-                        typeInfo.Material == sourceTypeInfo.Material)
+                        !string.IsNullOrEmpty(sourceTypeInfo.PTFEColor) &&
+                        typeInfo.PTFEColor == sourceTypeInfo.PTFEColor)
                     {
                         // 材質相同，從資料庫讀取來源料號的相機參數並複製
                         using (var db = new MydbDB())
@@ -4146,39 +4191,10 @@ namespace peilin
                                 p.Name.Contains("chamfer") || p.Name.Contains("position")))
                         .ToList();
 
-                    // 【修正】：只移除校正工具產生的特定參數，保留參考區和其他參數
-                    allParameters.RemoveAll(p =>
-                        p.Zone == ParameterZone.AddedModified &&
-                        (p.Name.Contains("center") || p.Name.Contains("radius") ||
-                         p.Name.Contains("chamfer") || p.Name.Contains("position")));
-
-                    // 新增載入的位置參數到已新增已修改區
+                    // 由 GitHub Copilot 產生 - 使用 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
                     foreach (var param in positionParams)
                     {
-                        // 檢查是否已存在相同參數
-                        var existingParam = allParameters.FirstOrDefault(p =>
-                            p.Name == param.Name && p.Stop == param.Stop);
-
-                        if (existingParam != null)
-                        {
-                            // 更新現有參數
-                            existingParam.Value = param.Value;
-                            existingParam.Zone = ParameterZone.AddedModified; // 校正完成的參數
-                        }
-                        else
-                        {
-                            // 新增新參數
-                            allParameters.Add(new ParameterItem
-                            {
-                                Type = TargetType,
-                                Name = param.Name,
-                                Value = param.Value,
-                                Stop = param.Stop,
-                                ChineseName = param.ChineseName,
-                                Zone = ParameterZone.AddedModified, // 校正完成的參數
-                                IsSelected = false
-                            });
-                        }
+                        UpdateOrAddModifiedParameter(param.Name, param.Value, param.Stop, param.ChineseName);
                     }
 
                     // 更新顯示
@@ -4235,7 +4251,12 @@ namespace peilin
             try
             {
                 var categoryParams = parameterManager.GetParametersByCategory(allParameters, currentCategory);
-                var paramsToSave = categoryParams.Where(p => p.Zone == ParameterZone.AddedModified || p.Zone == ParameterZone.AddedUnmodified).ToList();
+                // 由 GitHub Copilot 產生 - 按 (Name, Stop, Type) 去重，優先取已修改區參數
+                var paramsToSave = categoryParams
+                    .Where(p => p.Zone == ParameterZone.AddedModified || p.Zone == ParameterZone.AddedUnmodified)
+                    .GroupBy(p => new { p.Name, p.Stop, p.Type })
+                    .Select(g => g.OrderByDescending(p => p.Zone == ParameterZone.AddedModified ? 1 : 0).First())
+                    .ToList();
 
                 if (paramsToSave.Count == 0)
                 {
@@ -4271,7 +4292,12 @@ namespace peilin
         {
             try
             {
-                var allParamsToSave = allParameters.Where(p => p.Zone == ParameterZone.AddedModified || p.Zone == ParameterZone.AddedUnmodified).ToList();
+                // 由 GitHub Copilot 產生 - 按 (Name, Stop, Type) 去重，優先取已修改區參數
+                var allParamsToSave = allParameters
+                    .Where(p => p.Zone == ParameterZone.AddedModified || p.Zone == ParameterZone.AddedUnmodified)
+                    .GroupBy(p => new { p.Name, p.Stop, p.Type })
+                    .Select(g => g.OrderByDescending(p => p.Zone == ParameterZone.AddedModified ? 1 : 0).First())
+                    .ToList();
 
                 if (allParamsToSave.Count == 0)
                 {
@@ -4310,6 +4336,7 @@ namespace peilin
             }
         }
 
+        // 由 GitHub Copilot 產生 - 使用 update-first, insert-if-none 模式
         private void SaveParametersToDatabase(List<ParameterItem> parameters)
         {
             using (var db = new MydbDB())
@@ -4319,43 +4346,45 @@ namespace peilin
                     // 判斷參數應該存到哪個資料表
                     if (IsCameraParameter(param.Name))
                     {
-                        // 先刪除舊資料
-                        var existingCamera = db.Cameras.FirstOrDefault(c =>
-                            c.Type == param.Type && c.Name == param.Name && c.Stop == param.Stop);
-                        if (existingCamera != null)
-                        {
-                            db.Delete(existingCamera);
-                        }
+                        // 嘗試更新現有記錄
+                        int updatedRows = db.Cameras
+                            .Where(c => c.Type == param.Type && c.Name == param.Name && c.Stop == param.Stop)
+                            .Set(c => c.Value, param.Value)
+                            .Set(c => c.ChineseName, param.ChineseName)
+                            .Update();
 
-                        // 新增新資料
-                        db.Insert(new Camera
+                        // 若無更新記錄則插入新記錄
+                        if (updatedRows == 0)
                         {
-                            Type = param.Type,
-                            Name = param.Name,
-                            Value = param.Value,
-                            Stop = param.Stop ?? 0,
-                            ChineseName = param.ChineseName
-                        });
+                            db.Cameras
+                                .Value(c => c.Type, param.Type)
+                                .Value(c => c.Name, param.Name)
+                                .Value(c => c.Value, param.Value)
+                                .Value(c => c.Stop, param.Stop ?? 0)
+                                .Value(c => c.ChineseName, param.ChineseName)
+                                .Insert();
+                        }
                     }
                     else
                     {
-                        // 先刪除舊資料
-                        var existingParam = db.@params.FirstOrDefault(p =>
-                            p.Type == param.Type && p.Name == param.Name && p.Stop == param.Stop);
-                        if (existingParam != null)
-                        {
-                            db.Delete(existingParam);
-                        }
+                        // 嘗試更新現有記錄
+                        int updatedRows = db.@params
+                            .Where(p2 => p2.Type == param.Type && p2.Name == param.Name && p2.Stop == param.Stop)
+                            .Set(p2 => p2.Value, param.Value)
+                            .Set(p2 => p2.ChineseName, param.ChineseName)
+                            .Update();
 
-                        // 新增新資料
-                        db.Insert(new Param
+                        // 若無更新記錄則插入新記錄
+                        if (updatedRows == 0)
                         {
-                            Type = param.Type,
-                            Name = param.Name,
-                            Value = param.Value,
-                            Stop = param.Stop,
-                            ChineseName = param.ChineseName
-                        });
+                            db.@params
+                                .Value(p2 => p2.Type, param.Type)
+                                .Value(p2 => p2.Name, param.Name)
+                                .Value(p2 => p2.Value, param.Value)
+                                .Value(p2 => p2.Stop, param.Stop)
+                                .Value(p2 => p2.ChineseName, param.ChineseName)
+                                .Insert();
+                        }
                     }
                 }
             }

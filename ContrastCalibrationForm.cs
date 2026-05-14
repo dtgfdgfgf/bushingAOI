@@ -96,7 +96,7 @@ namespace peilin
             cmbStation.Size = new System.Drawing.Size(90, 25);
             cmbStation.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbStation.Font = new Font("Microsoft JhengHei", 10F);
-            cmbStation.Items.AddRange(new object[] { "請選擇", "站點1", "站點2", "站點3", "站點4" });
+            cmbStation.Items.AddRange(new object[] { "請選擇", "站點1", "站點2" });
             cmbStation.SelectedIndex = 0;
             selectedStation = 0;
             cmbStation.SelectedIndexChanged += CmbStation_SelectedIndexChanged;
@@ -306,6 +306,8 @@ namespace peilin
             }
 
             UpdateStatus($"已選擇站點 {selectedStation}");
+            // 由 GitHub Copilot 產生 - 切換站點時恢復按鈕文字
+            btnApplyValues.Text = "套用推薦值";
             LoadCurrentParameters(); // 只在有效站點時載入
         }
 
@@ -354,9 +356,20 @@ namespace peilin
             // 由 GitHub Copilot 產生 - 載入校正圖片
             try
             {
-                // 釋放舊圖片
-                originalImage?.Dispose();
-                processedImage?.Dispose();
+                // 由 GitHub Copilot 產生 - 先設為 false 防止 Paint 事件存取已丟棄物件
+                hasValidImage = false;
+
+                // 釋放舊圖片並設為 null
+                if (originalImage != null)
+                {
+                    originalImage.Dispose();
+                    originalImage = null;
+                }
+                if (processedImage != null)
+                {
+                    processedImage.Dispose();
+                    processedImage = null;
+                }
 
                 // 載入新圖片
                 originalImage = new Mat(imagePath);
@@ -397,15 +410,21 @@ namespace peilin
 
             try
             {
-                // 釋放舊的處理結果
-                processedImage?.Dispose();
+                // 由 GitHub Copilot 產生 - 釋放舊的處理結果並設為 null
+                if (processedImage != null)
+                {
+                    processedImage.Dispose();
+                    processedImage = null;
+                }
 
-                // 轉為灰階
-                Mat grayImage = new Mat();
-                Cv2.CvtColor(originalImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                // 由 GitHub Copilot 產生 - 用 using 包裝 grayImage 防止記憶體洩漏
+                using (Mat grayImage = new Mat())
+                {
+                    Cv2.CvtColor(originalImage, grayImage, ColorConversionCodes.BGR2GRAY);
 
-                // 使用 Contrast 函數處理圖片
-                processedImage = Contrast(grayImage, currentContrast, currentBrightness);
+                    // 使用 Contrast 函數處理圖片
+                    processedImage = Contrast(grayImage, currentContrast, currentBrightness);
+                }
 
                 // 轉回 BGR 以便顯示和保存
                 if (!(app.param.ContainsKey($"color_{selectedStation}") && app.param[$"color_{selectedStation}"] == "1"))
@@ -617,6 +636,8 @@ namespace peilin
 
                 // 不關閉視窗，只更新狀態
                 UpdateStatus($"參數已儲存 - 站點{selectedStation} 對比度:{currentContrast} 亮度:{currentBrightness}");
+                // 由 GitHub Copilot 產生 - 套用成功後更新按鈕文字
+                btnApplyValues.Text = "✅ 已套用";
             }
             catch (Exception ex)
             {
@@ -634,10 +655,23 @@ namespace peilin
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 清理資源
-            originalImage?.Dispose();
-            processedImage?.Dispose();
-            imagePreview.Image?.Dispose();
+            // 由 GitHub Copilot 產生 - 清理資源並設為 null
+            hasValidImage = false;
+            if (originalImage != null)
+            {
+                originalImage.Dispose();
+                originalImage = null;
+            }
+            if (processedImage != null)
+            {
+                processedImage.Dispose();
+                processedImage = null;
+            }
+            if (imagePreview.Image != null)
+            {
+                imagePreview.Image.Dispose();
+                imagePreview.Image = null;
+            }
             base.OnFormClosing(e);
         }
         private void BtnShowOriginal_MouseDown(object sender, MouseEventArgs e)
@@ -672,7 +706,8 @@ namespace peilin
         private void ImagePreview_Paint(object sender, PaintEventArgs e)
         {
             // 由 GitHub Copilot 產生 - 自訂繪製圖片預覽
-            if (!hasValidImage || originalImage == null)
+            // 由 GitHub Copilot 產生 - 加入 IsDisposed 檢查防止存取已丟棄物件
+            if (!hasValidImage || originalImage == null || originalImage.IsDisposed)
                 return;
 
             try
@@ -681,7 +716,7 @@ namespace peilin
                 Mat displayImage;
                 bool showingOriginal = btnShowOriginal.BackColor == System.Drawing.Color.Orange;
 
-                if (showingOriginal || processedImage == null)
+                if (showingOriginal || processedImage == null || processedImage.IsDisposed)
                 {
                     displayImage = originalImage;
                 }
@@ -689,6 +724,10 @@ namespace peilin
                 {
                     displayImage = processedImage;
                 }
+
+                // 由 GitHub Copilot 產生 - 再次檢查 displayImage 是否有效
+                if (displayImage == null || displayImage.IsDisposed)
+                    return;
 
                 // 轉換為 Bitmap
                 var bitmap = displayImage.ToBitmap();

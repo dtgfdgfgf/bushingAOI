@@ -537,7 +537,7 @@ namespace peilin
             this.groupBox5.Size = new System.Drawing.Size(178, 121);
             this.groupBox5.TabIndex = 416;
             this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "有無五彩鋅";
+            this.groupBox5.Text = "有無電鍍";
             // 
             // comboBox6
             // 
@@ -554,6 +554,7 @@ namespace peilin
             this.comboBox6.Size = new System.Drawing.Size(127, 40);
             this.comboBox6.TabIndex = 21;
             this.comboBox6.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboBox2_DrawItem);
+            this.comboBox6.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
             // 
             // type_info
             // 

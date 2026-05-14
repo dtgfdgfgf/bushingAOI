@@ -254,6 +254,7 @@ namespace peilin
             lbAdd("開啟檢測程式", "inf", "");
             #endregion
             #region 空間不足警告與自動刪檔
+            /*
             // 由 GitHub Copilot 產生
             // 先檢查磁碟空間，若不足200GB則詢問使用者是否刪除舊檔案
             double freeSpaceBefore = GetHardDiskFreeSpace("C");
@@ -322,6 +323,7 @@ namespace peilin
                     lbAdd($"磁碟空間不足 200GB（剩餘 {freeSpaceBefore:F1} GB），使用者選擇不刪除舊檔案。", "war", "");
                 }
             }
+            */
             #endregion
             #region sqlite
             checkTable();
@@ -547,33 +549,123 @@ namespace peilin
                 //dailyCheck();
                 #endregion
                 #region 刪檔作業
+                
                 // 由 GitHub Copilot 產生
                 // 啟動時自動刪除超過保留天數的舊檔案（僅 .\image 資料夾）
+                // 修正：遞迴檢查到日期資料夾層級（yyyy-MM\MMdd），避免誤刪整個月份資料夾
                 // 注意：桌面 NG 備份資料夾不在此處理，由使用者手動管理
                 try
                 {
-                    var dir = @".\image\";
-                    int days = 14; // 預設值
+                    var imageDir = @".\image\";
+                    int keepDays = 14; // 預設值
                     if (app.param.ContainsKey("KeepDay") && int.TryParse(app.param["KeepDay"], out int parsedDays))
                     {
-                        days = parsedDays;
+                        keepDays = parsedDays;
                     }
 
-                    if (Directory.Exists(dir) && days >= 1)
+                    if (Directory.Exists(imageDir) && keepDays >= 1)
                     {
                         var now = DateTime.Now;
-                        foreach (var f in Directory.GetFileSystemEntries(dir).Where(f => Directory.Exists(f)))
+                        var expiredDateFolders = new List<string>();
+
+                        // 階段一：掃描所有日期資料夾，收集待刪除清單
+                        // 結構：.\image\{yyyy-MM}\{MMdd}\...
+                        foreach (var monthFolder in Directory.GetDirectories(imageDir))
                         {
-                            var t = File.GetCreationTime(f);
-
-                            var elapsedTicks = now.Ticks - t.Ticks;
-                            var elapsedSpan = new TimeSpan(elapsedTicks);
-
-                            if (elapsedSpan.TotalDays > days)
+                            foreach (var dateFolder in Directory.GetDirectories(monthFolder))
                             {
-                                Directory.Delete(f, true);
-                                lbAdd($"刪除過期資料夾：{f}", "inf", "");
+                                var creationTime = Directory.GetCreationTime(dateFolder);
+                                var elapsed = now - creationTime;
+                                if (elapsed.TotalDays > keepDays)
+                                {
+                                    expiredDateFolders.Add(dateFolder);
+                                }
                             }
+                        }
+
+                        // 階段二：刪除過期資料夾（有資料夾才顯示進度條）
+                        if (expiredDateFolders.Count > 0)
+                        {
+                            int deletedCount = 0;
+                            int totalCount = expiredDateFolders.Count;
+
+                            using (var progressForm = new Form())
+                            using (var progressBar = new ProgressBar())
+                            using (var statusLabel = new Label())
+                            {
+                                // 設定進度視窗
+                                progressForm.Text = "清理過期檔案";
+                                progressForm.Width = 450;
+                                progressForm.Height = 130;
+                                progressForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                                progressForm.StartPosition = FormStartPosition.CenterScreen;
+                                progressForm.ControlBox = false;
+                                progressForm.TopMost = true;
+                                progressForm.ShowInTaskbar = false;
+
+                                // 設定進度條
+                                progressBar.Minimum = 0;
+                                progressBar.Maximum = totalCount;
+                                progressBar.Value = 0;
+                                progressBar.Location = new System.Drawing.Point(20, 20);
+                                progressBar.Size = new System.Drawing.Size(400, 25);
+
+                                // 設定狀態標籤
+                                statusLabel.Location = new System.Drawing.Point(20, 55);
+                                statusLabel.Size = new System.Drawing.Size(400, 25);
+                                statusLabel.TextAlign = ContentAlignment.MiddleLeft;
+                                statusLabel.Text = "準備刪除...";
+
+                                progressForm.Controls.Add(progressBar);
+                                progressForm.Controls.Add(statusLabel);
+                                progressForm.Show();
+                                Application.DoEvents();
+
+                                // 執行刪除
+                                foreach (var dateFolder in expiredDateFolders)
+                                {
+                                    try
+                                    {
+                                        var folderName = Path.GetFileName(dateFolder);
+                                        var parentName = Path.GetFileName(Path.GetDirectoryName(dateFolder));
+                                        statusLabel.Text = $"刪除中 ({deletedCount + 1}/{totalCount})：{parentName}\\{folderName}";
+                                        Application.DoEvents();
+
+                                        Directory.Delete(dateFolder, true);
+                                        lbAdd($"刪除過期資料夾：{dateFolder}", "inf", "");
+                                    }
+                                    catch (Exception delEx)
+                                    {
+                                        // 單一資料夾刪除失敗，記錄並繼續
+                                        lbAdd($"刪除資料夾失敗：{dateFolder}", "err", delEx.Message);
+                                    }
+
+                                    deletedCount++;
+                                    progressBar.Value = deletedCount;
+                                    Application.DoEvents();
+                                }
+
+                                progressForm.Close();
+                            }
+
+                            // 清理空的月份資料夾
+                            foreach (var monthFolder in Directory.GetDirectories(imageDir))
+                            {
+                                try
+                                {
+                                    if (Directory.GetFileSystemEntries(monthFolder).Length == 0)
+                                    {
+                                        Directory.Delete(monthFolder);
+                                        lbAdd($"刪除空月份資料夾：{monthFolder}", "inf", "");
+                                    }
+                                }
+                                catch (Exception emptyEx)
+                                {
+                                    lbAdd($"刪除空資料夾失敗：{monthFolder}", "err", emptyEx.Message);
+                                }
+                            }
+
+                            lbAdd($"清理完成，共刪除 {deletedCount} 個過期日期資料夾", "inf", "");
                         }
                     }
                 }
@@ -581,6 +673,7 @@ namespace peilin
                 {
                     lbAdd("刪檔錯誤", "err", e1.ToString());
                 }
+                
                 #endregion
                 //setNet();
                 //tasks.Add(Task.Factory.StartNew(() => buttonM9()));
@@ -1767,47 +1860,7 @@ namespace peilin
                                 */
                                 #endregion
 
-                                #region 是否為有效取像（物體位置），只在這裡做!
-
-                                // 0801: 需新增區分真NULL/變形功能
-                                Mat ObjCheckimage = null;
-                                Mat ObjResult = null;
-                                bool isObjectNG = false;
-                                try
-                                {
-                                    ObjCheckimage = input.image.Clone();
-                                    (isObjectNG, ObjResult) = CheckObjectPosition(ObjCheckimage, input.stop);
-
-                                    if (isObjectNG)
-                                    {
-                                        // 顯示檢測結果
-                                        showResultMat(ObjResult, input.stop);
-
-                                        // 建立檢測結果物件
-                                        StationResult CheckObjectResult = new StationResult
-                                        {
-                                            Stop = input.stop,
-                                            IsNG = isObjectNG,
-                                            OkNgScore = 0.0f,
-                                            FinalMap = ObjResult.Clone(),
-                                            DefectName = "NULL_Invalid_ObjPos",
-                                            DefectScore = 1.0f,
-                                            OriName = input.name
-                                        };
-
-                                        // 添加結果到管理器
-                                        app.resultManager.AddResult(input.count, CheckObjectResult);
-                                        //updateLabel();
-                                        continue;
-                                    }
-                                }
-                                finally
-                                {
-                                    ObjCheckimage?.Dispose();
-                                    ObjResult?.Dispose();
-                                }
-
-                                #endregion
+                                
 
                                 #region 是否變形，無效取像也有可能在這裡檢出，因為使用固定座標
                                 /*
@@ -1858,7 +1911,47 @@ namespace peilin
                                 }
                                 #endregion
 
-                                
+                                #region 是否為有效取像（物體位置），只在這裡做!
+
+                                // 0801: 需新增區分真NULL/變形功能
+                                Mat ObjCheckimage = null;
+                                Mat ObjResult = null;
+                                bool isObjectNG = false;
+                                try
+                                {
+                                    ObjCheckimage = input.image.Clone();
+                                    (isObjectNG, ObjResult) = CheckObjectPosition(ObjCheckimage, input.stop);
+
+                                    if (isObjectNG)
+                                    {
+                                        // 顯示檢測結果
+                                        showResultMat(ObjResult, input.stop);
+
+                                        // 建立檢測結果物件
+                                        StationResult CheckObjectResult = new StationResult
+                                        {
+                                            Stop = input.stop,
+                                            IsNG = isObjectNG,
+                                            OkNgScore = 0.0f,
+                                            FinalMap = ObjResult.Clone(),
+                                            DefectName = "NULL_Invalid_ObjPos",
+                                            DefectScore = 1.0f,
+                                            OriName = input.name
+                                        };
+
+                                        // 添加結果到管理器
+                                        app.resultManager.AddResult(input.count, CheckObjectResult);
+                                        //updateLabel();
+                                        continue;
+                                    }
+                                }
+                                finally
+                                {
+                                    ObjCheckimage?.Dispose();
+                                    ObjResult?.Dispose();
+                                }
+
+                                #endregion
                                 // 由 GitHub Copilot 產生
                                 // 根本解決方案: 傳遞 Clone 副本給 DetectAndExtractROI
                                 Mat roiInputImage = null;
@@ -2679,12 +2772,14 @@ namespace peilin
                                         // 如果有OTP瑕疵，才進行色彩複檢
                                         if (otpDefects.Count > 0)
                                         {
-                                            var colorVerifier = new SimplifiedColorVerifier();
+                                            //var colorVerifier = new SimplifiedColorVerifier();
 
                                             // 使用簡化的3+1特徵模型進行色彩複檢
                                             // 主要特徵 (2.5σ): G通道、V通道、R通道
                                             // 輔助特徵 (3.0σ): B通道
-                                            var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
+                                            // 由 GitHub Copilot 產生 - 暫時停用色彩複驗，直接保留全部OTP瑕疵
+                                            var verifiedOtpDefects = otpDefects;
+                                            //var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
 
                                             if (verifiedOtpDefects.Count > 0)
                                             {
@@ -2807,7 +2902,22 @@ namespace peilin
                                             Cv2.PutText(resultImage, ratioText,
                                                                     new Point(10, 420), // 第三行顯示比例信息
                                                                     HersheyFonts.HersheyDuplex, 1, Scalar.Yellow, 2);
-                                            hasDefect = isAreaNG; //如果最後驗到最高分是OTP 那就看OTP總面積是否超過閥值
+                                            // 由 GitHub Copilot 產生
+                                            // 修正: OTP 判定邏輯
+                                            // 1. OTP 必須先超過閾值 (hasDefect == true)
+                                            // 2. 若 OTPratio 啟用，還需要面積占比也超過閾值
+                                            // 3. 若 OTPratio 不啟用，只看 OTP 閾值
+                                            if (hasDefect) // OTP 超過閾值
+                                            {
+                                                // 檢查是否啟用 OTPratio
+                                                if (app.param.ContainsKey("OTPratio" + input.stop.ToString() + "_threshold"))
+                                                {
+                                                    // OTPratio 啟用：需要同時滿足 OTP 閾值 AND 面積占比閾值
+                                                    hasDefect = isAreaNG;
+                                                }
+                                                // else: OTPratio 不啟用，保持 hasDefect = true（只看 OTP 閾值）
+                                            }
+                                            // else: OTP 沒超過閾值，hasDefect 維持 false，不管面積占比
                                         }
                                         // 使用現有的 showResultMat 方法顯示結果
                                         showResultMat(resultImage, input.stop);
@@ -3093,7 +3203,11 @@ namespace peilin
                                     #endregion
 
                                 #region 小黑點AOI檢測
-                                /*
+                                // 由 GitHub Copilot 產生 - 修正: 與 getMat3 對齊，先取得需檢測的瑕疵清單
+                                List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
+                                if (defectsToDetect.Contains("blackDot"))
+                                {
+
                                 bool hasBlackDotsDefect = false;
                                 Mat blackDotResultImage = null;
                                 List<Point[]> blackDotContours = null;
@@ -3175,15 +3289,14 @@ namespace peilin
                                     // ✅ P1-1 修正: try-finally 確保無論 hasBlackDotsDefect 為何都會釋放
                                     blackDotResultImage?.Dispose();
                                 }
-                                    */
+                                } // 由 GitHub Copilot 產生 - 結束 blackDot 檢測的 if 區塊
+                                    
                                 #endregion
 
                                 #region 正常yolo
 
                                 using (Mat visualizationImage = input.image.Clone())
                                 {
-                                    List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
-
                                     // AI 推論 OK/NG
                                     string defectServerUrl = app.produce_outerServerUrl;
 
@@ -3321,12 +3434,14 @@ namespace peilin
                                         // 如果有OTP瑕疵，才進行色彩複檢
                                         if (otpDefects.Count > 0)
                                         {
-                                            var colorVerifier = new SimplifiedColorVerifier();
+                                            //var colorVerifier = new SimplifiedColorVerifier();
 
                                             // 使用簡化的3+1特徵模型進行色彩複檢
                                             // 主要特徵 (2.5σ): G通道、V通道、R通道
                                             // 輔助特徵 (3.0σ): B通道
-                                            var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
+                                            // 由 GitHub Copilot 產生 - 暫時停用色彩複驗，直接保留全部OTP瑕疵
+                                            var verifiedOtpDefects = otpDefects;
+                                            //var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
 
                                             if (verifiedOtpDefects.Count > 0)
                                             {
@@ -3437,6 +3552,35 @@ namespace peilin
                                     // 繪製檢測結果
                                     using (Mat resultImage = _yoloDetection.DrawDetectionResults(visualizationImage, new DetectionResponse { detections = processedDefects }, threshold))
                                     {
+                                        if (defectName == "OTP")
+                                        {
+
+                                            Cv2.PutText(resultImage, areaText,
+                                                                    new Point(10, 300), // 避免與其他文字重疊，放在稍低的位置
+                                                                    HersheyFonts.HersheyDuplex, 1, Scalar.Yellow, 2);
+                                            Cv2.PutText(resultImage, roiText,
+                                                                    new Point(10, 360), // 第二行顯示ROI信息
+                                                                    HersheyFonts.HersheyDuplex, 1, Scalar.Yellow, 2);
+                                            Cv2.PutText(resultImage, ratioText,
+                                                                    new Point(10, 420), // 第三行顯示比例信息
+                                                                    HersheyFonts.HersheyDuplex, 1, Scalar.Yellow, 2);
+                                            // 由 GitHub Copilot 產生
+                                            // 修正: OTP 判定邏輯
+                                            // 1. OTP 必須先超過閾值 (hasDefect == true)
+                                            // 2. 若 OTPratio 啟用，還需要面積占比也超過閾值
+                                            // 3. 若 OTPratio 不啟用，只看 OTP 閾值
+                                            if (hasDefect) // OTP 超過閾值
+                                            {
+                                                // 檢查是否啟用 OTPratio
+                                                if (app.param.ContainsKey("OTPratio" + input.stop.ToString() + "_threshold"))
+                                                {
+                                                    // OTPratio 啟用：需要同時滿足 OTP 閾值 AND 面積占比閾值
+                                                    hasDefect = isAreaNG;
+                                                }
+                                                // else: OTPratio 不啟用，保持 hasDefect = true（只看 OTP 閾值）
+                                            }
+                                            // else: OTP 沒超過閾值，hasDefect 維持 false，不管面積占比
+                                        }
                                         // 使用現有的 showResultMat 方法顯示結果
                                         showResultMat(resultImage, input.stop);
 
@@ -5038,7 +5182,9 @@ namespace peilin
 
         void TypeSetting()
         {
-            Dictionary<string, string> param = new Dictionary<string, string>();
+            // 由 GitHub Copilot 產生
+            // 修改: 使用大小寫不敏感的比較器
+            Dictionary<string, string> param = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (button6.Text == "變更")
             {
@@ -5184,8 +5330,8 @@ namespace peilin
             }
             */
             // 由 GitHub Copilot 產生
-            // 使用 ConcurrentDictionary 建構函式轉換
-            app.param = new ConcurrentDictionary<string, string>(param);
+            // 修改: 使用大小寫不敏感的比較器轉換
+            app.param = new ConcurrentDictionary<string, string>(param, StringComparer.OrdinalIgnoreCase);
         }
 
         #endregion
@@ -5849,8 +5995,27 @@ namespace peilin
         // 由 GitHub Copilot 產生 - 測試取像模式選單事件
         private void testToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            // 由 GitHub Copilot 產生 - 運行中保護：禁止在正常檢測運行中切換測試模式
+            if (app.status && !app.testImageMode && !app.isAdjustmentMode)
+            {
+                CustomMessageBox.Show(
+                    "系統正在運行中，請先停止檢測再切換測試取像模式。",
+                    "操作提醒",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning,
+                    new System.Drawing.Font("微軟正黑體", 14F)
+                );
+                return;
+            }
+
             if (!testToolStripMenuItem.Checked)
             {
+                // 由 GitHub Copilot 產生 - 清空觸發計數器，避免切換後誤判
+                basler.Camera.ResetTriggerCounters();
+                
+                // 由 GitHub Copilot 產生 - 清空影像佇列，釋放殘留的 Mat 物件避免記憶體洩漏
+                ClearImageQueues();
+                
                 // 開啟測試模式（資料夾由 Camera0.cs OnImageGrabbed 自動建立）
                 lbAdd("測試取像模式開啟", "inf", "");
                 testToolStripMenuItem.Checked = true;
@@ -5871,6 +6036,9 @@ namespace peilin
             }
             else
             {
+                // 由 GitHub Copilot 產生 - 關閉測試模式前清空觸發計數器，避免影響正常檢測
+                basler.Camera.ResetTriggerCounters();
+                
                 // 關閉測試模式
                 testToolStripMenuItem.Checked = false;
                 app.testImageMode = false;
@@ -9746,7 +9914,7 @@ namespace peilin
                 int.TryParse(outwardStr, out outwardThreshold);
             }
 
-            // 3. deform_gapTolerance -> maxGapWidthMm
+            // 3. deform_gapTolerance -> maxGapWidthMm (單位: mm)
             double maxGapWidthMm = 10.0;
             if (app.param.TryGetValue($"deform_gapTolerance{stop}_threshold", out string gapTolStr))
             {
@@ -9843,7 +10011,8 @@ namespace peilin
                 // Draw Fitted Circle
                 Cv2.Circle(visualImg, (int)center.X, (int)center.Y, 5, Scalar.Blue, -1);
                 Cv2.Circle(visualImg, (int)center.X, (int)center.Y, (int)fittedRadius, Scalar.Blue, 1);
-                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new Point(10, 110), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
+                // Y=120: 與 Gap(Y=80) 保持足夠間距，避免重疊
+                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new Point(10, 120), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
 
                 // Pixel Scanning for Gap
                 // 修改：將掃描半徑向外擴 5 像素，確保掃描路徑落在物體實體(黑色)上
@@ -9895,41 +10064,40 @@ namespace peilin
                 bool hasGap = false;
                 Point pStart = new Point();
                 Point pEnd = new Point();
-                double gapWidthMm = 0;
+                double gapWidthPx = 0;
                 
                 if (mainGap != null && mainGap.Count > 1)
                 {
                     hasGap = true;
                     pStart = mainGap.First();
                     pEnd = mainGap.Last();
-                    double gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
-                    gapWidthMm = gapWidthPx * pixeltomm;
+                    gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
 
                     Cv2.Line(visualImg, pStart, pEnd, Scalar.Magenta, 2);
-                    Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm ({gapWidthPx:F1}px)", new Point(10, 80), HersheyFonts.HersheySimplex, 0.8, Scalar.Magenta, 2);
                 }
 
                 // 邏輯修正：若有開口，外凸容許值為 outwardThreshold (參數值)；若無開口，容許值為 2
                 outwardThreshold = hasGap ? outwardThreshold : 2;
 
                 // Check Defects
+                // 由 GitHub Copilot 產生 - 修正：將 pixel 轉換為 mm 後再與 mm 閾值比較
+                double gapWidthMm = gapWidthPx * pixeltomm;
                 List<string> ngReasons = new List<string>();
                 bool isGapTooWide = gapWidthMm > maxGapWidthMm;
 
-                if (isGapTooWide) ngReasons.Add($"GapBig({gapWidthMm:F1}>{maxGapWidthMm})");
+                if (isGapTooWide) ngReasons.Add($"GapBig({gapWidthMm:F2}mm>{maxGapWidthMm:F2}mm)");
 
                 Scalar gapColor = isGapTooWide ? Scalar.Red : Scalar.Cyan;
 
                 if (hasGap)
                 {
                     Cv2.Line(visualImg, pStart, pEnd, gapColor, 2);
-                    // 顯示像素距離與物理距離
-                    Point midPoint = new Point((pStart.X + pEnd.X) / 2, (pStart.Y + pEnd.Y) / 2);
-                    Cv2.PutText(visualImg, $"{gapWidthMm:F2}mm", new Point(10, 80), HersheyFonts.HersheySimplex, 1, gapColor, 2);
+                    // Y=80: 顯示開口寬度(mm)，scale 0.8 避免與 R_fit(Y=120) 重疊
+                    Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm", new Point(10, 80), HersheyFonts.HersheySimplex, 0.8, gapColor, 2);
                 }
                 else
                 {
-                    Cv2.PutText(visualImg, "No Gap", new Point(10, 80), HersheyFonts.HersheySimplex, 1, Scalar.Red, 2);
+                    Cv2.PutText(visualImg, "No Gap", new Point(10, 80), HersheyFonts.HersheySimplex, 0.8, Scalar.Red, 2);
                 }
 
                 int inwardBendingCount = 0;
@@ -9987,8 +10155,13 @@ namespace peilin
                 bool isDeformed = ngReasons.Count > 0;
                 if (isDeformed)
                 {
-                    string reason = string.Join(", ", ngReasons);
-                    Cv2.PutText(visualImg, reason, new Point(10, 140), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
+                    // 由 GitHub Copilot 產生 - 每條原因分行顯示，從 Y=150 開始，間距 23px，避免單行過長或與 R_fit(Y=120) 重疊
+                    int reasonY = 150;
+                    foreach (var r in ngReasons)
+                    {
+                        Cv2.PutText(visualImg, r, new Point(10, reasonY), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
+                        reasonY += 23;
+                    }
                 }
 
                 string statusText = isDeformed ? "NG" : "OK";
@@ -10415,7 +10588,16 @@ namespace peilin
 
                 // 4. 做二值化 (65, 255)
                 Mat binaryImage = new Mat();
-                Cv2.Threshold(grayImage, binaryImage, 105, 255, ThresholdTypes.Binary);
+                int lowbound = 0;
+                if (stop == 3)
+                {
+                    lowbound = 105;
+                }
+                else if (stop == 4)
+                {
+                    lowbound = 85;
+                }
+                Cv2.Threshold(grayImage, binaryImage, lowbound, 255, ThresholdTypes.Binary);
 
                 // 5. 做findcontour，找面積為150像素以上的輪廓
                 Point[][] contours;
@@ -19084,19 +19266,31 @@ public class ResultManager
             string saveDir = Path.Combine(basePath, resultFolder);
             if (!Directory.Exists(saveDir)) Directory.CreateDirectory(saveDir);
 
-            // 新增功能：依據站點存放圖片到各自對應資料夾
-            // 檢查是否需要儲存 Stations 結果
+            // 由 GitHub Copilot 產生 - 修正：分開讀取各個儲存參數，OK/NG/NULL 與 Stations 各自獨立控制
+            bool shouldSaveOK = false;
+            bool shouldSaveNG = false;
+            bool shouldSaveNULL = false;
             bool shouldSaveStations = false;
             using (var db = new MydbDB())
             {
-                var param = db.Parameters.Where(p => p.Name == "saveStations").FirstOrDefault();
-                shouldSaveStations = param?.Value == "true";
+                shouldSaveOK = db.Parameters.FirstOrDefault(p => p.Name == "OK")?.Value == "true";
+                shouldSaveNG = db.Parameters.FirstOrDefault(p => p.Name == "NG")?.Value == "true";
+                shouldSaveNULL = db.Parameters.FirstOrDefault(p => p.Name == "NULL")?.Value == "true";
+                shouldSaveStations = db.Parameters.FirstOrDefault(p => p.Name == "saveStations")?.Value == "true";
             }
 
-            if (shouldSaveStations)
+            // 由 GitHub Copilot 產生 - 判斷當前樣品是否需要儲存到結果資料夾 (OK/NG/NULL)
+            bool shouldSaveToResultFolder = false;
+            if (isNull && shouldSaveNULL) shouldSaveToResultFolder = true;
+            else if (isNG && !isNull && shouldSaveNG) shouldSaveToResultFolder = true;
+            else if (!isNG && !isNull && shouldSaveOK) shouldSaveToResultFolder = true;
+
+            // 由 GitHub Copilot 產生 - 只有在需要儲存時才處理圖片
+            if (shouldSaveToResultFolder || shouldSaveStations)
             {
                 string stationBasePath = Path.Combine(basePath, "Stations");
-                if (!Directory.Exists(stationBasePath)) Directory.CreateDirectory(stationBasePath);
+                if (shouldSaveStations && !Directory.Exists(stationBasePath))
+                    Directory.CreateDirectory(stationBasePath);
 
                 foreach (var stationResult in sampleResult.StationResults.Values)
                 {
@@ -19162,46 +19356,37 @@ public class ResultManager
                             5
                         );
 
-                        // 保存原有路徑圖像（需要 Clone 因為 using 會釋放）
-                        app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), savePath));
-
-                        // 由 GitHub Copilot 產生
-                        // 新增功能：NG 圖像額外備份至桌面（永久保存，不受自動刪檔影響）
-                        // 路徑格式：C:\Users\Chernger\Desktop\NG\{yyyy-MM}\{MMdd}\{foldername}\
-                        /*
-                        if (isNG && !isNull)
+                        // 由 GitHub Copilot 產生 - 根據對應參數決定是否儲存到 OK/NG/NULL 資料夾
+                        if (shouldSaveToResultFolder)
                         {
-                            try
-                            {
-                                string desktopNgBasePath = @"C:\Users\Chernger\Desktop\NG";
-                                string desktopNgPath = Path.Combine(
-                                    desktopNgBasePath,
-                                    timestamp.ToString("yyyy-MM"),
-                                    timestamp.ToString("MMdd"),
-                                    app.foldername
-                                );
-                                if (!Directory.Exists(desktopNgPath)) Directory.CreateDirectory(desktopNgPath);
-                                string desktopSavePath = Path.Combine(desktopNgPath, fname);
-                                app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), desktopSavePath));
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Warning($"NG 圖像備份至桌面失敗：{ex.Message}");
-                            }
+                            app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), savePath));
                         }
-                        */
 
-                        // 新增功能：依據站點存放
-                        string stationFolder = Path.Combine(stationBasePath, $"Station{stationResult.Stop}");
-                        if (!Directory.Exists(stationFolder)) Directory.CreateDirectory(stationFolder);
+                        // 由 GitHub Copilot 產生 - 依據 saveStations 參數決定是否存到 Stations 資料夾
+                        if (shouldSaveStations)
+                        {
+                            string stationFolder = Path.Combine(stationBasePath, $"Station{stationResult.Stop}");
+                            if (!Directory.Exists(stationFolder)) Directory.CreateDirectory(stationFolder);
 
-                        // 站點路徑下的檔名可以與原來相同
-                        string stationSavePath = Path.Combine(stationFolder, fname);
-                        app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), stationSavePath));
+                            string stationSavePath = Path.Combine(stationFolder, fname);
+                            app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), stationSavePath));
+                        }
                     }
 
                     // 觸發儲存
                     app._sv.Set();
+                }
+            }
+            else
+            {
+                // 由 GitHub Copilot 產生 - 即使不儲存圖片，也需要釋放 FinalMap 避免記憶體洩漏
+                foreach (var stationResult in sampleResult.StationResults.Values)
+                {
+                    if (stationResult.FinalMap != null)
+                    {
+                        stationResult.FinalMap.Dispose();
+                        stationResult.FinalMap = null;
+                    }
                 }
             }
             // 更新統計資料
@@ -19348,8 +19533,22 @@ public class ResultManager
                             // 由 GitHub Copilot 產生 - 修復：明確檢查 plcCount == app.pack，避免兩者都為 0 時誤判為滿箱
                             if (softwareCount != plcCount)
                             {
-                                // 覆蓋軟體計數
-                                ResultManager.counter[lane] = plcCount;
+                                // 由 GitHub Copilot 產生 - 修復：PLC 計滿後自動歸零的競態條件
+                                // 當軟體計數已達 app.pack 且 PLC 讀到 0，代表 PLC 已完成計數並自動歸零
+                                // 此時應視為同步成功，執行正常切換
+                                if (softwareCount == app.pack && plcCount == 0)
+                                {
+                                    ResultManager.counter[lane] = 0;
+                                    newLane = (lane == "OK1") ? "OK2" : "OK1";
+                                    ResultManager.activeOkCounter = newLane;
+                                    shouldSwitch = true;
+                                    Log.Warning($"[同步] PLC 已歸零（{lane}: 軟體={softwareCount}, PLC={plcCount}），視為計滿切換至 {newLane}");
+                                }
+                                else
+                                {
+                                    // 一般不匹配：覆蓋軟體計數
+                                    ResultManager.counter[lane] = plcCount;
+                                }
                             }
                             else if (plcCount == app.pack && plcCount > 0)
                             {
@@ -20670,7 +20869,9 @@ public class app
     // 修改: 使用執行緒安全的 ConcurrentDictionary
     public static ConcurrentDictionary<string, int> counter = new ConcurrentDictionary<string, int>();
     public static ConcurrentDictionary<string, int> dc = new ConcurrentDictionary<string, int>();
-    public static ConcurrentDictionary<string, string> param = new ConcurrentDictionary<string, string>();
+    // 由 GitHub Copilot 產生
+    // 修改: 使用大小寫不敏感的比較器
+    public static ConcurrentDictionary<string, string> param = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public static ConcurrentDictionary<string, string> models = new ConcurrentDictionary<string, string>();
     public static ConcurrentDictionary<string, string> metas = new ConcurrentDictionary<string, string>();
     public static ConcurrentDictionary<string, int> pos = new ConcurrentDictionary<string, int>();

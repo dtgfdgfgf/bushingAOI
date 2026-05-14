@@ -591,7 +591,7 @@ namespace peilin
             panel.Controls.Add(btnApplyToAll);
             yPos += 45;
 
-            // 儲存設定（初始禁用）
+            // 套用推薦值（初始禁用）
             btnSaveSettings = new Button
             {
                 Text = "套用推薦值",
@@ -923,11 +923,15 @@ namespace peilin
         private void CmbStation_SelectedIndexChanged(object sender, EventArgs e)
         {
             ResetParameterStatus();
+            // 由 GitHub Copilot 產生 - 切換站點時恢復按鈕文字
+            btnSaveSettings.Text = "套用推薦值";
         }
 
         private void CmbCircleType_SelectedIndexChanged(object sender, EventArgs e)
         {
             ResetParameterStatusKeepImages();
+            // 由 GitHub Copilot 產生 - 切換圓類型時恢復按鈕文字
+            btnSaveSettings.Text = "套用推薦值";
         }
         private void ResetParameterStatusKeepImages()
         {
@@ -1126,6 +1130,8 @@ namespace peilin
                         hasSavedToDb = true;
 
                         UpdateCurrentSettingsDisplay();
+                        // 由 GitHub Copilot 產生 - 套用成功後更新按鈕文字
+                        btnSaveSettings.Text = "✅ 已套用";
 
                         MessageBox.Show($"圓心校正參數已成功更新！\n" +
                                       $"料號: {productType}\n" +

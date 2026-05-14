@@ -366,8 +366,12 @@ bin/x64/Release/models/
 Release/opencv_world455.dll
 bin/x64/Release/opencv_world455.dll
 
-# 排除 PVS 自動備份
+# 排除 PVS 工作檔 / 自動備份 (檔名可能含客戶識別)
+*.PVS
 *.PVS.BAK
+
+# 排除 Claude Code 本機個人設定 (含絕對路徑)
+.claude/settings.local.json
 
 # 排除根目錄與 logs/ 內的執行期日誌
 /peilin_log-*.txt

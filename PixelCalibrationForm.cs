@@ -223,6 +223,8 @@ namespace peilin
                 return;
             }
             UpdateStatus($"已選擇站點 {selectedStation}");
+            // 由 GitHub Copilot 產生 - 切換站點時恢復按鈕文字
+            btnApplyValues.Text = "套用推薦值";
             // 若已有量測結果才允許套用
             if (currentDetectionPrecision > 0)
                 btnApplyValues.Enabled = true;
@@ -434,7 +436,7 @@ namespace peilin
                     $"儲存成功\n站點: {selectedStation}\nPixelToMM: {currentDetectionPrecision:F4}",
                     "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                btnApplyValues.Text = "✅ 已套用 (可重算)";
+                btnApplyValues.Text = "✅ 已套用";
                 btnApplyValues.BackColor = System.Drawing.Color.LightGreen;
             }
             catch (Exception ex)

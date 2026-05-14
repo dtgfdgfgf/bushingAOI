@@ -369,6 +369,8 @@ namespace peilin
 
                     btnAnalyzeControl.Text = $"🔍 分析 {selectedImagePaths.Count} 張照片";
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
+                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    btnApplyControl.Text = "✅ 套用推薦值";
                 }
             }
         }
@@ -472,7 +474,7 @@ namespace peilin
                     $"objBias_x = {recommendedBiasX}\nobjBias_y = {recommendedBiasY}",
                     "設定完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                btnApplyControl.Text = "✅ 已套用 (可重新套用)";
+                btnApplyControl.Text = "✅ 已套用";
                 btnApplyControl.BackColor = System.Drawing.Color.LightGreen;
             }
             catch (Exception ex)

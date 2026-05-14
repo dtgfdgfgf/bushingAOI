@@ -1393,7 +1393,7 @@ namespace peilin
             {
                 case 0: return "known_inner"; // 內圓
                 case 1: return "known_outer"; // 外圓  
-                case 2: return "chamfer";     // 倒角
+                case 2: return "known_chamfer";     // 倒角
                 default: return "known_inner";
             }
         }

@@ -1,0 +1,1700 @@
+{
+  "SessionId": "20260320_10218111920T",
+  "CreatedTime": "2026-03-20T13:47:49.4296707+08:00",
+  "SourceType": "10218111920T",
+  "TargetType": "10218111920T",
+  "Parameters": [
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "800",
+      "Stop": 1,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 2,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 3,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "150",
+      "Stop": 4,
+      "ChineseName": "曝光時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 1,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "5",
+      "Stop": 2,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "10",
+      "Stop": 3,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 4,
+      "ChineseName": "增益",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "474",
+      "Stop": 1,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "455",
+      "Stop": 2,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "485",
+      "Stop": 3,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "570",
+      "Stop": 4,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "尋找非ROI(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "NROI向內擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "NROI向外擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "尋找非ROI(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "NROI向內擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "NROI向外擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "尋找非ROI(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "NROI向內擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "NROI向外擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "尋找非ROI(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "NROI向內擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "NROI向外擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "ROI色彩模式 (站1/2一律灰階(0))",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "ROI色彩模式 (站1/2一律灰階(0))",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "ROI色彩模式 (無五彩鋅 → 設為灰階(0))",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "ROI色彩模式 (無五彩鋅 → 設為灰階(0))",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "objTolerance",
+      "Value": "50",
+      "Stop": 2,
+      "ChineseName": "物體偏移容忍度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "1.0",
+      "Stop": 1,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "1.0",
+      "Stop": 2,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 3,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 4,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToOK1_time_ms",
+      "Value": "1250",
+      "Stop": 4,
+      "ChineseName": "站4到OK1出料時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToOK2_time_ms",
+      "Value": "1900",
+      "Stop": 4,
+      "ChineseName": "站4到OK2出料時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToNG_time_ms",
+      "Value": "4600",
+      "Stop": 4,
+      "ChineseName": "站4到NG出料時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToNULL_time_ms",
+      "Value": "5000",
+      "Stop": 4,
+      "ChineseName": "站4到NULL出料時間",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1138",
+      "Stop": 1,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1181",
+      "Stop": 2,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1258",
+      "Stop": 3,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1189",
+      "Stop": 4,
+      "ChineseName": "預設內環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "1061",
+      "Stop": 1,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "1082",
+      "Stop": 2,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "966",
+      "Stop": 3,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "975",
+      "Stop": 4,
+      "ChineseName": "預設內環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "710",
+      "Stop": 1,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "705",
+      "Stop": 2,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "630",
+      "Stop": 3,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "640",
+      "Stop": 4,
+      "ChineseName": "預設外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "500",
+      "Stop": 1,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "505",
+      "Stop": 2,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "485",
+      "Stop": 3,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "500",
+      "Stop": 4,
+      "ChineseName": "預設內半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1136",
+      "Stop": 1,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1187",
+      "Stop": 2,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1246",
+      "Stop": 3,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1217",
+      "Stop": 4,
+      "ChineseName": "預設外環X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "1074",
+      "Stop": 1,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "1118",
+      "Stop": 2,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "978",
+      "Stop": 3,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "975",
+      "Stop": 4,
+      "ChineseName": "預設外環Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1136",
+      "Stop": 1,
+      "ChineseName": "最外中心X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1192",
+      "Stop": 2,
+      "ChineseName": "最外中心X",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_y",
+      "Value": "1073",
+      "Stop": 1,
+      "ChineseName": "最外中心Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_y",
+      "Value": "1111",
+      "Stop": 2,
+      "ChineseName": "最外中心Y",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_radius",
+      "Value": "800",
+      "Stop": 1,
+      "ChineseName": "最外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_radius",
+      "Value": "790",
+      "Stop": 2,
+      "ChineseName": "最外半徑",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0270",
+      "Stop": 2,
+      "ChineseName": "站點2檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0269",
+      "Stop": 1,
+      "ChineseName": "站點1檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0324",
+      "Stop": 3,
+      "ChineseName": "站點3檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0324",
+      "Stop": 4,
+      "ChineseName": "站點4檢測精度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "38.7",
+      "Stop": 1,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "21.7",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "119",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "17.0",
+      "Stop": 2,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "33.3",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "177",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "12.6",
+      "Stop": 3,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "27.2",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "190",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "8.7",
+      "Stop": 4,
+      "ChineseName": "白色像素占比",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "23.0",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "175",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenContrast",
+      "Value": "25",
+      "Stop": 1,
+      "ChineseName": "站點1對比度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenBrightness",
+      "Value": "-15",
+      "Stop": 1,
+      "ChineseName": "站點1亮度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenContrast",
+      "Value": "30",
+      "Stop": 2,
+      "ChineseName": "站點2對比度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenBrightness",
+      "Value": "-5",
+      "Stop": 2,
+      "ChineseName": "站點2亮度",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "objBias_x",
+      "Value": "-43",
+      "Stop": 2,
+      "ChineseName": "物體X軸偏移補償",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "objBias_y",
+      "Value": "57",
+      "Stop": 2,
+      "ChineseName": "物體Y軸偏移補償",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gapThresh",
+      "Value": "115",
+      "Stop": 2,
+      "ChineseName": "Gap檢測閾值",
+      "Zone": 0,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "800",
+      "Stop": 1,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 2,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "600",
+      "Stop": 3,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "exposure",
+      "Value": "150",
+      "Stop": 4,
+      "ChineseName": "曝光時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 1,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "5",
+      "Stop": 2,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "10",
+      "Stop": 3,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gain",
+      "Value": "6",
+      "Stop": 4,
+      "ChineseName": "增益",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "474",
+      "Stop": 1,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "455",
+      "Stop": 2,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "485",
+      "Stop": 3,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "delay",
+      "Value": "570",
+      "Stop": 4,
+      "ChineseName": "拍照延遲時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "尋找非ROI(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "NROI向內擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "NROI向外擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "尋找非ROI(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "NROI向內擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "NROI向外擴展像素(內圈) (無內圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "尋找非ROI(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "NROI向內擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "NROI向外擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "find_NROI",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "尋找非ROI(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_in",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "NROI向內擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "expandNROI_out",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "NROI向外擴展像素(外圈) (無外圈NROI模型 → 設為0)",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 1,
+      "ChineseName": "ROI色彩模式 (站1/2一律灰階(0))",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 2,
+      "ChineseName": "ROI色彩模式 (站1/2一律灰階(0))",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 3,
+      "ChineseName": "ROI色彩模式 (無五彩鋅 → 設為灰階(0))",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "color",
+      "Value": "0",
+      "Stop": 4,
+      "ChineseName": "ROI色彩模式 (無五彩鋅 → 設為灰階(0))",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "objTolerance",
+      "Value": "50",
+      "Stop": 2,
+      "ChineseName": "物體偏移容忍度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "1.0",
+      "Stop": 1,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "1.0",
+      "Stop": 2,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 3,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "IOU",
+      "Value": "0.2",
+      "Stop": 4,
+      "ChineseName": "瑕疵在非ROI區占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToOK1_time_ms",
+      "Value": "1250",
+      "Stop": 4,
+      "ChineseName": "站4到OK1出料時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToOK2_time_ms",
+      "Value": "1900",
+      "Stop": 4,
+      "ChineseName": "站4到OK2出料時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToNG_time_ms",
+      "Value": "4600",
+      "Stop": 4,
+      "ChineseName": "站4到NG出料時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "fourToNULL_time_ms",
+      "Value": "5000",
+      "Stop": 4,
+      "ChineseName": "站4到NULL出料時間",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1138",
+      "Stop": 1,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1181",
+      "Stop": 2,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1258",
+      "Stop": 3,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_x",
+      "Value": "1189",
+      "Stop": 4,
+      "ChineseName": "預設內環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "1061",
+      "Stop": 1,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "1082",
+      "Stop": 2,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "966",
+      "Stop": 3,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_center_y",
+      "Value": "975",
+      "Stop": 4,
+      "ChineseName": "預設內環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "710",
+      "Stop": 1,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "705",
+      "Stop": 2,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "630",
+      "Stop": 3,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_radius",
+      "Value": "640",
+      "Stop": 4,
+      "ChineseName": "預設外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "500",
+      "Stop": 1,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "505",
+      "Stop": 2,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "485",
+      "Stop": 3,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_inner_radius",
+      "Value": "500",
+      "Stop": 4,
+      "ChineseName": "預設內半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1136",
+      "Stop": 1,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1187",
+      "Stop": 2,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1246",
+      "Stop": 3,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_x",
+      "Value": "1217",
+      "Stop": 4,
+      "ChineseName": "預設外環X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "1074",
+      "Stop": 1,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "1118",
+      "Stop": 2,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "978",
+      "Stop": 3,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_outer_center_y",
+      "Value": "975",
+      "Stop": 4,
+      "ChineseName": "預設外環Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1136",
+      "Stop": 1,
+      "ChineseName": "最外中心X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_x",
+      "Value": "1192",
+      "Stop": 2,
+      "ChineseName": "最外中心X",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_y",
+      "Value": "1073",
+      "Stop": 1,
+      "ChineseName": "最外中心Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_center_y",
+      "Value": "1111",
+      "Stop": 2,
+      "ChineseName": "最外中心Y",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_radius",
+      "Value": "800",
+      "Stop": 1,
+      "ChineseName": "最外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "known_chamfer_radius",
+      "Value": "790",
+      "Stop": 2,
+      "ChineseName": "最外半徑",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0270",
+      "Stop": 2,
+      "ChineseName": "站點2檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0269",
+      "Stop": 1,
+      "ChineseName": "站點1檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0324",
+      "Stop": 3,
+      "ChineseName": "站點3檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "PixelToMM",
+      "Value": "0.0324",
+      "Stop": 4,
+      "ChineseName": "站點4檢測精度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "38.7",
+      "Stop": 1,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "21.7",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "119",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 1,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "17.0",
+      "Stop": 2,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "33.3",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "177",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 2,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "12.6",
+      "Stop": 3,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "27.2",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "190",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 3,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "white",
+      "Value": "8.7",
+      "Stop": 4,
+      "ChineseName": "白色像素占比",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteNULL",
+      "Value": "23.0",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteThresh",
+      "Value": "175",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "whiteTolerance",
+      "Value": "5.0",
+      "Stop": 4,
+      "ChineseName": "白色像素閾值",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenContrast",
+      "Value": "25",
+      "Stop": 1,
+      "ChineseName": "站點1對比度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenBrightness",
+      "Value": "-15",
+      "Stop": 1,
+      "ChineseName": "站點1亮度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenContrast",
+      "Value": "30",
+      "Stop": 2,
+      "ChineseName": "站點2對比度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "deepenBrightness",
+      "Value": "-5",
+      "Stop": 2,
+      "ChineseName": "站點2亮度",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "objBias_x",
+      "Value": "-43",
+      "Stop": 2,
+      "ChineseName": "物體X軸偏移補償",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "objBias_y",
+      "Value": "57",
+      "Stop": 2,
+      "ChineseName": "物體Y軸偏移補償",
+      "Zone": 1,
+      "IsSelected": false
+    },
+    {
+      "Type": "10218111920T",
+      "Name": "gapThresh",
+      "Value": "115",
+      "Stop": 2,
+      "ChineseName": "Gap檢測閾值",
+      "Zone": 1,
+      "IsSelected": false
+    }
+  ]
+}

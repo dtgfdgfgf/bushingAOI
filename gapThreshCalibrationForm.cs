@@ -44,10 +44,16 @@ namespace peilin
             public string ImagePath { get; set; }
             public bool IsNG { get; set; }
             // 由 GitHub Copilot 產生 - 改為返回開口大小數據
-            public double OuterGapMm { get; set; }          // 外擴開口大小 (mm)
+            public double OuterGapMm { get; set; }          // 外擴開口弦長 (mm)
             public double OuterGapAngleDeg { get; set; }    // 外擴開口角度 (度)
             public double InwardBendMm { get; set; }        // 內彎弧長 (mm)
             public double InwardBendAngleDeg { get; set; }  // 內彎角度 (度)
+            // 由 GitHub Copilot 產生 - 新增欄位以正確反映檢測邏輯
+            public int InwardBendingCount { get; set; }           // 內彎像素點數（與閾值比較用）
+            public int OutwardDeformationCount { get; set; }      // 外凸像素點數（與閾值比較用）
+            public double MaxGapWidthMm { get; set; }             // 本次分析實際使用的開口容許閾值 (mm)
+            public bool HasGap { get; set; }                      // 是否偵測到開口
+            public List<string> NgReasons { get; set; }           // NG 原因清單
             public Mat OriginalImage { get; set; }
             public Mat ResultImage { get; set; }
             public bool IsValid { get; set; }
@@ -393,6 +399,8 @@ namespace peilin
 
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
                     btnApplyControl.Enabled = selectedImagePaths.Count > 0;
+                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    btnApplyControl.Text = "✅ 套用推薦值";
 
                     // 自動進行首次分析
                     if (selectedImagePaths.Count > 0)
@@ -467,7 +475,7 @@ namespace peilin
                     $"gapThresh = {currentGapThresh}",
                     "設定完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                btnApplyControl.Text = "✅ 已套用 (可重新套用)";
+                btnApplyControl.Text = "✅ 已套用";
                 btnApplyControl.BackColor = System.Drawing.Color.LightGreen;
             }
             catch (Exception ex)
@@ -545,8 +553,8 @@ namespace peilin
                     throw new Exception("無法載入圖片");
                 }
 
-                // 由 GitHub Copilot 產生 - 更新為接收開口大小數據
-                var (isNG, resultImage, outerGapMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg) =
+                // 由 GitHub Copilot 產生 - 更新為接收完整檢測詳情
+                var (isNG, resultImage, outerGapMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg, inwardBendingCount, outwardDeformationCount, maxGapWidthMm, hasGap, ngReasons) =
                     AnalyzeGapWithThreshold(image, targetStation, currentGapThresh);
 
                 return new GapAnalysisResult
@@ -557,6 +565,11 @@ namespace peilin
                     OuterGapAngleDeg = outerGapAngleDeg,
                     InwardBendMm = inwardBendMm,
                     InwardBendAngleDeg = inwardBendAngleDeg,
+                    InwardBendingCount = inwardBendingCount,
+                    OutwardDeformationCount = outwardDeformationCount,
+                    MaxGapWidthMm = maxGapWidthMm,
+                    HasGap = hasGap,
+                    NgReasons = ngReasons,
                     OriginalImage = image.Clone(),
                     ResultImage = resultImage,
                     IsValid = true,
@@ -645,7 +658,7 @@ namespace peilin
             }
         }
         // 由 GitHub Copilot 產生 - 修改返回值為開口大小數據
-        public (bool isNG, Mat img, double outerGapMm, double outerGapAngleDeg, double inwardBendMm, double inwardBendAngleDeg)
+        public (bool isNG, Mat img, double outerGapMm, double outerGapAngleDeg, double inwardBendMm, double inwardBendAngleDeg, int inwardBendingCount, int outwardDeformationCount, double maxGapWidthMm, bool hasGap, List<string> ngReasons)
             AnalyzeGapWithThreshold(Mat img, int stop, int gapThresh)
         {
             // 由 GitHub Copilot 產生
@@ -661,7 +674,7 @@ namespace peilin
             int minthresh = gapThresh;
             if (minthresh == 0)
             {
-                return (false, visualImg, 0, 0, 0, 0);
+                return (false, visualImg, 0, 0, 0, 0, 0, 0, 0.0, false, new List<string>());
             }
 
             double pixeltomm = 1.0;
@@ -703,6 +716,14 @@ namespace peilin
                 double.TryParse(misalignStr, out tolerancePx);
             }
 
+            // 由 GitHub Copilot 產生
+            // 5. deform_gapClusterSpan -> gapClusterSpanThreshold (無開口時外凸群集角度容許值，單位：度)
+            double gapClusterSpanThreshold = 5.0;
+            if (app.param.TryGetValue($"deform_gapClusterSpan{stop}_threshold", out string gapClusterStr))
+            {
+                double.TryParse(gapClusterStr, out gapClusterSpanThreshold);
+            }
+
             using (Mat gray = new Mat())
             using (Mat binary = new Mat())
             {
@@ -718,7 +739,7 @@ namespace peilin
                 HierarchyIndex[] hierarchy;
                 Cv2.FindContours(binary, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxNone);
 
-                if (contours.Length == 0) return (false, visualImg, 0, 0, 0, 0);
+                if (contours.Length == 0) return (false, visualImg, 0, 0, 0, 0, 0, 0, 0.0, false, new List<string>());
 
                 var bushingContour = contours.OrderByDescending(c => Cv2.ContourArea(c)).First();
 
@@ -742,7 +763,7 @@ namespace peilin
                     if (d < distThreshold) innerPoints.Add(p);
                 }
 
-                if (innerPoints.Count < 10) return (false, visualImg, 0, 0, 0, 0);
+                if (innerPoints.Count < 10) return (false, visualImg, 0, 0, 0, 0, 0, 0, 0.0, false, new List<string>());
 
                 // Fit Circle (Least Squares)
                 var fitResult = FitCircle(innerPoints);
@@ -752,7 +773,8 @@ namespace peilin
                 // Draw Fitted Circle
                 Cv2.Circle(visualImg, (int)center.X, (int)center.Y, 5, Scalar.Blue, -1);
                 Cv2.Circle(visualImg, (int)center.X, (int)center.Y, (int)fittedRadius, Scalar.Blue, 1);
-                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new OpenCvSharp.Point(10, 110), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
+                // Y=120: 與 Gap(Y=80) 保持足夠間距，避免重疊
+                Cv2.PutText(visualImg, $"R_fit: {fittedRadius:F1}px", new OpenCvSharp.Point(10, 120), HersheyFonts.HersheySimplex, 0.8, Scalar.Yellow, 2);
 
                 // Pixel Scanning for Gap
                 int scanRadius = (int)fittedRadius + 20;
@@ -812,13 +834,10 @@ namespace peilin
                     pEnd = mainGap.Last();
                     double gapWidthPx = Math.Sqrt(Math.Pow(pStart.X - pEnd.X, 2) + Math.Pow(pStart.Y - pEnd.Y, 2));
                     gapWidthMm = gapWidthPx * pixeltomm;
-
-                    Cv2.Line(visualImg, pStart, pEnd, Scalar.Magenta, 2);
-                    Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm ({gapWidthPx:F1}px)", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 0.8, Scalar.Magenta, 2);
                 }
 
                 // 邏輯修正：若有開口，外凸容許值為 outwardThreshold (參數值)；若無開口，容許值為 2
-                outwardThreshold = hasGap ? outwardThreshold : 2;
+                //outwardThreshold = hasGap ? outwardThreshold : 2;
 
                 // Check Defects
                 List<string> ngReasons = new List<string>();
@@ -831,17 +850,53 @@ namespace peilin
                 if (hasGap)
                 {
                     Cv2.Line(visualImg, pStart, pEnd, gapColor, 2);
-                    OpenCvSharp.Point midPoint = new OpenCvSharp.Point((pStart.X + pEnd.X) / 2, (pStart.Y + pEnd.Y) / 2);
-                    Cv2.PutText(visualImg, $"{gapWidthMm:F2}mm", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 1, gapColor, 2);
+                    // Y=80: 顯示開口寬度(mm)，scale 0.8 避免與 R_fit(Y=120) 重疊
+                    Cv2.PutText(visualImg, $"Gap: {gapWidthMm:F2}mm", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 0.8, gapColor, 2);
                 }
                 else
                 {
-                    Cv2.PutText(visualImg, "No Gap", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 1, Scalar.Red, 2);
+                    Cv2.PutText(visualImg, "No Gap", new OpenCvSharp.Point(10, 80), HersheyFonts.HersheySimplex, 0.8, Scalar.Red, 2);
                 }
 
                 int inwardBendingCount = 0;
                 int outwardDeformationCount = 0;
                 double gapExclusionAngle = 1.0;
+
+                // 由 GitHub Copilot 產生
+                // 無開口時：預先收集所有外凸點角度，計算角度跨度以判斷是否為開口邊緣假陽性
+                bool suppressOutward = false;
+                if (!hasGap)
+                {
+                    List<double> outwardAngles = new List<double>();
+                    foreach (var q in innerPoints)
+                    {
+                        double dx2 = q.X - center.X;
+                        double dy2 = q.Y - center.Y;
+                        double r2 = Math.Sqrt(dx2 * dx2 + dy2 * dy2);
+                        if (r2 > fittedRadius + tolerancePx)
+                        {
+                            double ang = Math.Atan2(dy2, dx2) * 180.0 / Math.PI; // -180 ~ 180
+                            outwardAngles.Add(ang);
+                        }
+                    }
+                    if (outwardAngles.Count > 0)
+                    {
+                        outwardAngles.Sort();
+                        // 計算最小包含弧 = 360 - 最大間隔
+                        double maxGapBetween = 0;
+                        for (int i = 1; i < outwardAngles.Count; i++)
+                        {
+                            double g = outwardAngles[i] - outwardAngles[i - 1];
+                            if (g > maxGapBetween) maxGapBetween = g;
+                        }
+                        // 考慮跨越 -180/+180 邊界的間隔
+                        double wrapGap = (outwardAngles[0] + 360.0) - outwardAngles[outwardAngles.Count - 1];
+                        if (wrapGap > maxGapBetween) maxGapBetween = wrapGap;
+                        double clusterSpan = 360.0 - maxGapBetween;
+                        // 角度跨度 < 門檻值 → 視為開口邊緣幾何假陽性，全部忽略
+                        suppressOutward = (clusterSpan < gapClusterSpanThreshold);
+                    }
+                }
 
                 foreach (var p in innerPoints)
                 {
@@ -877,7 +932,8 @@ namespace peilin
                             }
                         }
 
-                        if (isDefect)
+                        // 由 GitHub Copilot 產生：無開口且群集跨度 < 門檻值時，忽略此外凸點
+                        if (isDefect && !suppressOutward)
                         {
                             Cv2.Circle(visualImg, p, 2, Scalar.Magenta, -1);
                             outwardDeformationCount++;
@@ -891,8 +947,13 @@ namespace peilin
                 bool isDeformed = ngReasons.Count > 0;
                 if (isDeformed)
                 {
-                    string reason = string.Join(", ", ngReasons);
-                    Cv2.PutText(visualImg, reason, new OpenCvSharp.Point(10, 140), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
+                    // 由 GitHub Copilot 產生 - 每條原因分行顯示，從 Y=150 開始，間距 23px，避免單行過長或與 R_fit(Y=120) 重疊
+                    int reasonY = 150;
+                    foreach (var r in ngReasons)
+                    {
+                        Cv2.PutText(visualImg, r, new OpenCvSharp.Point(10, reasonY), HersheyFonts.HersheySimplex, 0.6, Scalar.Red, 1);
+                        reasonY += 23;
+                    }
                 }
 
                 string statusText = isDeformed ? "NG" : "OK";
@@ -919,7 +980,8 @@ namespace peilin
                     inwardBendMm = inwardBendAngleDeg * Math.PI / 180.0 * fittedRadius * pixeltomm;
                 }
 
-                return (isDeformed, visualImg, gapWidthMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg);
+                // 由 GitHub Copilot 產生 - 擴充回傳元組以包含檢測詳情
+                return (isDeformed, visualImg, gapWidthMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg, inwardBendingCount, outwardDeformationCount, maxGapWidthMm, hasGap, new List<string>(ngReasons));
             }
         }
         #endregion
@@ -961,25 +1023,55 @@ namespace peilin
 
         private void UpdateImageInfo(GapAnalysisResult currentResult)
         {
+            // 由 GitHub Copilot 產生 - 修正所有顯示邏輯與實際檢測邏輯的出入
             string info = $"📷 圖片 {currentImageIndex + 1}/{gapAnalysisResults.Count}: {currentResult.ImagePath}\r\n\r\n";
             info += $"🔍 分析狀態: {(currentResult.IsValid ? "✅ 成功分析" : "❌ 分析失敗")}\r\n\r\n";
 
             if (currentResult.IsValid)
             {
                 info += $"⚙️ 使用 gapThresh: {currentResult.UsedGapThresh}\r\n";
-                info += $"🔍 檢測結果: {(currentResult.IsNG ? "❌ NG (檢出Gap)" : "✅ OK (無Gap)")}\r\n\r\n";
 
-                // 由 GitHub Copilot 產生 - 顯示開口大小數據而非位置
+                // 修正出入一：NG 描述不再硬寫「檢出Gap」，改由 NgReasons 顯示實際原因
+                info += $"🔍 檢測結果: {(currentResult.IsNG ? "❌ NG" : "✅ OK")}\r\n";
+                if (currentResult.IsNG && currentResult.NgReasons != null && currentResult.NgReasons.Count > 0)
+                {
+                    info += $"  NG 原因: {string.Join(", ", currentResult.NgReasons)}\r\n";
+                }
+                info += "\r\n";
+
                 info += $"📏 開口尺寸測量:\r\n";
+                // 補充開口狀態
+                info += $"  開口狀態: {(currentResult.HasGap ? "有開口" : "無開口")}\r\n";
                 info += $"  外擴開口:\r\n";
-                info += $"    弧長: {currentResult.OuterGapMm:F3} mm\r\n";
+                // 修正出入四：「弧長」改為「開口弦長」（計算方式為兩端點直線距離）
+                info += $"    開口弦長: {currentResult.OuterGapMm:F3} mm\r\n";
                 info += $"    角度: {currentResult.OuterGapAngleDeg:F2}°\r\n";
-                info += $"    判定: {(currentResult.OuterGapMm >= 1.5 ? "❌ NG (≥1.5mm)" : "✅ OK (<1.5mm)")}\r\n\r\n";
+                // 修正出入二：判定閾值使用實際參數值 MaxGapWidthMm，而非硬編碼 1.5mm
+                info += $"    判定: {(currentResult.OuterGapMm > currentResult.MaxGapWidthMm ? $"❌ NG (>{currentResult.MaxGapWidthMm:F1}mm)" : $"✅ OK (≤{currentResult.MaxGapWidthMm:F1}mm)")}\r\n\r\n";
 
+                // 修正出入三：內彎判定依 NgReasons 決定 NG/OK，顯示實際點數
+                bool inwardNG = currentResult.NgReasons != null && currentResult.NgReasons.Any(r => r.StartsWith("Inward"));
                 info += $"  內彎檢測:\r\n";
+                info += $"    像素點數: {currentResult.InwardBendingCount}\r\n";
                 info += $"    弧長: {currentResult.InwardBendMm:F3} mm\r\n";
                 info += $"    角度: {currentResult.InwardBendAngleDeg:F2}°\r\n";
-                info += $"    判定: {(currentResult.InwardBendAngleDeg > 0 ? "❌ NG (有內彎)" : "✅ OK (無內彎)")}\r\n";
+                if (inwardNG)
+                    info += $"    判定: ❌ NG (超過閾值)\r\n\r\n";
+                else if (currentResult.InwardBendingCount > 0)
+                    info += $"    判定: ✅ OK ({currentResult.InwardBendingCount} 點，未達閾值)\r\n\r\n";
+                else
+                    info += $"    判定: ✅ OK (無內彎)\r\n\r\n";
+
+                // 修正出入五：新增外凸檢測區塊
+                bool outwardNG = currentResult.NgReasons != null && currentResult.NgReasons.Any(r => r.StartsWith("Outward"));
+                info += $"  外凸檢測:\r\n";
+                info += $"    像素點數: {currentResult.OutwardDeformationCount}\r\n";
+                if (outwardNG)
+                    info += $"    判定: ❌ NG (超過閾值)\r\n";
+                else if (currentResult.OutwardDeformationCount > 0)
+                    info += $"    判定: ✅ OK ({currentResult.OutwardDeformationCount} 點，未達閾值)\r\n";
+                else
+                    info += $"    判定: ✅ OK (無外凸)\r\n";
             }
             else
             {

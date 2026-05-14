@@ -61,6 +61,18 @@ namespace basler
         private static readonly ConcurrentDictionary<int, int> _testModeCounters = new ConcurrentDictionary<int, int>();
         DateTime st = DateTime.Now;
 
+        // 由 GitHub Copilot 產生
+        /// <summary>
+        /// 重置觸發時間和計數器，用於測試取像模式切換時清空狀態
+        /// 避免切換後第一張影像因間隔計算被誤判為誤觸
+        /// </summary>
+        public static void ResetTriggerCounters()
+        {
+            _lastGrabTimes.Clear();
+            _grabCounters.Clear();
+            LogMessage("觸發時間計數器已重置（測試模式切換）", false);
+        }
+
         // 新增: CSV 統計相關
         private static string _csvFilePath;
         private static readonly object _csvLock = new object();
@@ -206,7 +218,7 @@ namespace basler
                 {
                     level = "初次";
                 }
-                else if (intervalMs < 100)
+                else if (intervalMs < 200)
                 {
                     level = "嚴重";  // 會在 Excel 中標記為紅色
                 }
@@ -978,7 +990,7 @@ namespace basler
                             LogTriggerTime(cameraIndex, time_start, intervalMs, currentCounter);
 
                             // 分級記錄邏輯
-                            if (intervalMs < 100)
+                            if (intervalMs < 150)
                             {
                                 LogMessage($"相機 {cameraIndex} 嚴重誤觸,間隔 {intervalMs:F3}ms", true);
 
