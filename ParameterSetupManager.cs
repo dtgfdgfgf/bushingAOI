@@ -146,8 +146,8 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正 ParameterSetupManager 中的進度計算
-        // 由 GitHub Copilot 產生 - 修正 ParameterSetupManager 中的進度計算
+        // 修正 ParameterSetupManager 中的進度計算
+        // 修正 ParameterSetupManager 中的進度計算
         public void UpdateCategoryProgress(ParameterCategory category, int completed, int total)
         {
             categoryProgress[category] = completed;
@@ -216,7 +216,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正整體進度計算
+        // 修正整體進度計算
         public int GetOverallProgress()
         {
             int totalCompleted = 0;
@@ -235,7 +235,7 @@ namespace peilin
             return totalCount > 0 ? (int)Math.Round((double)totalCompleted / totalCount * 100) : 0;
         }
 
-        // 由 GitHub Copilot 產生 - 修正進度摘要顯示
+        // 修正進度摘要顯示
         public string GetProgressSummary()
         {
             var summary = new List<string>();

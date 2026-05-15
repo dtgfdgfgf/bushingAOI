@@ -144,7 +144,6 @@ namespace peilin
 
         #region sqlite
         static string mydb = @".\setting\mydb.sqlite";
-        // 由 GitHub Copilot 產生
         // 修正: 增加 SQLite 並發支援,避免 "database is locked" 錯誤
         // BusyTimeout=5000: 等待鎖定最多 5 秒
         // Journal Mode=WAL: 使用 Write-Ahead Logging,支援多讀者/單寫者
@@ -255,7 +254,6 @@ namespace peilin
             #endregion
             #region 空間不足警告與自動刪檔
             /*
-            // 由 GitHub Copilot 產生
             // 先檢查磁碟空間，若不足200GB則詢問使用者是否刪除舊檔案
             double freeSpaceBefore = GetHardDiskFreeSpace("C");
             if (200 > freeSpaceBefore)
@@ -388,7 +386,6 @@ namespace peilin
 
                         PLC_SetM(30, true);   // 先開燈
 
-                        // 由 GitHub Copilot 產生
                         // 啟動時寫入出料卡料時間預設值到PLC
                         PLC_SetD(8, app.DEFAULT_D8_VALUE);
                         PLC_SetD(9, app.DEFAULT_D9_VALUE);
@@ -538,7 +535,6 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生
                 // 初始化時隱藏出料卡料時間設定選單（僅管理者/工程師可見）
                 出料卡料時間設定ToolStripMenuItem.Visible = false;
                 檔案留存天數設定ToolStripMenuItem.Visible = false;
@@ -550,7 +546,6 @@ namespace peilin
                 #endregion
                 #region 刪檔作業
                 
-                // 由 GitHub Copilot 產生
                 // 啟動時自動刪除超過保留天數的舊檔案（僅 .\image 資料夾）
                 // 修正：遞迴檢查到日期資料夾層級（yyyy-MM\MMdd），避免誤刪整個月份資料夾
                 // 注意：桌面 NG 備份資料夾不在此處理，由使用者手動管理
@@ -784,7 +779,6 @@ namespace peilin
         #region PLC 訊號數量監控
         private void StartPLCQueueMonitoring()
         {
-            // 由 GitHub Copilot 產生
             // 修正: 計時器週期設定為 500 毫秒，提供足夠的監控頻率
             _plcQueueMonitorTimer = new System.Threading.Timer(
                 MonitorPLCQueueLengths,
@@ -798,7 +792,6 @@ namespace peilin
 
         private void MonitorPLCQueueLengths(object state)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 使用時間戳判斷，確保每秒最多寫一次 LOG
 
             // 只在系統運行時監控
@@ -851,7 +844,7 @@ namespace peilin
         #region Receiver
         public void Receiver(int camID, Mat Src, DateTime dt)
         {
-            // 由 GitHub Copilot 產生 - 調機模式防禦性檢查
+            // 調機模式防禦性檢查
             if (app.isAdjustmentMode)
             {
                 // 理論上不應該到這裡（因為 Camera0.cs 的 OnImageGrabbed 已經阻擋）
@@ -890,7 +883,6 @@ namespace peilin
                                 SAMPLE_ID = app.counter["stop3"];
                             }
 
-                            // 由 GitHub Copilot 產生
                             // 新增：每 100 個樣品監控一次記憶體（統一在 Receiver 監控）
                             lock (_memoryMonitorLock)
                             {
@@ -1005,7 +997,6 @@ namespace peilin
                     {
                         try
                         {
-                            // 由 GitHub Copilot 產生
                             // 修正: 調機模式也需要 Clone,因為 OnImageGrabbed 返回後 Src 可能被 GC
                             Mat clonedMat = null;
                             try
@@ -1079,7 +1070,6 @@ namespace peilin
                     app.Queue_Bitmap1.TryDequeue(out input);
                     if (app.status && input != null)
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: Receiver 已經 Clone,這裡只需檢查有效性
                         if (input.image == null || input.image.IsDisposed)
                         {
@@ -1098,7 +1088,6 @@ namespace peilin
                                 {
                                     try
                                     {
-                                        // 由 GitHub Copilot 產生
                                         // 緊急修正 (ObjectDisposedException): 直接 Enqueue 必須 Clone
                                         // 原因: input.image 後續還要給 findGap/DetectAndExtractROI 等函數使用
                                         // 只有透過 SaveImageAsync() 函數才會內部自動 Clone
@@ -1141,7 +1130,6 @@ namespace peilin
                                         // 顯示檢測結果
                                         showResultMat(whiteCheckImage, input.stop);
 
-                                        // 由 GitHub Copilot 產生
                                         // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
                                         // 建立檢測結果物件
                                         StationResult WhitePixelResult = new StationResult
@@ -1213,7 +1201,6 @@ namespace peilin
                                 #endregion
 
                                 #region 倒角 只檢藍色畫線
-                                // 由 GitHub Copilot 產生
                                 // 修正: 使用快取檢查是否需要倒角檢測,避免資料庫鎖定
                                 string chamferCacheKey = $"{app.produce_No}_{input.stop}";
                                 bool needChamferDetection = app.chamferDetectionCache.TryGetValue(chamferCacheKey, out bool cached)
@@ -1236,7 +1223,6 @@ namespace peilin
                                             // 顯示檢測結果
                                             showResultMat(resultimage, input.stop);
 
-                                            // 由 GitHub Copilot 產生
                                             // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
                                             // 建立檢測結果物件
                                             StationResult chamferResult = new StationResult
@@ -1264,7 +1250,6 @@ namespace peilin
 
                                 #endregion
 
-                                // 由 GitHub Copilot 產生
                                 // 根本解決方案: 傳遞 Clone 副本給 DetectAndExtractROI
                                 Mat roiInputImage = null;
                                 Mat roi = null;
@@ -1273,7 +1258,6 @@ namespace peilin
                                 {
                                     roiInputImage = input.image.Clone();
                                     roi = DetectAndExtractROI(roiInputImage, input.stop, input.count);
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正: 檢查 roi 是否有效，避免後續操作失敗
                                     if (roi == null || roi.IsDisposed || roi.Empty())
                                     {
@@ -1297,7 +1281,6 @@ namespace peilin
                                         }
                                         // 執行非 ROI 區域檢測
                                         string nonRoiServerUrl = app.produce_inner_NROI_ServerUrl;
-                                        // 由 GitHub Copilot 產生
                                         // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                         DetectionResponse nonRoiDetection;
                                         using (Mat roiForNroi = roi.Clone())
@@ -1320,7 +1303,6 @@ namespace peilin
                                             PerformanceProfiler.StopMeasure($"{input.count}_nonRoiDetection1");
                                         }
 
-                                        // 由 GitHub Copilot 產生
                                         // 篩選 cyg 框，確保恰好 4 個（使用 NMS + 方案A：先空間去重，再角度篩選）
                                         if (nonRoiRects.Count > 0)
                                         {
@@ -1380,7 +1362,7 @@ namespace peilin
                                     List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
 
                                     #region 黑點AOI
-                                    // 由 GitHub Copilot 產生 - 黑點檢測
+                                    // 黑點檢測
                                     // 檢查是否啟用黑點檢測（從參數讀取）
 
                                     if (defectsToDetect.Contains("bp_AOI"))
@@ -1416,7 +1398,6 @@ namespace peilin
                                                     // 顯示檢測結果
                                                     showResultMat(blackSpotResult, input.stop);
 
-                                                    // 由 GitHub Copilot 產生
                                                     // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
                                                     // 建立檢測結果物件
                                                     StationResult bpAOIResult = new StationResult
@@ -1475,7 +1456,6 @@ namespace peilin
                                         {
                                             PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference1");
                                         }
-                                        // 由 GitHub Copilot 產生
                                         // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                         DetectionResponse defectDetection;
                                         using (Mat roiForYolo = roi.Clone())
@@ -1510,7 +1490,7 @@ namespace peilin
                                     
                                             foreach (var defect in defectDetection.detections)
                                             {
-                                                // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                                // 檢查這個瑕疵是否需要檢測（大小寫不敏感）
                                                 if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                                 {
                                                     continue;  // 跳過不需要檢測的瑕疵
@@ -1727,7 +1707,6 @@ namespace peilin
                                 } // 結束 roi try
                                 finally
                                 {
-                                    // 由 GitHub Copilot 產生
                                     // 修正: 釋放 roi, nong 和 roiInputImage Mat (總計 35-50 MB)
                                     roiInputImage?.Dispose();
                                     roi?.Dispose();
@@ -1771,7 +1750,6 @@ namespace peilin
                     app.Queue_Bitmap2.TryDequeue(out input);
                     if (app.status && input != null)
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: Receiver 已經 Clone,這裡只需檢查有效性
                         if (input.image == null || input.image.IsDisposed)
                         {
@@ -1790,7 +1768,6 @@ namespace peilin
                                 {
                                     try
                                     {
-                                        // 由 GitHub Copilot 產生
                                         // 緊急修正 (ObjectDisposedException): 直接 Enqueue 必須 Clone
                                         // 原因: input.image 後續還要給 findGap/DetectAndExtractROI 等函數使用
                                         // 只有透過 SaveImageAsync() 函數才會內部自動 Clone
@@ -1833,7 +1810,6 @@ namespace peilin
                                         // 顯示檢測結果
                                         showResultMat(whiteCheckImage, input.stop);
 
-                                        // 由 GitHub Copilot 產生
                                         // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
                                         // 建立檢測結果物件
                                         StationResult WhitePixelResult = new StationResult
@@ -1868,7 +1844,6 @@ namespace peilin
                                 var (outerCircles, innerCircles) = DetectCircles(input.image, input.stop);
                                 PerformanceProfiler.StopMeasure($"{input.count}_DetectCircles2");
                                 */
-                                // 由 GitHub Copilot 產生
                                 // 根本解決方案: 傳遞 Clone 副本給 findGapWidth
                                 Mat gapInputImage = null;
                                 bool gapIsNG = false;
@@ -1952,7 +1927,6 @@ namespace peilin
                                 }
 
                                 #endregion
-                                // 由 GitHub Copilot 產生
                                 // 根本解決方案: 傳遞 Clone 副本給 DetectAndExtractROI
                                 Mat roiInputImage = null;
                                 Mat roi = null;
@@ -1960,7 +1934,6 @@ namespace peilin
                                 {
                                     roiInputImage = input.image.Clone();
                                     roi = DetectAndExtractROI(roiInputImage, input.stop, input.count);
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正: 檢查 roi 是否有效，避免後續操作失敗
                                     if (roi == null || roi.IsDisposed || roi.Empty())
                                     {
@@ -1980,7 +1953,6 @@ namespace peilin
                                         }
                                         // 執行非 ROI 區域檢測
                                         string nonRoiServerUrl = app.produce_inner_NROI_ServerUrl;
-                                        // 由 GitHub Copilot 產生
                                         // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                         DetectionResponse nonRoiDetection;
                                         using (Mat roiForNroi = roi.Clone())
@@ -2025,7 +1997,6 @@ namespace peilin
                                         {
                                             PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference2");
                                         }
-                                        // 由 GitHub Copilot 產生
                                         // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                         DetectionResponse defectDetection;
                                         using (Mat roiForYolo = roi.Clone())
@@ -2060,7 +2031,7 @@ namespace peilin
 
                                             foreach (var defect in defectDetection.detections)
                                             {
-                                                // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                                // 檢查這個瑕疵是否需要檢測（大小寫不敏感）
                                                 if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                                 {
                                                     continue;  // 跳過不需要檢測的瑕疵
@@ -2239,10 +2210,9 @@ namespace peilin
                                         PerformanceProfiler.StopMeasure($"{input.count}_getmat2");
                                     }
                                 //PerformanceProfiler.FlushToDisk();
-                                } // 由 GitHub Copilot 產生 - 結束 roi 的 try 語句
+                                } // 結束 roi 的 try 語句
                                 finally
                                 {
-                                    // 由 GitHub Copilot 產生
                                     // 修正: 釋放 roiInputImage 和 roi Mat (總計 30-40 MB)
                                     roiInputImage?.Dispose();
                                     roi?.Dispose();
@@ -2259,7 +2229,6 @@ namespace peilin
                         } // 結束 try
                         finally
                         {
-                            // 由 GitHub Copilot 產生
                             // 修正: 使用 finally 確保 input.image 一定會被釋放，即使中途 continue
                             input.image?.Dispose();
                         }
@@ -2285,7 +2254,6 @@ namespace peilin
                     app.Queue_Bitmap3.TryDequeue(out input);
                     if (app.status && input != null)
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: Receiver 已經 Clone,這裡只需檢查有效性
                         if (input.image == null || input.image.IsDisposed)
                         {
@@ -2304,7 +2272,6 @@ namespace peilin
                             {
                                 try
                                 {
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正 (ObjectDisposedException): 直接 Enqueue 必須 Clone
                                     // 原因: input.image 後續還要給 findGap/DetectAndExtractROI 等函數使用
                                     // 只有透過 SaveImageAsync() 函數才會內部自動 Clone
@@ -2345,7 +2312,6 @@ namespace peilin
                                     // 顯示檢測結果
                                     showResultMat(whiteCheckImage, input.stop);
 
-                                    // 由 GitHub Copilot 產生
                                     // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
                                     // 建立檢測結果物件
                                     StationResult WhitePixelResult = new StationResult
@@ -2440,10 +2406,8 @@ namespace peilin
                             #endregion
 
                             
-                            // 由 GitHub Copilot 產生
                             // 修正 P1-3: 手動管理 roi 生命週期，避免 using 在 async 期間提早釋放 (15-20 MB)
 
-                            // 由 GitHub Copilot 產生
                             // 緊急修正: 在呼叫 DetectAndExtractROI 前檢查 input.image 狀態
                             // 注意：必須先檢查 null 和 IsDisposed，不能在已釋放的物件上呼叫 Empty()
                             if (input.image == null || input.image.IsDisposed)
@@ -2458,7 +2422,6 @@ namespace peilin
                                 continue;
                             }
 
-                            // 由 GitHub Copilot 產生
                             // 根本解決方案: 傳遞 Clone 副本給 DetectAndExtractROI
                             Mat roiInputImage = null;
                             Mat roi = null;
@@ -2466,7 +2429,6 @@ namespace peilin
                             {
                                 roiInputImage = input.image.Clone();
                                 roi = DetectAndExtractROI(roiInputImage, input.stop, input.count);
-                                // 由 GitHub Copilot 產生
                                 // 緊急修正: 檢查 roi 是否有效，避免後續操作失敗
                                 // 注意：必須先檢查 null 和 IsDisposed，不能在已釋放的物件上呼叫 Empty()
                                 if (roi == null)
@@ -2500,7 +2462,6 @@ namespace peilin
                                     }
                                     // 執行非 ROI 區域檢測
                                     string nonRoiServerUrl = app.produce_outer_NROI_ServerUrl;
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                     DetectionResponse nonRoiDetection;
                                     using (Mat roiForNroi = roi.Clone())
@@ -2623,7 +2584,6 @@ namespace peilin
                                     {
                                         PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference3");
                                     }
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                     DetectionResponse defectDetection;
                                     using (Mat roiForYolo = roi.Clone())
@@ -2657,7 +2617,7 @@ namespace peilin
 
                                         foreach (var defect in defectDetection.detections)
                                         {
-                                            // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                            // 檢查這個瑕疵是否需要檢測（大小寫不敏感）
                                             if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                             {
                                                 continue;  // 跳過不需要檢測的瑕疵
@@ -2777,7 +2737,7 @@ namespace peilin
                                             // 使用簡化的3+1特徵模型進行色彩複檢
                                             // 主要特徵 (2.5σ): G通道、V通道、R通道
                                             // 輔助特徵 (3.0σ): B通道
-                                            // 由 GitHub Copilot 產生 - 暫時停用色彩複驗，直接保留全部OTP瑕疵
+                                            // 暫時停用色彩複驗，直接保留全部OTP瑕疵
                                             var verifiedOtpDefects = otpDefects;
                                             //var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
 
@@ -2902,7 +2862,6 @@ namespace peilin
                                             Cv2.PutText(resultImage, ratioText,
                                                                     new Point(10, 420), // 第三行顯示比例信息
                                                                     HersheyFonts.HersheyDuplex, 1, Scalar.Yellow, 2);
-                                            // 由 GitHub Copilot 產生
                                             // 修正: OTP 判定邏輯
                                             // 1. OTP 必須先超過閾值 (hasDefect == true)
                                             // 2. 若 OTPratio 啟用，還需要面積占比也超過閾值
@@ -2958,10 +2917,9 @@ namespace peilin
                                 }
                                 //var totalTime = PerformanceProfiler.StopMeasure("AI_singleProcess3");
                                 //PerformanceProfiler.FlushToDisk();
-                                } // 由 GitHub Copilot 產生 - 結束 roi 的 try 語句
+                                } // 結束 roi 的 try 語句
                             finally
                             {
-                                // 由 GitHub Copilot 產生
                                 // 修正: 釋放 roiInputImage 和 roi Mat (總計 30-40 MB)
                                 roiInputImage?.Dispose();
                                 roi?.Dispose();
@@ -2978,7 +2936,6 @@ namespace peilin
                         } // 結束 try
                         finally
                         {
-                            // 由 GitHub Copilot 產生
                             // 修正: 使用 finally 確保 input.image 一定會被釋放，即使中途 continue
                             input.image?.Dispose();
                         }
@@ -3005,7 +2962,6 @@ namespace peilin
 
                     if (app.status && input != null)
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: Receiver 已經 Clone,這裡只需檢查有效性
                         if (input.image == null || input.image.IsDisposed)
                         {
@@ -3024,7 +2980,6 @@ namespace peilin
                             {
                                 try
                                 {
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正 (ObjectDisposedException): 直接 Enqueue 必須 Clone
                                     // 原因: input.image 後續還要給 findGap/DetectAndExtractROI 等函數使用
                                     // 只有透過 SaveImageAsync() 函數才會內部自動 Clone
@@ -3066,7 +3021,6 @@ namespace peilin
                                     // 顯示檢測結果
                                     showResultMat(whiteCheckImage, input.stop);
 
-                                    // 由 GitHub Copilot 產生
                                     // 修正: FinalMap 必須使用 Clone，避免與 input.image 共享同一物件
                                     // 建立檢測結果物件
                                     StationResult WhitePixelResult = new StationResult
@@ -3132,10 +3086,8 @@ namespace peilin
                             #endregion
 
                             
-                            // 由 GitHub Copilot 產生
                             // 修正 P1-4: 手動管理 roi 生命週期，避免 using 在 async 期間提早釋放 (15-20 MB)
 
-                            // 由 GitHub Copilot 產生
                             // 根本修正: 傳遞 Clone 給 DetectAndExtractROI，避免 finally 執行時釋放正在使用中的影像
                             // 建立獨立生命週期的 Clone (15-20 MB)，傳遞給函數後立即釋放
 
@@ -3144,7 +3096,6 @@ namespace peilin
                                                       
                             try
                             {
-                                // 由 GitHub Copilot 產生
                                 // 緊急修正: 檢查 roi 是否有效，避免後續操作失敗
                                 // 注意：必須先檢查 null 和 IsDisposed，不能在已釋放的物件上呼叫 Empty()
                                 roiInputImage = input.image.Clone();
@@ -3179,7 +3130,6 @@ namespace peilin
                                     }
                                     // 執行非 ROI 區域檢測
                                     string nonRoiServerUrl = app.produce_outer_NROI_ServerUrl;
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                     DetectionResponse nonRoiDetection;
                                     using (Mat roiForNroi = roi.Clone())
@@ -3203,7 +3153,7 @@ namespace peilin
                                     #endregion
 
                                 #region 小黑點AOI檢測
-                                // 由 GitHub Copilot 產生 - 修正: 與 getMat3 對齊，先取得需檢測的瑕疵清單
+                                // 修正: 與 getMat3 對齊，先取得需檢測的瑕疵清單
                                 List<string> defectsToDetect = GetDefectNameListForThisStop(app.produce_No, input.stop);
                                 if (defectsToDetect.Contains("blackDot"))
                                 {
@@ -3289,7 +3239,7 @@ namespace peilin
                                     // ✅ P1-1 修正: try-finally 確保無論 hasBlackDotsDefect 為何都會釋放
                                     blackDotResultImage?.Dispose();
                                 }
-                                } // 由 GitHub Copilot 產生 - 結束 blackDot 檢測的 if 區塊
+                                } // 結束 blackDot 檢測的 if 區塊
                                     
                                 #endregion
 
@@ -3304,7 +3254,6 @@ namespace peilin
                                     {
                                         PerformanceProfiler.StartMeasure($"{input.count}_yolo_Inference4");
                                     }
-                                    // 由 GitHub Copilot 產生
                                     // 緊急修正: 使用 Clone 傳遞給 async 方法，避免 await 期間 roi 被釋放
                                     DetectionResponse defectDetection;
                                     using (Mat roiForYolo = roi.Clone())
@@ -3337,7 +3286,7 @@ namespace peilin
                                         }
                                         foreach (var defect in defectDetection.detections)
                                         {
-                                            // 由 GitHub Copilot 產生 - 檢查這個瑕疵是否需要檢測（大小寫不敏感）
+                                            // 檢查這個瑕疵是否需要檢測（大小寫不敏感）
                                             if (!defectsToDetect.Any(d => d.Equals(defect.class_name, StringComparison.OrdinalIgnoreCase)))
                                             {
                                                 continue;  // 跳過不需要檢測的瑕疵
@@ -3439,7 +3388,7 @@ namespace peilin
                                             // 使用簡化的3+1特徵模型進行色彩複檢
                                             // 主要特徵 (2.5σ): G通道、V通道、R通道
                                             // 輔助特徵 (3.0σ): B通道
-                                            // 由 GitHub Copilot 產生 - 暫時停用色彩複驗，直接保留全部OTP瑕疵
+                                            // 暫時停用色彩複驗，直接保留全部OTP瑕疵
                                             var verifiedOtpDefects = otpDefects;
                                             //var verifiedOtpDefects = colorVerifier.VerifyDefectsByColor(otpDefects, roi, input.stop, 2.5, 5.0);
 
@@ -3564,7 +3513,6 @@ namespace peilin
                                             Cv2.PutText(resultImage, ratioText,
                                                                     new Point(10, 420), // 第三行顯示比例信息
                                                                     HersheyFonts.HersheyDuplex, 1, Scalar.Yellow, 2);
-                                            // 由 GitHub Copilot 產生
                                             // 修正: OTP 判定邏輯
                                             // 1. OTP 必須先超過閾值 (hasDefect == true)
                                             // 2. 若 OTPratio 啟用，還需要面積占比也超過閾值
@@ -3616,10 +3564,9 @@ namespace peilin
                                     PerformanceProfiler.StopMeasure($"{input.count}_getmat4");
                                 }
                                 PerformanceProfiler.FlushToDisk();
-                            } // 由 GitHub Copilot 產生 - 結束 roi 的 try 語句
+                            } // 結束 roi 的 try 語句
                             finally
                             {
-                                // 由 GitHub Copilot 產生
                                 // 修正 P1-4: 在 finally 釋放 roiInputImage 和 roi Mat (30-40 MB)
                                 roiInputImage?.Dispose();
                                 roi?.Dispose();
@@ -3636,7 +3583,6 @@ namespace peilin
                         } // 結束 try
                         finally
                         {
-                            // 由 GitHub Copilot 產生
                             // 修正: 使用 finally 確保 input.image 一定會被釋放，即使中途 continue
                             input.image?.Dispose();
                         }
@@ -4582,7 +4528,7 @@ namespace peilin
                 bool hasStation1Model = File.Exists(station1_ModelPath);
                 bool hasStation2Model = File.Exists(station2_ModelPath);
 
-                // 由 GitHub Copilot 產生 - 計算需要開啟的模型數量
+                // 計算需要開啟的模型數量
                 int totalModelsToLoad = 0;
                 if (hasInnerModel) totalModelsToLoad++;
                 if (hasOuterModel) totalModelsToLoad++;
@@ -4592,7 +4538,7 @@ namespace peilin
                 if (hasStation1Model) totalModelsToLoad++;
                 if (hasStation2Model) totalModelsToLoad++;
 
-                // 由 GitHub Copilot 產生 - 顯示開始載入提示
+                // 顯示開始載入提示
                 if (totalModelsToLoad > 0)
                 {
                     BeginInvoke(new Action(() =>
@@ -4621,7 +4567,7 @@ namespace peilin
                     return;
                 }
 
-                // 由 GitHub Copilot 產生 - 追蹤成功/失敗數量
+                // 追蹤成功/失敗數量
                 int successCount = 0;
                 int failCount = 0;
 
@@ -4653,18 +4599,18 @@ namespace peilin
                             ResultManager.totalStations += 2;
 
                             await WarmUpYoloModel(_yoloDetection, innerServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入內環模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到內環伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4694,18 +4640,18 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入外環模型: {outerModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, outerServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入外環模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到外環伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4729,19 +4675,19 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入內環非ROI模型: {inner_NROI_ModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, inner_NROI_ServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
 
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入內環非ROI模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到內環非ROI伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4766,18 +4712,18 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入外環非ROI模型: {outer_NROI_ModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, outer_NROI_ServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入外環非ROI模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到外環非ROI伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4801,18 +4747,18 @@ namespace peilin
                             lbAdd($"[setNet] 成功載入倒角模型: {chamfer_ModelName}", "inf", "");
 
                             await WarmUpYoloModel(_yoloDetection, chamfer_ServerUrl, 2448, 2048); // 依你的模型輸入尺寸
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入倒角模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到倒角伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4838,18 +4784,18 @@ namespace peilin
                             ResultManager.totalStations += 1;
 
                             await WarmUpYoloModel(_yoloDetection, station1_ServerUrl, 2448, 2048);
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入站1模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到站1伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4875,18 +4821,18 @@ namespace peilin
                             ResultManager.totalStations += 1;
 
                             await WarmUpYoloModel(_yoloDetection, station2_ServerUrl, 2448, 2048);
-                            successCount++; // 由 GitHub Copilot 產生
+                            successCount++;
                         }
                         else
                         {
                             lbAdd($"[setNet] 載入站2模型失敗: {loadResult.error}", "err", "");
-                            failCount++; // 由 GitHub Copilot 產生
+                            failCount++;
                         }
                     }
                     else
                     {
                         lbAdd($"[setNet] 無法連接到站2伺服器，請檢查設定。", "err", "");
-                        failCount++; // 由 GitHub Copilot 產生
+                        failCount++;
                     }
                 }
                 else
@@ -4896,7 +4842,7 @@ namespace peilin
 
                 lbAdd($"目前設置的總站台數： {ResultManager.totalStations}", "inf", "");
 
-                // 由 GitHub Copilot 產生 - 顯示最終結果視窗
+                // 顯示最終結果視窗
                 string resultMessage;
                 MessageBoxIcon resultIcon;
 
@@ -4981,7 +4927,7 @@ namespace peilin
             catch (Exception e1)
             {
                 lbAdd("AI Model載入失敗", "err", e1.ToString());
-                // 由 GitHub Copilot 產生 - 異常時也顯示結果視窗
+                // 異常時也顯示結果視窗
                 BeginInvoke(new Action(() =>
                 {
                     CustomMessageBox.Show(
@@ -5182,7 +5128,6 @@ namespace peilin
 
         void TypeSetting()
         {
-            // 由 GitHub Copilot 產生
             // 修改: 使用大小寫不敏感的比較器
             Dictionary<string, string> param = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -5268,7 +5213,6 @@ namespace peilin
 
                 setNet();
          
-                // 由 GitHub Copilot 產生
                 // 新增: 載入每個站點的瑕疵名稱快取,避免檢測時重複查詢資料庫
                 app.defectNamesPerStop.Clear();
                 app.chamferDetectionCache.Clear();
@@ -5285,7 +5229,6 @@ namespace peilin
                         app.defectNamesPerStop[stop] = defectNames;
                         Console.WriteLine($"已載入站點 {stop} 的瑕疵類別 {defectNames.Count} 筆.");
                         
-                        // 由 GitHub Copilot 產生
                         // 新增: 預載入倒角檢測設定
                         var chamferCheck = db.DefectChecks
                             .Where(dc => dc.Type == app.produce_No && 
@@ -5329,7 +5272,6 @@ namespace peilin
                 }
             }
             */
-            // 由 GitHub Copilot 產生
             // 修改: 使用大小寫不敏感的比較器轉換
             app.param = new ConcurrentDictionary<string, string>(param, StringComparer.OrdinalIgnoreCase);
         }
@@ -5475,7 +5417,6 @@ namespace peilin
                     }
                     finally
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: 存檔完成後釋放圖像，避免記憶體洩漏
                         file.image?.Dispose();
                     }
@@ -5522,7 +5463,7 @@ namespace peilin
         {
             if (status) //停止狀態的邏輯
             {
-                // 由 GitHub Copilot 產生 - testImageMode 簡化停止流程
+                // testImageMode 簡化停止流程
                 // 只停止 PLC 和相機，跳過報表儲存等需要料號/LotID 的操作
                 if (app.testImageMode)
                 {
@@ -5561,7 +5502,7 @@ namespace peilin
 
                     lbAdd("停止檢測", "inf", "");
                     
-                    // 由 GitHub Copilot 產生 - 修正：明確停止相機
+                    // 修正：明確停止相機
                     if (!app.offline)
                     {
                         // 1. 先停止相機抓取
@@ -5711,7 +5652,7 @@ namespace peilin
                 {
                     app.status = true; // 系統整體狀態標記為「正在運行中」
                     
-                    // 由 GitHub Copilot 產生 - testImageMode 簡化啟動流程
+                    // testImageMode 簡化啟動流程
                     // 只啟動 PLC 和相機，跳過料號/LotID 相關初始化
                     if (app.testImageMode)
                     {
@@ -5805,7 +5746,7 @@ namespace peilin
                             Dictionary<string, int> lastCounts = DefectCountManager.ReadLatestDefectCounts(app.produce_No, app.LotID);
                             if (lastCounts != null && lastCounts.Count > 0)
                             {
-                                // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 保證執行緒安全
+                                // 修改: 使用 AddOrUpdate 保證執行緒安全
                                 foreach (var pair in lastCounts)
                                 {
                                     app.dc.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
@@ -5992,10 +5933,10 @@ namespace peilin
         }
         #endregion
         #region 資料儲存
-        // 由 GitHub Copilot 產生 - 測試取像模式選單事件
+        // 測試取像模式選單事件
         private void testToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 運行中保護：禁止在正常檢測運行中切換測試模式
+            // 運行中保護：禁止在正常檢測運行中切換測試模式
             if (app.status && !app.testImageMode && !app.isAdjustmentMode)
             {
                 CustomMessageBox.Show(
@@ -6010,10 +5951,10 @@ namespace peilin
 
             if (!testToolStripMenuItem.Checked)
             {
-                // 由 GitHub Copilot 產生 - 清空觸發計數器，避免切換後誤判
+                // 清空觸發計數器，避免切換後誤判
                 basler.Camera.ResetTriggerCounters();
                 
-                // 由 GitHub Copilot 產生 - 清空影像佇列，釋放殘留的 Mat 物件避免記憶體洩漏
+                // 清空影像佇列，釋放殘留的 Mat 物件避免記憶體洩漏
                 ClearImageQueues();
                 
                 // 開啟測試模式（資料夾由 Camera0.cs OnImageGrabbed 自動建立）
@@ -6021,7 +5962,7 @@ namespace peilin
                 testToolStripMenuItem.Checked = true;
                 app.testImageMode = true;
                 labelTestMode.Visible = true;
-                // 由 GitHub Copilot 產生 - 開啟 testImageMode 時將狀態設為 Stopped，確保可直接開始
+                // 開啟 testImageMode 時將狀態設為 Stopped，確保可直接開始
                 app.currentState = app.SystemState.Stopped;
                 UpdateButtonStates();
                 using (var db = new MydbDB())
@@ -6036,7 +5977,7 @@ namespace peilin
             }
             else
             {
-                // 由 GitHub Copilot 產生 - 關閉測試模式前清空觸發計數器，避免影響正常檢測
+                // 關閉測試模式前清空觸發計數器，避免影響正常檢測
                 basler.Camera.ResetTriggerCounters();
                 
                 // 關閉測試模式
@@ -6044,7 +5985,7 @@ namespace peilin
                 app.testImageMode = false;
                 labelTestMode.Visible = false;
                 lbAdd("測試取像模式關閉", "inf", "");
-                // 由 GitHub Copilot 產生 - 關閉 testImageMode 時更新按鈕狀態
+                // 關閉 testImageMode 時更新按鈕狀態
                 UpdateButtonStates();
                 using (var db = new MydbDB())
                 {
@@ -6743,7 +6684,6 @@ namespace peilin
                 MessageBox.Show($"開啟參數設定介面時發生錯誤：{ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // 由 GitHub Copilot 產生
         private void 時間測量ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!時間測量ToolStripMenuItem.Checked)
@@ -7050,18 +6990,18 @@ namespace peilin
 
         private void button1_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 調機模式優先檢查，不受狀態限制
+            // 調機模式優先檢查，不受狀態限制
             if (app.DetectMode == 1)
             {
                 // 調機模式：直接開始調機，不檢查狀態和其他參數
-                // 由 GitHub Copilot 產生 - 立即設定調機模式旗標，避免影像進入檢測流程
+                // 立即設定調機模式旗標，避免影像進入檢測流程
                 app.isAdjustmentMode = true;
                 switchButton(false);
                 lbAdd("開始調機", "inf", "");
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - testImageMode 優先檢查，不受狀態限制
+            // testImageMode 優先檢查，不受狀態限制
             // testImageMode 下跳過所有限制，直接啟動轉盤和相機
             if (app.testImageMode)
             {
@@ -7181,22 +7121,22 @@ namespace peilin
                     MessageBox.Show("尚未設定料號。");
                 }
             }
-            // 由 GitHub Copilot 產生 - 移除此處的調機模式處理，已在函式開頭處理
+            // 移除此處的調機模式處理，已在函式開頭處理
         }
         private void button2_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 調機模式優先檢查，不受狀態限制
+            // 調機模式優先檢查，不受狀態限制
             if (app.DetectMode == 1)
             {
                 // 調機模式：直接停止調機
-                // 由 GitHub Copilot 產生 - 重置調機模式旗標
+                // 重置調機模式旗標
                 app.isAdjustmentMode = false;
                 switchButton(true);
                 lbAdd("停止調機", "inf", "");
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - testImageMode 優先檢查，不受狀態限制
+            // testImageMode 優先檢查，不受狀態限制
             // testImageMode 下跳過狀態檢查，直接停止並設為 Stopped 狀態
             if (app.testImageMode)
             {
@@ -7542,7 +7482,6 @@ namespace peilin
                     if (app.user < 2)
                     {
                         管理使用者ToolStripMenuItem.Enabled = true;
-                        // 由 GitHub Copilot 產生
                         // 工程師/管理者可見出料卡料時間設定選單
                         出料卡料時間設定ToolStripMenuItem.Visible = true;
                         檔案留存天數設定ToolStripMenuItem.Visible = true;
@@ -7552,7 +7491,6 @@ namespace peilin
                     else
                     {
                         管理使用者ToolStripMenuItem.Enabled = false;
-                        // 由 GitHub Copilot 產生
                         // 作業員隱藏出料卡料時間設定選單
                         出料卡料時間設定ToolStripMenuItem.Visible = false;
                         檔案留存天數設定ToolStripMenuItem.Visible = false;
@@ -7578,7 +7516,6 @@ namespace peilin
             comboBox2.Enabled = true;
             管理使用者ToolStripMenuItem.Enabled = false;
             設定ToolStripMenuItem.Enabled = false;
-            // 由 GitHub Copilot 產生
             // 登出時隱藏出料卡料時間設定選單
             出料卡料時間設定ToolStripMenuItem.Visible = false;
 
@@ -7636,7 +7573,6 @@ namespace peilin
                                     app.counter["stop2"] = c.Count+1;
                                     app.counter["stop3"] = c.Count+1;
 
-                                    // 由 GitHub Copilot 產生
                                     // 同步初始化 ResultManager.counter["SAMPLE_ID"] 為上次完成的最後一個 ID
                                     ResultManager.counter["SAMPLE_ID"] = c.Count;
 
@@ -9144,7 +9080,6 @@ namespace peilin
 
         List<string> GetDefectNameListForThisStop(string produceNo, int stopVal)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 使用快取避免每次都查詢資料庫,減少 "database is locked" 錯誤
             
             // 先檢查快取
@@ -9343,7 +9278,6 @@ namespace peilin
                     }
                     else
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: 必須克隆 roi_full,否則在 finally 中釋放 roi_full 會導致 roi_final 也被釋放
                         roi_final = roi_full.Clone();
                     }
@@ -9364,13 +9298,11 @@ namespace peilin
                         Cv2.CvtColor(roi_final, roi_final, ColorConversionCodes.GRAY2BGR);
                     }
 
-                    // 由 GitHub Copilot 產生
                     // 修正: 使用快取的參數避免資料庫鎖定,不需每次都查詢資料庫
                     bool shouldSaveROI = app.param.ContainsKey("saveROI") && app.param["saveROI"] == "true";
 
                     if (shouldSaveROI)
                     {
-                        // 由 GitHub Copilot 產生
                         // 緊急修正: 必須使用 Clone，否則 sv() 執行緒釋放後會導致返回的 roi_final 失效
                         // 這是隨機發生 "roiImage 為 null 或已被釋放" 錯誤的根本原因
                         if (chamfer == false)
@@ -9390,7 +9322,6 @@ namespace peilin
                 }
                 finally
                 {
-                    // 由 GitHub Copilot 產生
                     // 修正: 釋放所有臨時 Mat 物件，防止記憶體洩漏
                     mask?.Dispose();
                     roi_full?.Dispose();  // ✅ 修正: 必須釋放 roi_full（15 MB）
@@ -9644,7 +9575,6 @@ namespace peilin
             // 新增：用來存儲開口位置的列表
             List<Point> gapPositions = new List<Point>();
 
-            // 由 GitHub Copilot 產生
             // 修正: 將 gray 和 ringThresh 納入 using 管理，確保記憶體釋放
             using (Mat ori = img.Clone())
             using (Mat visualImg = img.Clone())
@@ -9838,7 +9768,6 @@ namespace peilin
                 //Console.WriteLine($"外擴情況: 最大開口角度={outerMaxGapAngleDeg:F2} deg => 弧長={outerGapArcMm:F2} mm");
                 //Console.WriteLine($"內彎情況: 最大內彎角度={inwardBendAngleDeg:F2} deg => 弧長={inwardBendArcMm:F2} mm");
 
-                // 由 GitHub Copilot 產生
                 // 修正: 移除手動 Dispose（using 會自動處理）
                 // gray.Dispose();
                 // ringThresh.Dispose();
@@ -9868,7 +9797,6 @@ namespace peilin
             return diff;
         }
 
-        // 由 GitHub Copilot 產生
         // 核心單張處理 (原 findGapWidth_new)
         // 功能：1. 找出內圓 2. 計算開口寬度(Gap Width) 3. 檢測向內/向外變形
         // 修正：
@@ -10080,7 +10008,7 @@ namespace peilin
                 outwardThreshold = hasGap ? outwardThreshold : 2;
 
                 // Check Defects
-                // 由 GitHub Copilot 產生 - 修正：將 pixel 轉換為 mm 後再與 mm 閾值比較
+                // 修正：將 pixel 轉換為 mm 後再與 mm 閾值比較
                 double gapWidthMm = gapWidthPx * pixeltomm;
                 List<string> ngReasons = new List<string>();
                 bool isGapTooWide = gapWidthMm > maxGapWidthMm;
@@ -10155,7 +10083,7 @@ namespace peilin
                 bool isDeformed = ngReasons.Count > 0;
                 if (isDeformed)
                 {
-                    // 由 GitHub Copilot 產生 - 每條原因分行顯示，從 Y=150 開始，間距 23px，避免單行過長或與 R_fit(Y=120) 重疊
+                    // 每條原因分行顯示，從 Y=150 開始，間距 23px，避免單行過長或與 R_fit(Y=120) 重疊
                     int reasonY = 150;
                     foreach (var r in ngReasons)
                     {
@@ -10546,7 +10474,6 @@ namespace peilin
 
         public (bool hasBlackDots, Mat resultImage, List<Point[]> detectedContours) DetectBlackDots(Mat roiImage, int stop, int count)
         {
-            // 由 GitHub Copilot 產生
             // 緊急修正: 先檢查 IsDisposed，避免 ObjectDisposedException
             if (roiImage == null || roiImage.IsDisposed)
             {
@@ -11200,7 +11127,6 @@ namespace peilin
         }
 
         #region 黑點檢測相關常數
-        // 由 GitHub Copilot 產生
         // 黑點檢測參數 - 方便調整
         private const int BLACKSPOT_THRESHOLD = 50;        // 二值化閾值
         private const int BLACKSPOT_MIN_AREA = 400;        // 最小面積
@@ -11217,7 +11143,6 @@ namespace peilin
 
         #region DetectAndExtractROI_W (白色遮罩版本)
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 與 DetectAndExtractROI 相同功能，但外環之外區域染成白色而非黑色
         /// 用於黑點檢測，確保非 ROI 區域不會被誤判為黑點
         /// </summary>
@@ -11228,7 +11153,6 @@ namespace peilin
         /// <returns>處理後的 ROI 影像（外環之外為白色）</returns>
         private Mat DetectAndExtractROI_W(Mat inputImage, int stop, int count, bool chamfer = false)
         {
-            // 由 GitHub Copilot 產生
             Mat mask = null;
             Mat roi_full = null;
             Mat roi_final = null;
@@ -11344,7 +11268,7 @@ namespace peilin
             }
             finally
             {
-                // 由 GitHub Copilot 產生 - 記憶體管理
+                // 記憶體管理
                 mask?.Dispose();
                 roi_full?.Dispose();
                 whiteBackground?.Dispose();
@@ -11355,7 +11279,6 @@ namespace peilin
 
         #region 黑點檢測核心函數
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 黑點檢測演算法：二值化 → 輪廓檢測 → 面積過濾 → 圓度過濾 → 非ROI過濾 → 繪製標註
         /// </summary>
         /// <param name="roiImage">ROI 影像（外環之外已染白）</param>
@@ -11366,7 +11289,6 @@ namespace peilin
         /// <returns>(hasDefect: 是否有黑點, annotatedImage: 標註後的圖)</returns>
         private (bool hasDefect, Mat annotatedImage) DetectBlackSpots(Mat roiImage, int stop, int count, string originalFileName, List<Rect> nonRoiRects = null)
         {
-            // 由 GitHub Copilot 產生
             Mat grayImage = null;
             Mat binaryImage = null;
             Mat morphImage = null;
@@ -11375,7 +11297,7 @@ namespace peilin
 
             try
             {
-                // 由 GitHub Copilot 產生 - 創建除錯圖像（如果啟用）
+                // 創建除錯圖像（如果啟用）
                 if (enableBlackSpotDebug)
                 {
                     if (roiImage.Channels() == 1)
@@ -11418,7 +11340,7 @@ namespace peilin
                 HierarchyIndex[] hierarchy;
                 Cv2.FindContours(contourSource, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxSimple);
 
-                // 由 GitHub Copilot 產生 - 繪製所有 nonRoiRect（紅色）到除錯圖
+                // 繪製所有 nonRoiRect（紅色）到除錯圖
                 if (enableBlackSpotDebug && debugImage != null && nonRoiRects != null && nonRoiRects.Count > 0)
                 {
                     foreach (var nonRoiRect in nonRoiRects)
@@ -11431,7 +11353,6 @@ namespace peilin
                 }
 
                 // ========== 修正重點：讀取參數並預先計算所有非ROI多邊形 ==========
-                // 由 GitHub Copilot 產生
                 List<Point[]> nonRoiPolygons = new List<Point[]>();
 
                 if (nonRoiRects != null && nonRoiRects.Count > 0)
@@ -11461,7 +11382,7 @@ namespace peilin
                         nonRoiPolygons.Add(polygon);
                     }
 
-                    // 由 GitHub Copilot 產生 - 除錯模式下繪製多邊形（綠色）
+                    // 除錯模式下繪製多邊形（綠色）
                     if (enableBlackSpotDebug && debugImage != null)
                     {
                         foreach (var polygon in nonRoiPolygons)
@@ -11480,7 +11401,6 @@ namespace peilin
                     double area = Cv2.ContourArea(contour);
                     if (area >= BLACKSPOT_MIN_AREA && area <= BLACKSPOT_MAX_AREA)
                     {
-                        // 由 GitHub Copilot 產生
                         // 計算圓度
                         double perimeter = Cv2.ArcLength(contour, true);
                         double circularity = 0;
@@ -11502,11 +11422,9 @@ namespace peilin
                         if (passCircularityTest/* || passAspectRatioTest*/)
                         {
                             // ========== 修正重點：使用多邊形判斷替代 IoU ==========
-                            // 由 GitHub Copilot 產生
                             bool shouldSkip = false;
                             Rect contourRect = Cv2.BoundingRect(contour);
 
-                            // 由 GitHub Copilot 產生
                             // 繪製 contourRect（綠色）到除錯圖，並顯示圓度和長寬比
                             if (enableBlackSpotDebug && debugImage != null)
                             {
@@ -11518,7 +11436,6 @@ namespace peilin
 
                             if (nonRoiPolygons.Count > 0)
                             {
-                                // 由 GitHub Copilot 產生
                                 // 計算矩形的四個角點和中心點
                                 Point topLeft = new Point(contourRect.X, contourRect.Y);
                                 Point topRight = new Point(contourRect.Right, contourRect.Y);
@@ -11559,7 +11476,7 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生 - 儲存除錯圖像（如果啟用）
+                // 儲存除錯圖像（如果啟用）
                 if (enableBlackSpotDebug && debugImage != null)
                 {
                     try
@@ -11605,7 +11522,6 @@ namespace peilin
                         // 計算面積
                         double area = Cv2.ContourArea(validContours[i]);
 
-                        // 由 GitHub Copilot 產生
                         // 計算圓度：圓度 = 4π × 面積 / 周長²，完美圓形 = 1.0
                         double perimeter = Cv2.ArcLength(validContours[i], true);
                         double circularity = 0;
@@ -11630,7 +11546,6 @@ namespace peilin
                         Point textPos2 = new Point(boundingRect.X, boundingRect.Y - 30);
                         Point textPos3 = new Point(boundingRect.X, boundingRect.Y - 50);
 
-                        // 由 GitHub Copilot 產生
                         // 確保文字不超出圖像邊界
                         if (textPos3.Y < 0)
                         {
@@ -11664,7 +11579,7 @@ namespace peilin
             }
             finally
             {
-                // 由 GitHub Copilot 產生 - 記憶體管理
+                // 記憶體管理
                 grayImage?.Dispose();
                 binaryImage?.Dispose();
                 morphImage?.Dispose();
@@ -11676,7 +11591,6 @@ namespace peilin
 
         #region button24_Click 事件處理器
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 黑點 AOI 批次檢測：選擇資料夾 → 載入 a-1.jpg 圖檔 → ROI 提取 → 黑點檢測 → 統計報告
         /// </summary>
         private void button24_Click(object sender, EventArgs e)
@@ -11799,7 +11713,7 @@ namespace peilin
                         }
                         finally
                         {
-                            // 由 GitHub Copilot 產生 - 確保記憶體正確釋放
+                            // 確保記憶體正確釋放
                             inputImage?.Dispose();
                             roiImage?.Dispose();
                             annotatedImage?.Dispose();
@@ -13797,7 +13711,7 @@ namespace peilin
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - 解析檔名並按樣品編號和站號排序 (a-b 格式，a是樣品編號，b是站號1-4)
+            // 解析檔名並按樣品編號和站號排序 (a-b 格式，a是樣品編號，b是站號1-4)
             var sortedFiles = imageFiles.Select(file =>
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
@@ -13814,20 +13728,20 @@ namespace peilin
 
                 return new { FilePath = file, SampleId = sampleId, StationId = stationId };
             })
-            .OrderBy(item => item.SampleId)   // 由 GitHub Copilot 產生 - 先按樣品編號排序（數字排序）
-            .ThenBy(item => item.StationId)   // 由 GitHub Copilot 產生 - 再按站號排序，確保同一樣品的4站按1234順序處理
+            .OrderBy(item => item.SampleId)   // 先按樣品編號排序（數字排序）
+            .ThenBy(item => item.StationId)   // 再按站號排序，確保同一樣品的4站按1234順序處理
             .ToArray();
 
             lbAdd($"找到 {sortedFiles.Length} 張測試圖片", "inf", "");
 
-            // 由 GitHub Copilot 產生 - 檢查解析結果和圖片分布
+            // 檢查解析結果和圖片分布
             if (sortedFiles.All(item => item.StationId == 0))
             {
                 MessageBox.Show("檔案命名格式不符預期 (應為'a-b'格式，其中b為1~4的站號)", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - 統計圖片分布情況以便診斷
+            // 統計圖片分布情況以便診斷
             var uniqueSamples = sortedFiles.Select(f => f.SampleId).Distinct().Count();
             var station1Count = sortedFiles.Count(f => f.StationId == 1);
             var station2Count = sortedFiles.Count(f => f.StationId == 2);
@@ -13836,13 +13750,13 @@ namespace peilin
 
             lbAdd($"圖片分布: 樣品數={uniqueSamples}, 站1={station1Count}, 站2={station2Count}, 站3={station3Count}, 站4={station4Count}", "inf", "");
 
-            // 由 GitHub Copilot 產生 - 顯示前10張和後10張圖片順序，用於驗證排序
+            // 顯示前10張和後10張圖片順序，用於驗證排序
             var first10 = sortedFiles.Take(10).Select(f => $"{f.SampleId}-{f.StationId}");
             var last10 = sortedFiles.Skip(Math.Max(0, sortedFiles.Length - 10)).Select(f => $"{f.SampleId}-{f.StationId}");
             lbAdd($"前10張: {string.Join(", ", first10)}", "inf", "");
             lbAdd($"後10張: {string.Join(", ", last10)}", "inf", "");
 
-            // 由 GitHub Copilot 產生 - 檢查是否每個樣品都有完整的4個站點
+            // 檢查是否每個樣品都有完整的4個站點
             var sampleStationGroups = sortedFiles.GroupBy(f => f.SampleId)
                 .Select(g => new { SampleId = g.Key, Stations = g.Select(f => f.StationId).OrderBy(s => s).ToList() })
                 .ToList();
@@ -13876,22 +13790,22 @@ namespace peilin
             // 設定測試模式
             app.testc = true;  // 開啟測試模式標記
 
-            // 由 GitHub Copilot 產生 - 暫存原始狀態（包含系統狀態）
+            // 暫存原始狀態（包含系統狀態）
             bool originalStatus = app.status;
             bool originalSoftTriggerMode = app.SoftTriggerMode;
             app.SystemState originalSystemState = app.currentState;
 
-            // 由 GitHub Copilot 產生 - 設定為運行狀態，並關閉軟體觸發模式
+            // 設定為運行狀態，並關閉軟體觸發模式
             // 必須設定 currentState 為 Running，否則停止按鈕會一直彈出警告
             app.status = true;
             app.currentState = app.SystemState.Running;
             app.SoftTriggerMode = false;
             app._reader.Set();
 
-            // 由 GitHub Copilot 產生 - 初始化統計資料以避免匯出時發生 NullReferenceException
+            // 初始化統計資料以避免匯出時發生 NullReferenceException
             ResultManager.InitializeStats();
 
-            // 由 GitHub Copilot 產生 - 修復：只在開始時重設計數器一次
+            // 修復：只在開始時重設計數器一次
             // 重設計數器確保從0開始（只執行一次）
             app.counter["stop0"] = 0;
             app.counter["stop1"] = 0;
@@ -13900,8 +13814,8 @@ namespace peilin
 
             int processedImageCount = 0;
             int successCount = 0;
-            int skippedCount = 0;  // 由 GitHub Copilot 產生 - 記錄跳過的圖片數量
-            int failedCount = 0;   // 由 GitHub Copilot 產生 - 記錄讀取失敗的圖片數量
+            int skippedCount = 0;  // 記錄跳過的圖片數量
+            int failedCount = 0;   // 記錄讀取失敗的圖片數量
 
             try
             {
@@ -13914,7 +13828,7 @@ namespace peilin
                     if (fileInfo.StationId < 1 || fileInfo.StationId > 4)
                     {
                         lbAdd($"圖片 {Path.GetFileName(fileInfo.FilePath)} 站號 {fileInfo.StationId} 不在有效範圍1-4內，已跳過", "war", "");
-                        skippedCount++;  // 由 GitHub Copilot 產生
+                        skippedCount++;
                         continue;
                     }
 
@@ -13923,44 +13837,44 @@ namespace peilin
                     if (src.Empty())
                     {
                         lbAdd($"無法讀取圖片: {Path.GetFileName(fileInfo.FilePath)}", "war", "跳過此圖片");
-                        // 由 GitHub Copilot 產生 - 即使 Mat 是空的也需要釋放資源
+                        // 即使 Mat 是空的也需要釋放資源
                         src.Dispose();
-                        failedCount++;  // 由 GitHub Copilot 產生
+                        failedCount++;
                         continue;
                     }
 
                     // 使用 Receiver 方法模擬相機進圖 (站號從0開始，所以要減1)
                     int camID = fileInfo.StationId - 1;
 
-                    // 由 GitHub Copilot 產生 - 移除每張圖的計數器重設（已在開頭統一重設）
+                    // 移除每張圖的計數器重設（已在開頭統一重設）
                     // 計數器會在 Receiver 內部自動遞增，不應該在這裡重設
 
-                    // 由 GitHub Copilot 產生 - 記錄當前計數器值用於除錯
+                    // 記錄當前計數器值用於除錯
                     int currentCounter = app.counter.TryGetValue("stop" + camID, out int val) ? val : 0;
 
                     // 使用 Receiver 方法將圖片送入處理流程
                     Receiver(camID, src, DateTime.Now);
 
-                    // 由 GitHub Copilot 產生 - Receiver 會複製 Mat，原始 Mat 需要立即釋放以避免記憶體洩漏
+                    // Receiver 會複製 Mat，原始 Mat 需要立即釋放以避免記憶體洩漏
                     src.Dispose();
 
                     processedImageCount++;
                     successCount++;
 
-                    // 由 GitHub Copilot 產生 - 智能流控系統：監控佇列深度 + 處理時間，防止超時 NULL
+                    // 智能流控系統：監控佇列深度 + 處理時間，防止超時 NULL
                     int totalQueueCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
                                          app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
 
-                    // 由 GitHub Copilot 產生 - 計算平均處理時間（估算）
+                    // 計算平均處理時間（估算）
                     // 理論上：每站需處理時間 = AI推理(50-200ms) + ROI提取(20-50ms) + 其他(50ms) ≈ 120-300ms
                     // 安全起見，我們假設每站平均需要 250ms 處理時間
                     int estimatedProcessingTimePerStation = 250; // 每站估計處理時間(ms)
 
-                    // 由 GitHub Copilot 產生 - 根據佇列深度估算當前處理延遲
+                    // 根據佇列深度估算當前處理延遲
                     // 佇列深度 × 每張處理時間 = 預估等待時間
                     double estimatedDelay = totalQueueCount * estimatedProcessingTimePerStation / 4.0; // 除以4因為有4個站點並行處理
 
-                    // 由 GitHub Copilot 產生 - 智能延遲計算：確保 left > 200ms（安全餘量）
+                    // 智能延遲計算：確保 left > 200ms（安全餘量）
                     // 假設 fourToOK_time_ms ≈ 3000ms, delay4 ≈ 50ms
                     // 需確保 timeDifference < (fourToOK_time_ms - delay4 - 200) = 2750ms
                     int baseDelay = 150; // 基礎延遲降低到 250ms（離線檢測可以快一點）
@@ -13994,7 +13908,7 @@ namespace peilin
 
                     await Task.Delay(delay);
 
-                    // 由 GitHub Copilot 產生 - 優化：每 20 張圖更新一次進度
+                    // 優化：每 20 張圖更新一次進度
                     if (processedImageCount % 20 == 0)
                     {
                         lbAdd($"已處理 {processedImageCount}/{sortedFiles.Length} 張圖片 (佇列:{totalQueueCount}, 延遲:{delay}ms)", "inf", "");
@@ -14009,25 +13923,25 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生 - 優化：縮短等待間隔，加快隊列檢查頻率
+                // 優化：縮短等待間隔，加快隊列檢查頻率
                 lbAdd("等待所有隊列處理完畢...", "inf", "");
                 int timeout = 0;
-                int maxTimeout = 4000;  // 由 GitHub Copilot 產生 - 增加到 4000 (4000 × 150ms = 10 分鐘)
+                int maxTimeout = 4000;  // 增加到 4000 (4000 × 150ms = 10 分鐘)
                 int lastQueueCount = -1;
-                int noChangeCount = 0;  // 由 GitHub Copilot 產生 - 記錄佇列數量連續不變的次數
+                int noChangeCount = 0;  // 記錄佇列數量連續不變的次數
 
                 while ((app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
                         app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count > 0) &&
                       timeout < maxTimeout && app.status)
                 {
-                    // 由 GitHub Copilot 產生 - 優化：將等待間隔從 300ms 減少到 150ms，加快反應速度
+                    // 優化：將等待間隔從 300ms 減少到 150ms，加快反應速度
                     await Task.Delay(300);
                     timeout++;
 
                     int currentQueueCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
                                            app.Queue_Bitmap3.Count + app.Queue_Bitmap4.Count;
 
-                    // 由 GitHub Copilot 產生 - 優化：調整卡住檢測閾值（40 × 150ms = 6 秒）
+                    // 優化：調整卡住檢測閾值（40 × 150ms = 6 秒）
                     if (currentQueueCount == lastQueueCount)
                     {
                         noChangeCount++;
@@ -14044,7 +13958,7 @@ namespace peilin
                     }
                     lastQueueCount = currentQueueCount;
 
-                    // 由 GitHub Copilot 產生 - 優化：降低日誌輸出頻率（每 20 次 = 3 秒更新一次）
+                    // 優化：降低日誌輸出頻率（每 20 次 = 3 秒更新一次）
                     if (timeout % 20 == 0)
                     {
                         int remainingImages = currentQueueCount;
@@ -14056,7 +13970,7 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生 - 檢查是否因為 timeout 而結束
+                // 檢查是否因為 timeout 而結束
                 if (timeout >= maxTimeout)
                 {
                     int remainingCount = app.Queue_Bitmap1.Count + app.Queue_Bitmap2.Count +
@@ -14064,7 +13978,7 @@ namespace peilin
                     lbAdd($"警告: 等待超時（{maxTimeout * 150 / 1000} 秒），佇列中還有 {remainingCount} 張圖片未處理", "war", "");
                 }
 
-                // 由 GitHub Copilot 產生 - 完成測試，顯示詳細統計
+                // 完成測試，顯示詳細統計
                 totalTimer.Stop();
 
                 string resultMessage = $"離線測試完成\n" +
@@ -14079,7 +13993,7 @@ namespace peilin
 
                 MessageBox.Show(resultMessage, "測試完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // 由 GitHub Copilot 產生 - 離線測試後匯出檢測統計
+                // 離線測試後匯出檢測統計
                 #region 匯出檢測統計
                 DialogResult exportResult = MessageBox.Show(
                         "是否要匯出瑕疵統計資料？",
@@ -14126,7 +14040,7 @@ namespace peilin
             }
             finally
             {
-                // 由 GitHub Copilot 產生 - 復原系統狀態（包含 currentState）
+                // 復原系統狀態（包含 currentState）
                 app.status = originalStatus;
                 app.currentState = originalSystemState;
                 app.SoftTriggerMode = originalSoftTriggerMode;
@@ -14868,7 +14782,7 @@ namespace peilin
             PLC_SetD(805, 0);
             PLC_SetD(807, d807);
 
-            // 由 GitHub Copilot 產生 - 修復：更新計數時也重置同步狀態，避免滿料急停後殘留同步模式
+            // 修復：更新計數時也重置同步狀態，避免滿料急停後殘留同步模式
             lock (ResultManager.okLock)
             {
                 ResultManager.counter["OK1"] = 0;
@@ -15195,14 +15109,14 @@ namespace peilin
         /// <returns>如果像素占比在有效範圍內，返回true；否則返回false</returns>
         public bool CheckWhitePixelRatio(Mat image, int stop)
         {
-            // 由 GitHub Copilot 產生 - 調機模式或離線測試模式下跳過白色像素檢查
+            // 調機模式或離線測試模式下跳過白色像素檢查
             if (app.DetectMode == 1)
             {
                 // 調機模式：不執行白色像素檢查，直接返回 true（視為有效圖像）
                 return true;
             }
 
-            // 由 GitHub Copilot 產生 - 離線測試模式也跳過白色像素檢查
+            // 離線測試模式也跳過白色像素檢查
             // 因為離線測試使用的是歷史圖片，白色像素比例可能與實時拍攝不同
             if (app.testc)
             {
@@ -15244,7 +15158,7 @@ namespace peilin
                 gray.Dispose();
                 binary.Dispose();
 
-                // 由 GitHub Copilot 產生 - 使用安全的參數讀取方式
+                // 使用安全的參數讀取方式
                 // 從參數中讀取標準值
                 double tolerance = GetDoubleParam(app.param, $"whiteTolerance_{stop}", 3);
                 double standardRatio;
@@ -15593,7 +15507,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
 
         /// <summary>
         /// 檢測倒角區域的藍色像素（五彩鋅電鍍檢測）
@@ -15940,7 +15853,6 @@ namespace peilin
         }
 
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 遞迴移除多餘的 cyg 框，直到剩下 4 個
         /// 使用方案A：計算每個框到最近理論位置的偏離距離，移除偏離最大的框
         /// score 作為次要判斷依據（同偏離距離時，優先移除 score 較低的框）
@@ -16036,7 +15948,6 @@ namespace peilin
         }
 
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 非極大值抑制（NMS）：移除空間上重疊的框，保留 score 較高的
         /// </summary>
         /// <param name="rects">待篩選的框列表</param>
@@ -16070,7 +15981,6 @@ namespace peilin
         }
 
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 計算兩個矩形的 IoU（Intersection over Union，交集除以聯集）
         /// </summary>
         /// <param name="a">矩形 A</param>
@@ -16101,7 +16011,6 @@ namespace peilin
         }
 
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 將角度正規化到 0-360 度範圍
         /// </summary>
         /// <param name="angle">待正規化的角度</param>
@@ -16446,9 +16355,6 @@ namespace peilin
         /// </summary>
         #endregion
 
-        // 由 GitHub Copilot 產生
-        // 由 GitHub Copilot 產生
-        // 由 GitHub Copilot 產生
         private void testchamfer_Click(object sender, EventArgs e)
         {
             // 此函數用於測試藍色區域檢測，建議用於第一站
@@ -17405,7 +17311,6 @@ namespace peilin
         {
             return app.foldername;
         }
-        // 由 GitHub Copilot 產生
         // 修正: 內部 Clone 確保 Queue_Save 擁有獨立副本，避免呼叫方提早釋放導致 ObjectDisposedException
         public void SaveImageAsync(Mat image, string path)
         {
@@ -17952,7 +17857,6 @@ namespace peilin
                 lbAdd("顯示復歸成功通知時發生錯誤", "err", ex.Message);
             }
         }
-        // 由 GitHub Copilot 產生
         private void ShowCountdownDialog(int seconds)
         {
             // 計算初始文字所需的尺寸
@@ -18050,12 +17954,10 @@ namespace peilin
                 }
             }
         }
-        // 由 GitHub Copilot 產生
         private void UpdateButtonStates()
         {
             BeginInvoke(new Action(() =>
             {
-                // 由 GitHub Copilot 產生
                 // 調機模式下不限制按鈕，所有按鈕都可正常使用
                 if (app.DetectMode == 1)
                 {
@@ -18071,7 +17973,7 @@ namespace peilin
                     return; // 調機模式下直接返回，不執行後續的狀態限制
                 }
 
-                // 由 GitHub Copilot 產生 - testImageMode 下不限制按鈕，所有按鈕都可正常使用
+                // testImageMode 下不限制按鈕，所有按鈕都可正常使用
                 if (app.testImageMode)
                 {
                     button1.Enabled = true;
@@ -18131,7 +18033,6 @@ namespace peilin
         #endregion
         #region 取資料庫參數
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 安全取得 int 參數，避免格式錯誤造成例外
         /// </summary>
         public static int GetIntParam(IDictionary<string, string> param, string key, int defaultValue)
@@ -18142,7 +18043,6 @@ namespace peilin
         }
 
         /// <summary>
-        /// 由 GitHub Copilot 產生
         /// 安全取得 double 參數，避免格式錯誤造成例外
         /// </summary>
         public static double GetDoubleParam(IDictionary<string, string> param, string key, double defaultValue)
@@ -18390,7 +18290,6 @@ namespace peilin
 
         private async void button25_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生
             // 測試 findGapWidth_new 功能 (批量處理) - Async 改良版
             // 解決 ContextSwitchDeadlock 與記憶體問題
             try
@@ -18714,7 +18613,6 @@ namespace peilin
             {
                 DateTime now = DateTime.Now;
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄寫入開始
                 Log.Information("===== WriteDefectCounts 開始 =====");
                 Log.Information($"準備寫入 {items.Count} 筆資料，forceWrite={forceWrite}");
@@ -18728,7 +18626,6 @@ namespace peilin
 
                         foreach (var item in items)
                         {
-                            // 由 GitHub Copilot 產生
                             Log.Debug($"處理項目: Type='{item.Type}', Name='{item.Name}', Count={item.Count}, LotId='{item.LotId}'");
 
                             if (forceWrite)
@@ -18776,7 +18673,6 @@ namespace peilin
                             }
                         }
 
-                        // 由 GitHub Copilot 產生
                         // 診斷：記錄寫入統計
                         Log.Information($"寫入完成: 新增 {insertedCount} 筆, 跳過 {skippedCount} 筆");
                         Log.Information("===== WriteDefectCounts 結束 =====");
@@ -18808,14 +18704,12 @@ namespace peilin
         {
             try
             {
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄函數呼叫參數
                 Log.Information("===== WriteAllDefectCounts 開始 =====");
                 Log.Information($"參數: type='{type}', lotId='{lotId}', forceWrite={forceWrite}");
 
                 var itemsToWrite = new List<(string Type, string Name, int Count, string LotId)>();
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄瑕疵計數處理
                 Log.Information($"處理 defectCounts (共 {defectCounts?.Count ?? 0} 筆)：");
 
@@ -18827,13 +18721,11 @@ namespace peilin
                         // 【修正】跳過 SAMPLE_ID，避免重複寫入
                         if (item.Key != "SAMPLE_ID")
                         {
-                            // 由 GitHub Copilot 產生
                             // 診斷：檢查是否誤將 OK/NG/NULL 加入 app.dc
                             if (item.Key == "OK" || item.Key == "NG" || item.Key == "NULL")
                             {
                                 Log.Warning($"  [警告] 在 defectCounts 中發現一般計數項目: '{item.Key}' = {item.Value}");
                                 Log.Warning($"  [警告] 此項目應該在 generalCounts 中，而非 defectCounts (app.dc)");
-                                // 由 GitHub Copilot 產生
                                 // 決策：跳過此項目，不寫入（因為會在 generalCounts 處理）
                                 continue;
                             }
@@ -18848,7 +18740,6 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄一般計數處理
                 Log.Information($"處理 generalCounts (共 {generalCounts?.Count ?? 0} 筆)：");
 
@@ -18869,7 +18760,6 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄最終要寫入的項目
                 Log.Information($"準備寫入 {itemsToWrite.Count} 筆資料到資料庫");
 
@@ -18940,7 +18830,6 @@ namespace peilin
         {
             try
             {
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄 app.dc 的完整內容
                 Log.Information("===== PerformPeriodicWrite 開始 =====");
                 Log.Information($"forceWrite = {forceWrite}");
@@ -18965,7 +18854,6 @@ namespace peilin
                     return false;
                 }
 
-                // 由 GitHub Copilot 產生
                 // 診斷：逐項列出 app.dc 的內容
                 Log.Information($"app.dc 共有 {app.dc.Count} 筆資料：");
                 foreach (var item in app.dc.OrderBy(x => x.Key))
@@ -18978,7 +18866,6 @@ namespace peilin
                 int okCount = Form1.PLC_CheckD(807);
                 int nullCount = Form1.PLC_CheckD(809);
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄從 PLC 讀取的數值
                 Log.Information($"從 PLC 讀取的計數：");
                 Log.Information($"  D801 (NG) = {ngCount}");
@@ -18989,7 +18876,6 @@ namespace peilin
                 int q = okCount / app.pack;
                 int adjustedOkCount = q * app.pack;
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄 OK 數量調整
                 if (okCount != adjustedOkCount)
                 {
@@ -19004,7 +18890,6 @@ namespace peilin
                     { "NULL", nullCount }
                 };
 
-                // 由 GitHub Copilot 產生
                 // 診斷：記錄 generalCounts 內容
                 Log.Information($"generalCounts 內容：");
                 foreach (var item in generalCounts)
@@ -19020,7 +18905,6 @@ namespace peilin
                     int currentSampleId = 0;
                     if (ResultManager.counter.TryGetValue("SAMPLE_ID", out currentSampleId))
                     {
-                        // 由 GitHub Copilot 產生
                         Log.Information($"當前 SAMPLE_ID = {currentSampleId}");
 
                         try
@@ -19064,7 +18948,6 @@ namespace peilin
                     }
                 }
 
-                // 由 GitHub Copilot 產生
                 // 呼叫寫入函數前記錄
                 Log.Information("準備呼叫 WriteAllDefectCounts...");
                 bool result = WriteAllDefectCounts(app.produce_No, app.LotID, app.dc, generalCounts, forceWrite);
@@ -19165,7 +19048,7 @@ public class ResultManager
         counter.TryAdd("stop2", 0);
         counter.TryAdd("stop3", 0);
     }
-    // 由 GitHub Copilot 產生 - 修正: 改為 public 以允許 Form1 類別在更新計數時存取
+    // 修正: 改為 public 以允許 Form1 類別在更新計數時存取
     public static readonly object okLock = new object();
     private static string activeOkCounter = "OK1"; //一開始先從OK1 之後都在函數內變動
 
@@ -19266,7 +19149,7 @@ public class ResultManager
             string saveDir = Path.Combine(basePath, resultFolder);
             if (!Directory.Exists(saveDir)) Directory.CreateDirectory(saveDir);
 
-            // 由 GitHub Copilot 產生 - 修正：分開讀取各個儲存參數，OK/NG/NULL 與 Stations 各自獨立控制
+            // 修正：分開讀取各個儲存參數，OK/NG/NULL 與 Stations 各自獨立控制
             bool shouldSaveOK = false;
             bool shouldSaveNG = false;
             bool shouldSaveNULL = false;
@@ -19279,13 +19162,13 @@ public class ResultManager
                 shouldSaveStations = db.Parameters.FirstOrDefault(p => p.Name == "saveStations")?.Value == "true";
             }
 
-            // 由 GitHub Copilot 產生 - 判斷當前樣品是否需要儲存到結果資料夾 (OK/NG/NULL)
+            // 判斷當前樣品是否需要儲存到結果資料夾 (OK/NG/NULL)
             bool shouldSaveToResultFolder = false;
             if (isNull && shouldSaveNULL) shouldSaveToResultFolder = true;
             else if (isNG && !isNull && shouldSaveNG) shouldSaveToResultFolder = true;
             else if (!isNG && !isNull && shouldSaveOK) shouldSaveToResultFolder = true;
 
-            // 由 GitHub Copilot 產生 - 只有在需要儲存時才處理圖片
+            // 只有在需要儲存時才處理圖片
             if (shouldSaveToResultFolder || shouldSaveStations)
             {
                 string stationBasePath = Path.Combine(basePath, "Stations");
@@ -19356,13 +19239,13 @@ public class ResultManager
                             5
                         );
 
-                        // 由 GitHub Copilot 產生 - 根據對應參數決定是否儲存到 OK/NG/NULL 資料夾
+                        // 根據對應參數決定是否儲存到 OK/NG/NULL 資料夾
                         if (shouldSaveToResultFolder)
                         {
                             app.Queue_Save.Enqueue(new ImageSave(markedImage.Clone(), savePath));
                         }
 
-                        // 由 GitHub Copilot 產生 - 依據 saveStations 參數決定是否存到 Stations 資料夾
+                        // 依據 saveStations 參數決定是否存到 Stations 資料夾
                         if (shouldSaveStations)
                         {
                             string stationFolder = Path.Combine(stationBasePath, $"Station{stationResult.Stop}");
@@ -19379,7 +19262,7 @@ public class ResultManager
             }
             else
             {
-                // 由 GitHub Copilot 產生 - 即使不儲存圖片，也需要釋放 FinalMap 避免記憶體洩漏
+                // 即使不儲存圖片，也需要釋放 FinalMap 避免記憶體洩漏
                 foreach (var stationResult in sampleResult.StationResults.Values)
                 {
                     if (stationResult.FinalMap != null)
@@ -19437,7 +19320,7 @@ public class ResultManager
                 // 只有發現了有效的最嚴重缺陷，才計數一次
                 if (!string.IsNullOrEmpty(finalDefectName))
                 {
-                    // 由 GitHub Copilot 產生 // 修改: 使用 AddOrUpdate 原子遞增
+                    // 修改: 使用 AddOrUpdate 原子遞增
                     app.dc.AddOrUpdate(finalDefectName, 1, (key, oldValue) => oldValue + 1);
                 }
             }
@@ -19499,7 +19382,6 @@ public class ResultManager
                     // ✅ 等待結束，讀取 PLC 並覆蓋計數
                     try
                     {
-                        // 由 GitHub Copilot 產生
                         // 修正: 讀取 PLC 並覆蓋計數，整個同步邏輯包在 okLock 中避免競態條件
                         string lane;
                         int plcCount;
@@ -19530,10 +19412,10 @@ public class ResultManager
 
                             softwareCount = ResultManager.counter[lane];
 
-                            // 由 GitHub Copilot 產生 - 修復：明確檢查 plcCount == app.pack，避免兩者都為 0 時誤判為滿箱
+                            // 修復：明確檢查 plcCount == app.pack，避免兩者都為 0 時誤判為滿箱
                             if (softwareCount != plcCount)
                             {
-                                // 由 GitHub Copilot 產生 - 修復：PLC 計滿後自動歸零的競態條件
+                                // 修復：PLC 計滿後自動歸零的競態條件
                                 // 當軟體計數已達 app.pack 且 PLC 讀到 0，代表 PLC 已完成計數並自動歸零
                                 // 此時應視為同步成功，執行正常切換
                                 if (softwareCount == app.pack && plcCount == 0)
@@ -19585,7 +19467,6 @@ public class ResultManager
                     }
                 }
             }
-            // 由 GitHub Copilot 產生
             // 修改: 使用 TryGetValue 避免 Check-Then-Act 反模式
             if (!app.samplePhotoTimes.TryGetValue(sampleId, out DateTime photoTime))
             {
@@ -19619,7 +19500,7 @@ public class ResultManager
                 expectedPushTime = photoTime.AddMilliseconds(double.Parse(app.param["fourToNG_time_ms_4"]) - double.Parse(app.param["delay4"]));
             }
 
-            // 由 GitHub Copilot 產生 - 離線檢測模式：放寬超時閾值（沒有實際推料壓力）
+            // 離線檢測模式：放寬超時閾值（沒有實際推料壓力）
             int timeoutThreshold = app.offlinetest ? -5000 : 150;  // 離線模式允許延遲最多5秒，線上模式維持150ms
 
             if (left < timeoutThreshold)
@@ -19627,7 +19508,7 @@ public class ResultManager
                 isNull = true;
                 timeout = true;
 
-                // 由 GitHub Copilot 產生 - 記錄超時資訊以便診斷
+                // 記錄超時資訊以便診斷
                 if (app.offlinetest && sampleId % 50 == 0)  // 每50個樣品記錄一次
                 {
                     Log.Warning($"[離線檢測] 樣品 {sampleId} 處理延遲 {timeDifference.TotalMilliseconds:F0}ms (left={left:F0}ms)，但允許繼續處理");
@@ -19865,7 +19746,7 @@ public class ResultManager
                 counter["OK1"] = 0;
                 counter["OK2"] = 0;
 
-                // 由 GitHub Copilot 產生 - 修復：重置同步模式狀態，避免滿料急停後復歸時誤入同步邏輯
+                // 修復：重置同步模式狀態，避免滿料急停後復歸時誤入同步邏輯
                 app.isInSyncMode = false;
                 app.syncStartTime = DateTime.MinValue;
                 app.syncWaitTimeMs = 0;
@@ -20154,19 +20035,19 @@ public class ResultManager
             using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
             {
                 #region 總體統計
-                // 由 GitHub Copilot 產生 - 總體統計摘要（增加 null 安全檢查）
+                // 總體統計摘要（增加 null 安全檢查）
                 writer.WriteLine();
                 writer.WriteLine($"LOT ID:,{app.LotID}");
                 writer.WriteLine($"工單數量:,{app.order}");
                 writer.WriteLine("==== 總體統計 （實際推料數量，不含NULL）====");
 
-                // 由 GitHub Copilot 產生 - 以樣品為單位計算總數（不是站點單位）
+                // 以樣品為單位計算總數（不是站點單位）
                 // 從sampleResults中統計唯一的樣品ID數量
                 int totalSamples = 0;
                 int totalOK = 0;
                 int totalNG = 0;
 
-                // 由 GitHub Copilot 產生 - 統計所有樣品的OK/NG狀態（一個樣品有任一站NG就算NG）
+                // 統計所有樣品的OK/NG狀態（一個樣品有任一站NG就算NG）
                 var sampleStatusGroup = sampleResults.GroupBy(r => r.Key).Select(g => new
                 {
                     SampleId = g.Key,
@@ -20177,7 +20058,7 @@ public class ResultManager
                 totalOK = sampleStatusGroup.Count(s => !s.IsNG);
                 totalNG = sampleStatusGroup.Count(s => s.IsNG);
 
-                // 由 GitHub Copilot 產生 - 如果sampleResults為空，從站點統計推算
+                // 如果sampleResults為空，從站點統計推算
                 if (totalSamples == 0)
                 {
                     // 使用站點統計推算：取最小站點的樣品數作為總數（代表完成所有站點檢測的樣品數）
@@ -20204,7 +20085,7 @@ public class ResultManager
                         totalSamples = ok + ng;
                     }
                 }
-                // 由 GitHub Copilot 產生 - 計算 OK 率和不良率
+                // 計算 OK 率和不良率
                 double okPercentage = totalSamples > 0 ? (totalOK * 100.0 / totalSamples) : 0;
                 double ngPercentage = totalSamples > 0 ? (totalNG * 100.0 / totalSamples) : 0;
                 
@@ -20236,11 +20117,11 @@ public class ResultManager
                 }
                 #endregion
                 #region 分數分布分析
-                // 由 GitHub Copilot 產生 - 添加新的分數分布分析部分（加入 null 檢查）
+                // 添加新的分數分布分析部分（加入 null 檢查）
                 writer.WriteLine();
                 writer.WriteLine("==== 所有檢出瑕疵分布（包含 OK 樣品中的低分瑕疵、因為超時流進NULL的OK / NG樣品的瑕疵） ====");
 
-                // 由 GitHub Copilot 產生 - 收集分數數據，加入 try-catch 避免 NullReferenceException
+                // 收集分數數據，加入 try-catch 避免 NullReferenceException
                 try
                 {
                     var defectScores = ScoreAnalyzer.CollectDefectScores();
@@ -20279,11 +20160,11 @@ public class ResultManager
                 #endregion
                 #region 12/34 合併統計OK/NG
                 /*
-                // 由 GitHub Copilot 產生 - 修正: 以樣品為單位統計，任一站 NG 則該樣品算 NG
+                // 修正: 以樣品為單位統計，任一站 NG 則該樣品算 NG
                 int group12OK = 0, group12NG = 0;
                 int group34OK = 0, group34NG = 0;
 
-                // 由 GitHub Copilot 產生 - 遍歷所有樣品，檢查站點 1 和 2 的結果
+                // 遍歷所有樣品，檢查站點 1 和 2 的結果
                 foreach (var samplePair in sampleStationResults)
                 {
                     int sampleId = samplePair.Key;
@@ -20335,7 +20216,7 @@ public class ResultManager
                     int station = stationPair.Key;
                     var defectCounts = stationPair.Value;
 
-                    // 由 GitHub Copilot 產生 - 使用 TryGetValue 避免 KeyNotFoundException
+                    // 使用 TryGetValue 避免 KeyNotFoundException
                     if (!stationOkNgStats.TryGetValue(station, out var okNgStats))
                     {
                         okNgStats = (0, 0);
@@ -20835,7 +20716,6 @@ public class PendingPushInfo
 }
 public class app
 {
-    // 由 GitHub Copilot 產生
     // 修改: 使用執行緒安全的 ConcurrentDictionary
     public static ConcurrentDictionary<int, string> detect_result = new ConcurrentDictionary<int, string>();
     public static ConcurrentDictionary<int, bool[]> detect_result_check = new ConcurrentDictionary<int, bool[]>();
@@ -20865,25 +20745,20 @@ public class app
     public static System.Collections.Concurrent.ConcurrentQueue<PendingPushInfo> pendingPushOK2 =
         new System.Collections.Concurrent.ConcurrentQueue<PendingPushInfo>();
     //public static Dictionary<string, InferenceSession> onnxSessions = new Dictionary<string, InferenceSession>();
-    // 由 GitHub Copilot 產生
     // 修改: 使用執行緒安全的 ConcurrentDictionary
     public static ConcurrentDictionary<string, int> counter = new ConcurrentDictionary<string, int>();
     public static ConcurrentDictionary<string, int> dc = new ConcurrentDictionary<string, int>();
-    // 由 GitHub Copilot 產生
     // 修改: 使用大小寫不敏感的比較器
     public static ConcurrentDictionary<string, string> param = new ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public static ConcurrentDictionary<string, string> models = new ConcurrentDictionary<string, string>();
     public static ConcurrentDictionary<string, string> metas = new ConcurrentDictionary<string, string>();
     public static ConcurrentDictionary<string, int> pos = new ConcurrentDictionary<string, int>();
     public static Dictionary<string, Mat> img;
-    // 由 GitHub Copilot 產生
     // 修改: 使用執行緒安全的 ConcurrentDictionary
     public static ConcurrentDictionary<int, DateTime> samplePhotoTimes = new ConcurrentDictionary<int, DateTime>();
     public static List<string> defect_name = new List<string>();
-    // 由 GitHub Copilot 產生
     // 新增: 每個站點的瑕疵名稱快取,避免重複查詢資料庫
     public static ConcurrentDictionary<int, List<string>> defectNamesPerStop = new ConcurrentDictionary<int, List<string>>();
-    // 由 GitHub Copilot 產生
     // 新增: 倒角檢測快取 (料號_站點 -> 是否需要檢測)
     public static ConcurrentDictionary<string, bool> chamferDetectionCache = new ConcurrentDictionary<string, bool>();
     public static List<bool> ng_rec = new List<bool>();
@@ -20914,7 +20789,7 @@ public class app
     public static bool testImageMode = false;
     public static bool Mode = false;
     
-    // 由 GitHub Copilot 產生 - 新增調機模式旗標
+    // 新增調機模式旗標
     public static bool isAdjustmentMode = false; // 調機模式旗標（parameter_info 使用）
 
     public static float okNgThreshold = 0.5f;   // OK/NG 判定閾值
@@ -20939,7 +20814,6 @@ public class app
     public static int lastD98Accepted = -1;
     public static int ProductiveTimeoutSec = 10;
 
-    // 由 GitHub Copilot 產生
     // 出料卡料時間預設值（單位：0.1秒，6000 = 600秒）
     public const int DEFAULT_D8_VALUE = 6000;  // 卡料倒數時間長度預設值
     public const int DEFAULT_D9_VALUE = 6000;  // 沒料倒數時間長度預設值
@@ -20950,7 +20824,6 @@ public class app
     public static bool test = true;
     public static int mode = 0;
     public static bool allOK = false;
-    // 由 GitHub Copilot 產生
     // 修正: 簡化同步機制，使用簡單旗標
     public static bool isInSyncMode = false;              // 是否在同步模式
     public static DateTime syncStartTime = DateTime.MinValue; // 同步開始時間

@@ -1,4 +1,4 @@
-﻿// 由 GitHub Copilot 產生 - 對比度校正表單
+﻿// 對比度校正表單
 using System;
 using System.Drawing;
 using System.IO;
@@ -22,7 +22,7 @@ namespace peilin
         private bool hasValidImage = false;
         private string targetType;
 
-        // 由 GitHub Copilot 產生 - 修正預覽功能
+        // 修正預覽功能
         private float zoomFactor = 1.0f;
         private System.Drawing.Point imageOffset = System.Drawing.Point.Empty;
         private bool isDragging = false;
@@ -47,7 +47,7 @@ namespace peilin
 
         public ContrastCalibrationForm(string targetType)
         {
-            // 由 GitHub Copilot 產生 - 初始化視窗
+            // 初始化視窗
             this.targetType = targetType;
             InitializeFormProperties();
             SetupUI();
@@ -56,7 +56,7 @@ namespace peilin
 
         private void InitializeFormProperties()
         {
-            // 由 GitHub Copilot 產生 - 基本視窗屬性設定
+            // 基本視窗屬性設定
             this.Text = "對比度校正";
             this.Size = new System.Drawing.Size(1600, 1000);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -68,7 +68,7 @@ namespace peilin
 
         private void SetupUI()
         {
-            // 由 GitHub Copilot 產生 - 建立所有UI控制項
+            // 建立所有UI控制項
             CreateStationAndControlArea();
             CreateImagePreviewArea();
             CreateParameterDisplayArea();
@@ -77,7 +77,7 @@ namespace peilin
 
         private void CreateStationAndControlArea()
         {
-            // 由 GitHub Copilot 產生 - 站點選擇與控制區域
+            // 站點選擇與控制區域
             var grpStationAndControl = new GroupBox();
             grpStationAndControl.Text = "站點選擇與參數調整";
             grpStationAndControl.Location = new System.Drawing.Point(20, 20);
@@ -169,7 +169,7 @@ namespace peilin
 
         private void CreateImagePreviewArea()
         {
-            // 由 GitHub Copilot 產生 - 圖片預覽區域
+            // 圖片預覽區域
             var grpImagePreview = new GroupBox();
             grpImagePreview.Text = "圖片預覽";
             grpImagePreview.Location = new System.Drawing.Point(20, 160);
@@ -218,7 +218,7 @@ namespace peilin
 
         private void CreateParameterDisplayArea()
         {
-            // 由 GitHub Copilot 產生 - 參數顯示區域
+            // 參數顯示區域
             var grpParameters = new GroupBox();
             grpParameters.Text = "當前參數值";
             grpParameters.Location = new System.Drawing.Point(1240, 160);
@@ -272,7 +272,7 @@ namespace peilin
 
         private void CreateActionButtons()
         {
-            // 由 GitHub Copilot 產生 - 動作按鈕
+            // 動作按鈕
             btnApplyValues = new Button();
             btnApplyValues.Text = "套用推薦值";
             btnApplyValues.Location = new System.Drawing.Point(1280, 900);
@@ -306,14 +306,14 @@ namespace peilin
             }
 
             UpdateStatus($"已選擇站點 {selectedStation}");
-            // 由 GitHub Copilot 產生 - 切換站點時恢復按鈕文字
+            // 切換站點時恢復按鈕文字
             btnApplyValues.Text = "套用推薦值";
             LoadCurrentParameters(); // 只在有效站點時載入
         }
 
         private void TrackContrast_ValueChanged(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 對比度拖拉桿變更事件
+            // 對比度拖拉桿變更事件
             currentContrast = trackContrast.Value;
             lblContrastValue.Text = currentContrast.ToString();
             lblContrastDisplay.Text = currentContrast.ToString();
@@ -321,7 +321,7 @@ namespace peilin
 
         private void TrackBrightness_ValueChanged(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 亮度拖拉桿變更事件
+            // 亮度拖拉桿變更事件
             currentBrightness = trackBrightness.Value;
             lblBrightnessValue.Text = currentBrightness.ToString();
             lblBrightnessDisplay.Text = currentBrightness.ToString();
@@ -329,7 +329,7 @@ namespace peilin
 
         private void BtnLoadImage_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 載入圖片
+            // 載入圖片
             using (var openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.Title = "選擇校正圖片";
@@ -353,10 +353,10 @@ namespace peilin
 
         private void LoadCalibrationImage(string imagePath)
         {
-            // 由 GitHub Copilot 產生 - 載入校正圖片
+            // 載入校正圖片
             try
             {
-                // 由 GitHub Copilot 產生 - 先設為 false 防止 Paint 事件存取已丟棄物件
+                // 先設為 false 防止 Paint 事件存取已丟棄物件
                 hasValidImage = false;
 
                 // 釋放舊圖片並設為 null
@@ -401,7 +401,7 @@ namespace peilin
 
         private void BtnApplyProcessing_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 套用對比度與亮度處理
+            // 套用對比度與亮度處理
             if (!hasValidImage || originalImage == null)
             {
                 MessageBox.Show("請先載入圖片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -410,14 +410,14 @@ namespace peilin
 
             try
             {
-                // 由 GitHub Copilot 產生 - 釋放舊的處理結果並設為 null
+                // 釋放舊的處理結果並設為 null
                 if (processedImage != null)
                 {
                     processedImage.Dispose();
                     processedImage = null;
                 }
 
-                // 由 GitHub Copilot 產生 - 用 using 包裝 grayImage 防止記憶體洩漏
+                // 用 using 包裝 grayImage 防止記憶體洩漏
                 using (Mat grayImage = new Mat())
                 {
                     Cv2.CvtColor(originalImage, grayImage, ColorConversionCodes.BGR2GRAY);
@@ -507,7 +507,7 @@ namespace peilin
         private void LoadCurrentParameters()
         {
             if (selectedStation <= 0) return;
-            // 由 GitHub Copilot 產生 - 從資料庫載入當前站點的參數
+            // 從資料庫載入當前站點的參數
             try
             {
                 if (string.IsNullOrEmpty(targetType))
@@ -568,7 +568,7 @@ namespace peilin
         private void SaveParametersToDatabase()
         {
             if (selectedStation <= 0) throw new Exception("尚未選擇站點，無法儲存參數。");
-            // 由 GitHub Copilot 產生 - 儲存參數到資料庫使用 Set().Update() 方式
+            // 儲存參數到資料庫使用 Set().Update() 方式
             if (string.IsNullOrEmpty(targetType))
             {
                 throw new Exception("目標料號未設定");
@@ -620,14 +620,14 @@ namespace peilin
 
         private void UpdateStatus(string message)
         {
-            // 由 GitHub Copilot 產生 - 更新狀態顯示
+            // 更新狀態顯示
             lblStatus.Text = message;
             lblStatus.ForeColor = System.Drawing.Color.DarkBlue;
         }
 
         private void BtnApplyValues_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 套用參數到資料庫但保持視窗開啟
+            // 套用參數到資料庫但保持視窗開啟
             try
             {
                 SaveParametersToDatabase();
@@ -636,7 +636,7 @@ namespace peilin
 
                 // 不關閉視窗，只更新狀態
                 UpdateStatus($"參數已儲存 - 站點{selectedStation} 對比度:{currentContrast} 亮度:{currentBrightness}");
-                // 由 GitHub Copilot 產生 - 套用成功後更新按鈕文字
+                // 套用成功後更新按鈕文字
                 btnApplyValues.Text = "✅ 已套用";
             }
             catch (Exception ex)
@@ -648,14 +648,14 @@ namespace peilin
 
         private void BtnCancel_Click(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 取消操作
+            // 取消操作
             this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 清理資源並設為 null
+            // 清理資源並設為 null
             hasValidImage = false;
             if (originalImage != null)
             {
@@ -676,7 +676,7 @@ namespace peilin
         }
         private void BtnShowOriginal_MouseDown(object sender, MouseEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 按下顯示原圖按鈕
+            // 按下顯示原圖按鈕
             if (hasValidImage)
             {
                 btnShowOriginal.BackColor = System.Drawing.Color.Orange;
@@ -686,7 +686,7 @@ namespace peilin
 
         private void BtnShowOriginal_MouseUp(object sender, MouseEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 放開顯示原圖按鈕
+            // 放開顯示原圖按鈕
             if (hasValidImage)
             {
                 btnShowOriginal.BackColor = System.Drawing.Color.LightYellow;
@@ -696,7 +696,7 @@ namespace peilin
 
         private void BtnShowOriginal_MouseLeave(object sender, EventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 滑鼠離開顯示原圖按鈕
+            // 滑鼠離開顯示原圖按鈕
             if (hasValidImage)
             {
                 btnShowOriginal.BackColor = System.Drawing.Color.LightYellow;
@@ -705,8 +705,8 @@ namespace peilin
         }
         private void ImagePreview_Paint(object sender, PaintEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 自訂繪製圖片預覽
-            // 由 GitHub Copilot 產生 - 加入 IsDisposed 檢查防止存取已丟棄物件
+            // 自訂繪製圖片預覽
+            // 加入 IsDisposed 檢查防止存取已丟棄物件
             if (!hasValidImage || originalImage == null || originalImage.IsDisposed)
                 return;
 
@@ -725,7 +725,7 @@ namespace peilin
                     displayImage = processedImage;
                 }
 
-                // 由 GitHub Copilot 產生 - 再次檢查 displayImage 是否有效
+                // 再次檢查 displayImage 是否有效
                 if (displayImage == null || displayImage.IsDisposed)
                     return;
 
@@ -751,7 +751,7 @@ namespace peilin
 
         private void ImagePreview_MouseWheel(object sender, MouseEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 滑鼠滾輪縮放功能
+            // 滑鼠滾輪縮放功能
             if (!hasValidImage || (Control.ModifierKeys & Keys.Control) == 0)
                 return;
 
@@ -778,7 +778,7 @@ namespace peilin
 
         private void ImagePreview_MouseDown(object sender, MouseEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 開始拖曳
+            // 開始拖曳
             if (e.Button == MouseButtons.Left && hasValidImage)
             {
                 isDragging = true;
@@ -790,7 +790,7 @@ namespace peilin
 
         private void ImagePreview_MouseMove(object sender, MouseEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 拖曳移動視野
+            // 拖曳移動視野
             if (isDragging && hasValidImage)
             {
                 int deltaX = e.X - dragStartPoint.X;
@@ -806,7 +806,7 @@ namespace peilin
 
         private void ImagePreview_MouseUp(object sender, MouseEventArgs e)
         {
-            // 由 GitHub Copilot 產生 - 結束拖曳
+            // 結束拖曳
             if (e.Button == MouseButtons.Left)
             {
                 isDragging = false;

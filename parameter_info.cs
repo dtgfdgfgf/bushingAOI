@@ -258,7 +258,7 @@ namespace peilin
                 StopCamera();
                 camera.Stop();
 
-                // 由 GitHub Copilot 產生 - 設置調機模式旗標
+                // 設置調機模式旗標
                 app.isAdjustmentMode = true; // 進入調機模式
 
                 // 設定新的相機索引
@@ -300,7 +300,7 @@ namespace peilin
             {
                 try
                 {
-                    // 由 GitHub Copilot 產生 - 修正佇列清空時機
+                    // 修正佇列清空時機
                     // 1. 第一步：阻擋新影像進入佇列
                     app.isAdjustmentMode = false; // 離開調機模式
 
@@ -344,7 +344,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 新增：清空特定相機的影像佇列
         private void ClearCameraQueue(int cameraIndex)
         {
@@ -398,7 +397,6 @@ namespace peilin
         // 更新顯示
         private void UpdateDisplay()
         {
-            // 由 GitHub Copilot 產生
             // 修正: 完整的 using 鏈確保所有 Mat 物件釋放
             try
             {
@@ -428,7 +426,6 @@ namespace peilin
         // 獲取最新的相機影像
         private Mat GetLatestFrame(int cameraIndex)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 調機模式直接從相機讀取，不經過佇列
             try
             {
@@ -463,7 +460,6 @@ namespace peilin
         // 創建測試用影像 (如果無法獲取真實相機影像)
         private Mat CreateTestImage(int cameraIndex)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 明確文件化這個方法分配新 Mat，呼叫方負責釋放
             Mat testImage = new Mat(2048, 2448, MatType.CV_8UC3, new Scalar(240, 240, 240));
 
@@ -481,7 +477,6 @@ namespace peilin
         // 在影像上繪製 ROI (修改為使用臨時參數)
         private Mat DrawROIOnFrame(Mat inputFrame, int cameraIndex)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 只在需要修改時 Clone，並確保呼叫方知道要釋放
             Mat result = inputFrame.Clone(); // 必須 Clone 因為要在上面繪製
 
@@ -580,7 +575,6 @@ namespace peilin
         }        // 表單關閉事件
         private void Parameter_info_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 確保所有資源正確釋放並重置調機模式
             try
             {
@@ -1217,7 +1211,7 @@ namespace peilin
             };
 
             // 創建和啟動實時更新計時器
-            // 由 GitHub Copilot 產生 - 修正: 降低更新頻率以減少記憶體壓力
+            // 修正: 降低更新頻率以減少記憶體壓力
             enlargedUpdateTimer = new System.Windows.Forms.Timer();
             enlargedUpdateTimer.Interval = 100; // 從 30ms 改為 100ms（10fps），減少記憶體壓力
             enlargedUpdateTimer.Tick += EnlargedUpdateTimer_Tick;
@@ -1245,7 +1239,6 @@ namespace peilin
         {
             if (enlargedPictureBox == null || !isEnlargedViewActive) return;
 
-            // 由 GitHub Copilot 產生
             // 修正: 完整的 using 鏈 + Bitmap 追蹤
             try
             {
@@ -1268,7 +1261,6 @@ namespace peilin
         }
         private void ShowEnlargedImage(Mat image)
         {
-            // 由 GitHub Copilot 產生
             // 修正: 確保 Bitmap 在窗體關閉時釋放
             // 創建一個新窗體用於顯示放大的圖像
             Form enlargedForm = new Form();
@@ -1326,7 +1318,7 @@ namespace peilin
             StartCamera(3); // 啟動相機4顯示
         }
 
-        // 由 GitHub Copilot 產生 - 取像按鈕點擊事件
+        // 取像按鈕點擊事件
         private void buttonCapture_Click(object sender, EventArgs e)
         {
 
@@ -1336,7 +1328,6 @@ namespace peilin
                 return;
             }
 
-            // 由 GitHub Copilot 產生
             // 修正: 確保 Mat 物件正確釋放
             try
             {

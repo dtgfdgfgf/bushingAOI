@@ -43,12 +43,12 @@ namespace peilin
         {
             public string ImagePath { get; set; }
             public bool IsNG { get; set; }
-            // 由 GitHub Copilot 產生 - 改為返回開口大小數據
+            // 改為返回開口大小數據
             public double OuterGapMm { get; set; }          // 外擴開口弦長 (mm)
             public double OuterGapAngleDeg { get; set; }    // 外擴開口角度 (度)
             public double InwardBendMm { get; set; }        // 內彎弧長 (mm)
             public double InwardBendAngleDeg { get; set; }  // 內彎角度 (度)
-            // 由 GitHub Copilot 產生 - 新增欄位以正確反映檢測邏輯
+            // 新增欄位以正確反映檢測邏輯
             public int InwardBendingCount { get; set; }           // 內彎像素點數（與閾值比較用）
             public int OutwardDeformationCount { get; set; }      // 外凸像素點數（與閾值比較用）
             public double MaxGapWidthMm { get; set; }             // 本次分析實際使用的開口容許閾值 (mm)
@@ -69,7 +69,7 @@ namespace peilin
             InitializeUI();
         }
 
-        // 由 GitHub Copilot 產生 - 更新視窗標題預設顯示站點2
+        // 更新視窗標題預設顯示站點2
         private void InitializeUI()
         {
             this.Text = $"gapThresh 參數視覺化調校 - {targetType} 站點2";
@@ -117,7 +117,7 @@ namespace peilin
         #region 控件建立和布局
         private void CreateControls()
         {
-            // 由 GitHub Copilot 產生 - 說明標籤（更新為標示僅站點2使用）
+            // 說明標籤（更新為標示僅站點2使用）
             var lblDescription = new Label
             {
                 Text = "📋 請選擇測試圖片，調整 gapThresh 參數並觀察 Gap 檢測效果（此參數僅適用於站點 2）",
@@ -136,7 +136,7 @@ namespace peilin
                 Font = new Font("Microsoft JhengHei", 10F, FontStyle.Bold)
             };
 
-            // 由 GitHub Copilot 產生 - 修改為只顯示站點2並預設選中
+            // 修改為只顯示站點2並預設選中
             cmbStation = new ComboBox
             {
                 Location = new System.Drawing.Point(100, 50),
@@ -149,7 +149,7 @@ namespace peilin
             targetStation = 2;  // 直接設定為站點2
             cmbStation.SelectedIndexChanged += CmbStation_SelectedIndexChanged;
 
-            // 由 GitHub Copilot 產生 - 新增醒目提示標籤
+            // 新增醒目提示標籤
             var lblStation2Only = new Label
             {
                 Text = "此參數僅需設定站點 2",
@@ -358,7 +358,7 @@ namespace peilin
             };
             btnCancel.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
-            // 由 GitHub Copilot 產生 - 加入所有控件（包含新增的站點2提示標籤）
+            // 加入所有控件（包含新增的站點2提示標籤）
             this.Controls.AddRange(new Control[] {
                 lblDescription, lblStation, cmbStation, lblStation2Only, btnSelectImages,
                 grpGapThreshControl, grpImageDisplay,
@@ -368,7 +368,7 @@ namespace peilin
         #endregion
 
         #region 事件處理器
-        // 由 GitHub Copilot 產生 - 修改事件處理邏輯以配合只有站點2的選項結構
+        // 修改事件處理邏輯以配合只有站點2的選項結構
         private void CmbStation_SelectedIndexChanged(object sender, EventArgs e)
         {
             // 由於下拉選單只有「站點2」一個選項，索引0對應站點2
@@ -399,7 +399,7 @@ namespace peilin
 
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
                     btnApplyControl.Enabled = selectedImagePaths.Count > 0;
-                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    // 載入新圖片時恢復按鈕文字
                     btnApplyControl.Text = "✅ 套用推薦值";
 
                     // 自動進行首次分析
@@ -455,7 +455,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正套用按鈕不關閉視窗
+        // 修正套用按鈕不關閉視窗
         private void BtnApply_Click(object sender, EventArgs e)
         {
             if (targetStation <= 0)
@@ -553,7 +553,7 @@ namespace peilin
                     throw new Exception("無法載入圖片");
                 }
 
-                // 由 GitHub Copilot 產生 - 更新為接收完整檢測詳情
+                // 更新為接收完整檢測詳情
                 var (isNG, resultImage, outerGapMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg, inwardBendingCount, outwardDeformationCount, maxGapWidthMm, hasGap, ngReasons) =
                     AnalyzeGapWithThreshold(image, targetStation, currentGapThresh);
 
@@ -657,11 +657,10 @@ namespace peilin
                 return (false, resultImage, gapPositions);
             }
         }
-        // 由 GitHub Copilot 產生 - 修改返回值為開口大小數據
+        // 修改返回值為開口大小數據
         public (bool isNG, Mat img, double outerGapMm, double outerGapAngleDeg, double inwardBendMm, double inwardBendAngleDeg, int inwardBendingCount, int outwardDeformationCount, double maxGapWidthMm, bool hasGap, List<string> ngReasons)
             AnalyzeGapWithThreshold(Mat img, int stop, int gapThresh)
         {
-            // 由 GitHub Copilot 產生
             // 改用 findGapWidth_Single 邏輯：動態擬合圓心 + 變形檢測
 
             Mat visualImg = img.Clone();
@@ -716,7 +715,6 @@ namespace peilin
                 double.TryParse(misalignStr, out tolerancePx);
             }
 
-            // 由 GitHub Copilot 產生
             // 5. deform_gapClusterSpan -> gapClusterSpanThreshold (無開口時外凸群集角度容許值，單位：度)
             double gapClusterSpanThreshold = 5.0;
             if (app.param.TryGetValue($"deform_gapClusterSpan{stop}_threshold", out string gapClusterStr))
@@ -862,7 +860,6 @@ namespace peilin
                 int outwardDeformationCount = 0;
                 double gapExclusionAngle = 1.0;
 
-                // 由 GitHub Copilot 產生
                 // 無開口時：預先收集所有外凸點角度，計算角度跨度以判斷是否為開口邊緣假陽性
                 bool suppressOutward = false;
                 if (!hasGap)
@@ -932,7 +929,7 @@ namespace peilin
                             }
                         }
 
-                        // 由 GitHub Copilot 產生：無開口且群集跨度 < 門檻值時，忽略此外凸點
+                        // 無開口且群集跨度 < 門檻值時，忽略此外凸點
                         if (isDefect && !suppressOutward)
                         {
                             Cv2.Circle(visualImg, p, 2, Scalar.Magenta, -1);
@@ -947,7 +944,7 @@ namespace peilin
                 bool isDeformed = ngReasons.Count > 0;
                 if (isDeformed)
                 {
-                    // 由 GitHub Copilot 產生 - 每條原因分行顯示，從 Y=150 開始，間距 23px，避免單行過長或與 R_fit(Y=120) 重疊
+                    // 每條原因分行顯示，從 Y=150 開始，間距 23px，避免單行過長或與 R_fit(Y=120) 重疊
                     int reasonY = 150;
                     foreach (var r in ngReasons)
                     {
@@ -960,7 +957,6 @@ namespace peilin
                 Scalar statusColor = isDeformed ? Scalar.Red : Scalar.Green;
                 Cv2.PutText(visualImg, $"Result: {statusText}", new OpenCvSharp.Point(10, 30), HersheyFonts.HersheySimplex, 1.2, statusColor, 3);
 
-                // 由 GitHub Copilot 產生
                 // 計算回傳值以保持與 UI 相容
                 // outerGapMm: 直接使用 gapWidthMm (開口寬度)
                 // outerGapAngleDeg: 根據主要開口的點數計算角度
@@ -980,7 +976,7 @@ namespace peilin
                     inwardBendMm = inwardBendAngleDeg * Math.PI / 180.0 * fittedRadius * pixeltomm;
                 }
 
-                // 由 GitHub Copilot 產生 - 擴充回傳元組以包含檢測詳情
+                // 擴充回傳元組以包含檢測詳情
                 return (isDeformed, visualImg, gapWidthMm, outerGapAngleDeg, inwardBendMm, inwardBendAngleDeg, inwardBendingCount, outwardDeformationCount, maxGapWidthMm, hasGap, new List<string>(ngReasons));
             }
         }
@@ -1023,7 +1019,7 @@ namespace peilin
 
         private void UpdateImageInfo(GapAnalysisResult currentResult)
         {
-            // 由 GitHub Copilot 產生 - 修正所有顯示邏輯與實際檢測邏輯的出入
+            // 修正所有顯示邏輯與實際檢測邏輯的出入
             string info = $"📷 圖片 {currentImageIndex + 1}/{gapAnalysisResults.Count}: {currentResult.ImagePath}\r\n\r\n";
             info += $"🔍 分析狀態: {(currentResult.IsValid ? "✅ 成功分析" : "❌ 分析失敗")}\r\n\r\n";
 
@@ -1165,7 +1161,6 @@ namespace peilin
         }
 
         #region 輔助函數
-        // 由 GitHub Copilot 產生
         // 複製自 Form1.cs - 最小平方法圓擬合
         private (Point2f center, float radius) FitCircle(List<OpenCvSharp.Point> points)
         {
@@ -1207,7 +1202,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 複製自 Form1.cs - 計算角度差
         private double GetAngleDiff(double a1, double a2)
         {

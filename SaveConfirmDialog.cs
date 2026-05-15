@@ -54,7 +54,6 @@ namespace peilin
             dgvParameters.AllowUserToDeleteRows = false;
         }
 
-        // 由 GitHub Copilot 產生
         private string GetZoneName(ParameterZone zone)
         {
             switch (zone)

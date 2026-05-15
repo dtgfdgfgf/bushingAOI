@@ -1,5 +1,4 @@
-﻿// 由 GitHub Copilot 產生
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -52,7 +51,7 @@ namespace peilin
 
         public PixelCalibrationForm()
         {
-            // 由 GitHub Copilot 產生 - 初始化
+            // 初始化
             InitializeFormProperties();
             SetupUI();
             LoadCurrentTypeOD();
@@ -60,10 +59,10 @@ namespace peilin
             this.KeyDown += PixelCalibrationForm_KeyDown;
         }
 
-        // 由 GitHub Copilot 產生 - 視窗屬性
+        // 視窗屬性
         private void InitializeFormProperties()
         {
-            // 由 GitHub Copilot 產生 - 設定主視窗大小與屬性
+            // 設定主視窗大小與屬性
             this.Text = "檢測精度校正";
             this.Font = new System.Drawing.Font("Microsoft JhengHei", 10F);  // 統一字體
             this.Size = new System.Drawing.Size(1500, 1050);    // 螢幕適配
@@ -73,14 +72,14 @@ namespace peilin
             this.MinimizeBox = false;
         }
 
-        // 由 GitHub Copilot 產生 - 建立 UI
+        // 建立 UI
         private void SetupUI()
         {
             CreateImagePreviewArea();
             CreateRightPanel(); // 右側合併站點/數值/操作
         }
 
-        // 由 GitHub Copilot 產生 - 左側圖片區
+        // 左側圖片區
         private void CreateImagePreviewArea()
         {
             var grpImagePreview = new GroupBox();
@@ -105,7 +104,7 @@ namespace peilin
             this.Controls.Add(grpImagePreview);
         }
 
-        // 由 GitHub Copilot 產生 - 右側站點/數值/操作
+        // 右側站點/數值/操作
         private void CreateRightPanel()
         {
             var grpRight = new GroupBox();
@@ -212,7 +211,7 @@ namespace peilin
             this.Controls.Add(grpRight);
         }
 
-        // 由 GitHub Copilot 產生 - 站點切換事件
+        // 站點切換事件
         private void CmbStation_SelectedIndexChanged(object sender, EventArgs e)
         {
             selectedStation = cmbStation.SelectedIndex;
@@ -223,14 +222,14 @@ namespace peilin
                 return;
             }
             UpdateStatus($"已選擇站點 {selectedStation}");
-            // 由 GitHub Copilot 產生 - 切換站點時恢復按鈕文字
+            // 切換站點時恢復按鈕文字
             btnApplyValues.Text = "套用推薦值";
             // 若已有量測結果才允許套用
             if (currentDetectionPrecision > 0)
                 btnApplyValues.Enabled = true;
         }
 
-        // 由 GitHub Copilot 產生 - 載入圖片
+        // 載入圖片
         private void BtnLoadImage_Click(object sender, EventArgs e)
         {
             using (var fileDialog = new CommonOpenFileDialog())
@@ -255,7 +254,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 實際載入影像
+        // 實際載入影像
         private void LoadCalibrationImage(string path)
         {
             try
@@ -290,7 +289,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 讀取 OD
+        // 讀取 OD
         private void LoadCurrentTypeOD()
         {
             try
@@ -330,7 +329,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - Upsert PixelToMM
+        // Upsert PixelToMM
         private void SaveDetectionPrecisionToDatabase()
         {
             if (selectedStation <= 0) throw new Exception("尚未選擇站點，無法儲存 PixelToMM。");
@@ -369,7 +368,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 更新線長 (供內部呼叫)
+        // 更新線長 (供內部呼叫)
         private void InternalUpdateLineLength(double pixels)
         {
             currentLineLength = pixels;
@@ -380,7 +379,7 @@ namespace peilin
         // 保留舊介面可能外部呼叫 (若無可刪)
         public void UpdateLineLength(double pixels) => InternalUpdateLineLength(pixels);
 
-        // 由 GitHub Copilot 產生 - 計算 PixelToMM
+        // 計算 PixelToMM
         private void CalculateDetectionPrecision()
         {
             if (currentLineLength > 0 && currentOD > 0)
@@ -398,7 +397,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 重置數值
+        // 重置數值
         private void ResetValues()
         {
             currentLineLength = 0;
@@ -408,14 +407,14 @@ namespace peilin
             btnApplyValues.Enabled = false;
         }
 
-        // 由 GitHub Copilot 產生 - 更新狀態
+        // 更新狀態
         private void UpdateStatus(string msg)
         {
             lblStatus.Text = msg;
             lblStatus.ForeColor = System.Drawing.Color.DarkBlue;
         }
 
-        // 由 GitHub Copilot 產生 - 套用
+        // 套用
         private void BtnApplyValues_Click(object sender, EventArgs e)
         {
             if (selectedStation <= 0)
@@ -446,7 +445,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 關閉
+        // 關閉
         private void BtnCancel_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -454,7 +453,7 @@ namespace peilin
 
         // ========================= 線段繪製功能 (整合) =========================
 
-        // 由 GitHub Copilot 產生 - MouseDown
+        // MouseDown
         private void ImagePreview_MouseDown(object sender, MouseEventArgs e)
         {
             if (imagePreview.Image == null || e.Button != MouseButtons.Left) return;
@@ -492,7 +491,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - MouseMove
+        // MouseMove
         private void ImagePreview_MouseMove(object sender, MouseEventArgs e)
         {
             currentMousePoint = e.Location;
@@ -549,7 +548,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - MouseUp
+        // MouseUp
         private void ImagePreview_MouseUp(object sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left) return;
@@ -566,7 +565,7 @@ namespace peilin
             imagePreview.Cursor = Cursors.Default;
         }
 
-        // 由 GitHub Copilot 產生 - Paint
+        // Paint
         private void ImagePreview_Paint(object sender, PaintEventArgs e)
         {
             if (imagePreview.Image == null) return;
@@ -604,7 +603,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 畫端點
+        // 畫端點
         private void DrawHandle(Graphics g, SolidBrush b, Pen p, System.Drawing.Point pt)
         {
             int r = 4;
@@ -612,7 +611,7 @@ namespace peilin
             g.DrawEllipse(p, pt.X - r, pt.Y - r, r * 2, r * 2);
         }
 
-        // 由 GitHub Copilot 產生 - 開始新線
+        // 開始新線
         private void StartNewLine(System.Drawing.Point screenPoint)
         {
             lineStartRelative = ScreenToImageRelative(screenPoint);
@@ -623,7 +622,7 @@ namespace peilin
             imagePreview.Cursor = Cursors.Cross;
         }
 
-        // 由 GitHub Copilot 產生 - 更新游標
+        // 更新游標
         private void UpdateCursor(System.Drawing.PointF rel)
         {
             if (lineCompleted)
@@ -642,7 +641,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 刪除線
+        // 刪除線
         private void DeleteCurrentLine()
         {
             if (!lineCompleted && !isDrawingLine) return;
@@ -651,7 +650,7 @@ namespace peilin
             UpdateStatus("線段已刪除");
         }
 
-        // 由 GitHub Copilot 產生 - 清空線
+        // 清空線
         private void ClearLine()
         {
             isDrawingLine = false;
@@ -665,7 +664,7 @@ namespace peilin
             imagePreview.Cursor = Cursors.Default;
         }
 
-        // 由 GitHub Copilot 產生 - 鍵盤事件
+        // 鍵盤事件
         private void PixelCalibrationForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Delete)
@@ -674,7 +673,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 計算線長
+        // 計算線長
         private void UpdateLineLengthFromRelative()
         {
             if (lineStartRelative.IsEmpty || lineEndRelative.IsEmpty) return;
@@ -684,7 +683,7 @@ namespace peilin
             InternalUpdateLineLength(len);
         }
 
-        // 由 GitHub Copilot 產生 - 相對座標轉螢幕
+        // 相對座標轉螢幕
         private System.Drawing.Point ImageRelativeToScreen(System.Drawing.PointF rel)
         {
             if (imagePreview.Image == null) return System.Drawing.Point.Empty;
@@ -694,7 +693,7 @@ namespace peilin
             return new System.Drawing.Point(x, y);
         }
 
-        // 由 GitHub Copilot 產生 - 螢幕座標轉相對(0~1)
+        // 螢幕座標轉相對(0~1)
         private System.Drawing.PointF ScreenToImageRelative(System.Drawing.Point pt)
         {
             if (imagePreview.Image == null) return System.Drawing.PointF.Empty;
@@ -708,7 +707,7 @@ namespace peilin
             return new System.Drawing.PointF(rx, ry);
         }
 
-        // 由 GitHub Copilot 產生 - 相對轉原圖像素
+        // 相對轉原圖像素
         private System.Drawing.Point ImageRelativeToAbsolute(System.Drawing.PointF rel)
         {
             if (imagePreview.Image == null) return System.Drawing.Point.Empty;
@@ -717,7 +716,7 @@ namespace peilin
             return new System.Drawing.Point(ax, ay);
         }
 
-        // 由 GitHub Copilot 產生 - 取得實際顯示矩形 (SizeMode.Zoom)
+        // 取得實際顯示矩形 (SizeMode.Zoom)
         private System.Drawing.Rectangle GetDisplayedImageRect()
         {
             if (imagePreview.Image == null) return System.Drawing.Rectangle.Empty;
@@ -738,7 +737,7 @@ namespace peilin
                                                 drawW, drawH);
         }
 
-        // 由 GitHub Copilot 產生 - 約束線終點（水平或垂直）
+        // 約束線終點（水平或垂直）
         private System.Drawing.PointF GetConstrainedLineEndPointRelative(System.Drawing.PointF start, System.Drawing.PointF end)
         {
             float dx = Math.Abs(end.X - start.X);
@@ -747,7 +746,7 @@ namespace peilin
             return new System.Drawing.PointF(start.X, end.Y);
         }
 
-        // 由 GitHub Copilot 產生 - 約束線起點（拖動另一端）
+        // 約束線起點（拖動另一端）
         private System.Drawing.PointF GetConstrainedLineStartPointRelative(System.Drawing.PointF other, System.Drawing.PointF moving)
         {
             float dx = Math.Abs(moving.X - other.X);
@@ -756,7 +755,7 @@ namespace peilin
             return new System.Drawing.PointF(other.X, moving.Y);
         }
 
-        // 由 GitHub Copilot 產生 - 點在線段上判斷
+        // 點在線段上判斷
         private bool IsOnLineRelative(System.Drawing.PointF p, System.Drawing.PointF a, System.Drawing.PointF b, float threshold)
         {
             float len = (float)Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
@@ -767,21 +766,21 @@ namespace peilin
             return dot >= 0 && dot <= 1;
         }
 
-        // 由 GitHub Copilot 產生 - 點接近判斷
+        // 點接近判斷
         private bool IsNearPointRelative(System.Drawing.PointF p1, System.Drawing.PointF p2, float threshold)
         {
             float d = (float)Math.Sqrt(Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2));
             return d <= threshold;
         }
 
-        // 由 GitHub Copilot 產生 - 線段限制在範圍
+        // 線段限制在範圍
         private void ClampLineToBounds()
         {
             lineStartRelative = ClampPointToImageBoundsRelative(lineStartRelative);
             lineEndRelative = ClampPointToImageBoundsRelative(lineEndRelative);
         }
 
-        // 由 GitHub Copilot 產生 - 限制點
+        // 限制點
         private System.Drawing.PointF ClampPointToImageBoundsRelative(System.Drawing.PointF p)
         {
             return new System.Drawing.PointF(
@@ -792,12 +791,12 @@ namespace peilin
 
         // ========================= 線段繪製功能 結束 =========================
 
-        // 由 GitHub Copilot 產生 - 套用存檔
+        // 套用存檔
         private void BtnApplyValues_Click(object sender, EventArgs e, bool dummy = false) { } // (留空避免 IntelliSense 混淆)
 
-        // 由 GitHub Copilot 產生 - 真正事件已在上方定義 (保留結構)
+        // 真正事件已在上方定義 (保留結構)
 
-        // 由 GitHub Copilot 產生 - 關閉釋放資源
+        // 關閉釋放資源
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             calibrationImage?.Dispose();

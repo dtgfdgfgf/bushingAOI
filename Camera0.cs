@@ -57,11 +57,10 @@ namespace basler
         private static readonly ConcurrentDictionary<int, double> _minAllowedInterval = new ConcurrentDictionary<int, double>();
         private static readonly ConcurrentDictionary<int, Stopwatch> _cameraStopwatches = new ConcurrentDictionary<int, Stopwatch>();
         private static readonly ConcurrentDictionary<int, int> _touchedCounters = new ConcurrentDictionary<int, int>();
-        // 由 GitHub Copilot 產生 - 測試模式計數器，每個站點獨立計數
+        // 測試模式計數器，每個站點獨立計數
         private static readonly ConcurrentDictionary<int, int> _testModeCounters = new ConcurrentDictionary<int, int>();
         DateTime st = DateTime.Now;
 
-        // 由 GitHub Copilot 產生
         /// <summary>
         /// 重置觸發時間和計數器，用於測試取像模式切換時清空狀態
         /// 避免切換後第一張影像因間隔計算被誤判為誤觸
@@ -162,7 +161,6 @@ namespace basler
 
         #endregion
         #region LOG
-        // 由 GitHub Copilot 產生
         /// <summary>
         /// 初始化觸發時間記錄檔案
         /// </summary>
@@ -200,7 +198,6 @@ namespace basler
                 LogMessage($"初始化觸發時間記錄檔案失敗: {ex.Message}", true);
             }
         }
-        // 由 GitHub Copilot 產生
         /// <summary>
         /// 記錄每次觸發時間及間隔
         /// </summary>
@@ -290,7 +287,6 @@ namespace basler
 
             return true;
         }
-        // 由 GitHub Copilot 產生
 
         /// <summary>
         /// 初始化 CSV 統計檔案
@@ -331,7 +327,6 @@ namespace basler
                 LogMessage($"初始化 CSV 檔案失敗: {ex.Message}", true);
             }
         }
-        // 由 GitHub Copilot 產生
 
         /// <summary>
         /// 記錄觸發統計到 CSV
@@ -901,7 +896,6 @@ namespace basler
             catch { }
         }
 
-        // 由 GitHub Copilot 產生
         // 修正: 消除重複創建 Mat，只創建一次並重用
         /// <summary>
         /// 核心：收到 Basler 影像事件後，轉成 OpenCvSharp.Mat，呼叫 form1.Receiver(...)
@@ -912,7 +906,7 @@ namespace basler
             if (!grabResult.IsValid) return;
             if (!camera_app.Run) return;
 
-            // 由 GitHub Copilot 產生 - 調機模式檢查
+            // 調機模式檢查
             // 調機模式下，影像不進入處理佇列，只用於即時預覽
             if (app.isAdjustmentMode)
             {
@@ -921,7 +915,7 @@ namespace basler
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - 測試取像模式
+            // 測試取像模式
             // 測試模式下，直接儲存影像到 test 資料夾，不呼叫 Receiver
             // 檔名格式: {序號}-{站號}.jpg，與 button36_Click 預期格式相容
             if (app.testImageMode)
@@ -934,7 +928,7 @@ namespace basler
                     {
                         Directory.CreateDirectory(testDir);
                     }
-                    // 由 GitHub Copilot 產生 - 每站獨立計數，產生 {序號}-{站號}.jpg 格式
+                    // 每站獨立計數，產生 {序號}-{站號}.jpg 格式
                     int stationNumber = cameraIndex + 1; // 站號 1~4
                     int counter = _testModeCounters.AddOrUpdate(cameraIndex, 0, (key, oldValue) => oldValue + 1);
                     string fileName = $"{counter}-{stationNumber}.jpg";
@@ -963,7 +957,6 @@ namespace basler
             }
             catch { }
 
-            // 由 GitHub Copilot 產生
             // 修正: 移除 using，讓 getMat1-4 的 finally 負責釋放
             // 只在異常時釋放，正常流程由 Receiver → Queue_Bitmap → getMat → finally 釋放
             // ✅ 建立 src，並確保在所有路徑上都被釋放
@@ -1066,9 +1059,7 @@ namespace basler
 
             }
         }
-        // 由 GitHub Copilot 產生
 
-        // 由 GitHub Copilot 產生
         /// <summary>
         /// 儲存誤觸發照片到指定資料夾並返回路徑
         /// </summary>
@@ -1177,7 +1168,6 @@ namespace basler
             return counter - 1; // 返回更新前的值
         }
 
-        // 由 GitHub Copilot 產生
         /// <summary>
         /// 儲存白比率異常圖像到 \white 資料夾
         /// </summary>
@@ -1200,7 +1190,7 @@ namespace basler
                 // 複用現有的 _touchedCounters
                 int counter = GetNextTouchedCounter(cameraIndex);
 
-                // 由 GitHub Copilot 產生 - 修正白比率格式化，whiteRatio 已經是百分比值（13.99），使用 F2 而非 P2
+                // 修正白比率格式化，whiteRatio 已經是百分比值（13.99），使用 F2 而非 P2
                 // 檔名包含白比率資訊 (例如: 0001_cam1_white45.23%.jpg)
                 string fileName = $"{counter:D4}_cam{cameraIndex}_white{whiteRatio:F2}%.jpg";
                 string fullPath = System.IO.Path.Combine(baseDir, fileName);
@@ -1231,7 +1221,6 @@ namespace basler
             m_BaslerCameras[CameraID].Parameters[PLCamera.TriggerMode].SetValue(PLCamera.TriggerMode.Off);
         }
         
-        // 由 GitHub Copilot 產生
         /// <summary>
         /// 獲取指定相機的當前幀影像
         /// </summary>

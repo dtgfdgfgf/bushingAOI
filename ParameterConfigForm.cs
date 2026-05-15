@@ -26,10 +26,10 @@ namespace peilin
         // 【新增】參數狀態視覺化
         private Dictionary<string, ParameterStatus> parameterStatusMap = new Dictionary<string, ParameterStatus>();
 
-        // 由 GitHub Copilot 產生 - 參數區域快取（用於加速顏色查詢，避免重複 LINQ 查詢）
+        // 參數區域快取（用於加速顏色查詢，避免重複 LINQ 查詢）
         private Dictionary<string, ParameterZone> _parameterZoneCache = new Dictionary<string, ParameterZone>();
 
-        // 由 GitHub Copilot 產生 - 防止 UpdateReferenceRowVisual 重入（避免 CellFormatting 無限循環）
+        // 防止 UpdateReferenceRowVisual 重入（避免 CellFormatting 無限循環）
         private bool _isUpdatingReferenceRowVisual = false;
 
         // 【新增】參數狀態列舉
@@ -85,7 +85,7 @@ namespace peilin
             this.btnCameraSelectNone = new Button();
             this.btnCameraSelectInvert = new Button();
 
-            // 由 GitHub Copilot 產生 - 建立相機參數頁面提示標籤
+            // 建立相機參數頁面提示標籤
             this.lblCameraHint = new Label();
             this.lblCameraHint.Text = "所有相機參數皆採取自動導入\n請按需求自行測試、微調";
             this.lblCameraHint.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
@@ -121,7 +121,7 @@ namespace peilin
             this.btnPositionSelectInvert = new Button();
             this.btnOpenPositionCalibration = new Button();
 
-            // 由 GitHub Copilot 產生 - 建立位置參數頁面提示標籤
+            // 建立位置參數頁面提示標籤
             this.lblPositionPageHint = new Label();
             this.lblPositionPageHint.Text = "所有位置參數皆已先自動導入\n若設定新料號，請務必點擊右方「圓心校正工具」按鈕進行調整";
             this.lblPositionPageHint.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
@@ -190,7 +190,7 @@ namespace peilin
             this.btnTimingSelectNone = new Button();
             this.btnTimingSelectInvert = new Button();
 
-            // 由 GitHub Copilot 產生 - 建立時間參數頁面提示標籤
+            // 建立時間參數頁面提示標籤
             this.lblTimingHint = new Label();
             this.lblTimingHint.Text = "所有時間參數皆採取自動導入\n請按需求自行測試、微調";
             this.lblTimingHint.Font = new Font("Microsoft JhengHei", 14F, FontStyle.Bold);
@@ -215,7 +215,7 @@ namespace peilin
             Button btnMoveToModified, Button btnMoveToFixed, Button btnMoveToUnmodified,
             Button btnSelectAll, Button btnSelectNone, Button btnSelectInvert)
         {
-            // 由 GitHub Copilot 產生 - 調整三區佈局尺寸配合 TabPage 可用空間 (1452x594)
+            // 調整三區佈局尺寸配合 TabPage 可用空間 (1452x594)
             // 三區 GroupBox 寬度 = 460，間距 = 10，總寬 = 10 + 460 + 10 + 460 + 10 + 460 + 10 = 1420 (小於 1452)
             // 三區 GroupBox 高度 = 460，頂部 Y=55，底部 = 55 + 460 = 515
             // 按鈕 Y = 520，總高 = 520 + 35 = 555 (小於 594)
@@ -366,10 +366,10 @@ namespace peilin
             tab.Controls.Add(btnSelectInvert);
         }
 
-        // 由 GitHub Copilot 產生 - 在 SetupDataGridView 加入 commit handler 呼叫
+        // 在 SetupDataGridView 加入 commit handler 呼叫
         private void SetupDataGridView(DataGridView dgv)
         {
-            // 由 GitHub Copilot 產生 - 調整 DataGridView 尺寸配合新的 GroupBox (460x460)
+            // 調整 DataGridView 尺寸配合新的 GroupBox (460x460)
             // DataGridView 寬度 = GroupBox 寬度 - 左右邊距 (8+8) = 460 - 16 = 444
             // DataGridView 高度 = GroupBox 高度 - 頂部標題區 (35) = 460 - 35 = 425
             dgv.Location = new System.Drawing.Point(8, 25);
@@ -386,7 +386,7 @@ namespace peilin
             dgv.CellFormatting += DataGridView_CellFormatting;
             AddCheckboxCommitHandler(dgv); // ★ 新增
         }
-        // 由 GitHub Copilot 產生 - CellFormatting 也同步（雙保險）
+        // CellFormatting 也同步（雙保險）
         // 修正：加入重入檢查，避免 UpdateReferenceRowVisual 修改 BackColor 觸發無限循環
         private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
@@ -405,7 +405,7 @@ namespace peilin
                 }
             }
         }
-        // 由 GitHub Copilot 產生 - 勾選選取框後立即套色（避免看到閃爍或變白）
+        // 勾選選取框後立即套色（避免看到閃爍或變白）
         // 修正：只更新當前被修改的那一列，而非遍歷所有 DataGridView（避免 UI 卡頓）
         private void AddCheckboxCommitHandler(DataGridView dgv)
         {
@@ -430,7 +430,7 @@ namespace peilin
                 }
             };
         }
-        // 由 GitHub Copilot 產生 - 進度與顏色修正：使用快取查詢（O(1) 複雜度）
+        // 進度與顏色修正：使用快取查詢（O(1) 複雜度）
         private System.Drawing.Color GetReferenceRowBackground(ParameterItem refItem)
         {
             string key = $"{refItem.Name}_{refItem.Stop ?? 0}";
@@ -444,7 +444,7 @@ namespace peilin
             return System.Drawing.Color.White; // 尚未新增
         }
 
-        // 由 GitHub Copilot 產生 - 建立參數區域快取（一次性建立，避免 O(N²) 查詢）
+        // 建立參數區域快取（一次性建立，避免 O(N²) 查詢）
         private void BuildParameterZoneCache()
         {
             _parameterZoneCache.Clear();
@@ -474,7 +474,7 @@ namespace peilin
                 }
             }
         }
-        // 由 GitHub Copilot 產生 - 修正：使用重入保護旗標，只在顏色實際改變時才設定 BackColor
+        // 修正：使用重入保護旗標，只在顏色實際改變時才設定 BackColor
         private void UpdateReferenceRowVisual(DataGridViewRow row, ParameterItem item)
         {
             if (row == null || item == null) return;
@@ -525,7 +525,7 @@ namespace peilin
         }
 
         #region 參數狀態視覺化
-        // 由 GitHub Copilot 產生 - RowPrePaint 保底
+        // RowPrePaint 保底
         // 修正：加入重入檢查，避免重繪時的無限循環
         private void DataGridView_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
         {
@@ -559,7 +559,7 @@ namespace peilin
             }
         }
         // 【新增】：數據綁定完成事件 - 更新參數狀態對映
-        // 由 GitHub Copilot 產生 - DataBindingComplete 中強制上色
+        // DataBindingComplete 中強制上色
         private void DataGridView_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             var dgv = sender as DataGridView;
@@ -781,7 +781,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 顯示時間參數計算對話框（fourTo複製 + delay線性預測）
+        // 顯示時間參數計算對話框（fourTo複製 + delay線性預測）
         private void ShowTimingCalculationDialog(double od)
         {
             using (var dialog = new Form())
@@ -789,7 +789,7 @@ namespace peilin
                 dialog.Text = "時間參數計算結果";
                 dialog.Size = new Size(900, 650);
                 dialog.StartPosition = FormStartPosition.CenterParent;
-                // 由 GitHub Copilot 產生 - 設定對話框統一字體
+                // 設定對話框統一字體
                 dialog.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 計算時間參數（fourTo複製 + delay線性預測）
@@ -874,7 +874,7 @@ namespace peilin
         }
 
         #region 時間參數演算法
-        // 由 GitHub Copilot 產生 - 計算時間參數（fourTo從來源複製 + delay線性預測）
+        // 計算時間參數（fourTo從來源複製 + delay線性預測）
         private List<ParameterItem> CalculateTimingParameters(double od)
         {
             var calculatedParams = new List<ParameterItem>();
@@ -974,7 +974,7 @@ namespace peilin
             return calculatedParams;
         }
 
-        // 由 GitHub Copilot 產生 - 顯示計算公式的詳細說明
+        // 顯示計算公式的詳細說明
         private string GetCalculationFormula(double od)
         {
             // 計算預測的 delay 值供顯示
@@ -1008,10 +1008,10 @@ namespace peilin
    • 無上下限限制，直接線性外推";
         }
         #endregion
-        // 由 GitHub Copilot 產生 - 將計算結果加入到已修改區
+        // 將計算結果加入到已修改區
         private void AddCalculatedParametersToModified(List<ParameterItem> calculatedParams)
         {
-            // 由 GitHub Copilot 產生 - 使用 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
+            // 使用 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
             foreach (var calcParam in calculatedParams)
             {
                 UpdateOrAddModifiedParameter(calcParam.Name, calcParam.Value, calcParam.Stop, calcParam.ChineseName);
@@ -1026,7 +1026,7 @@ namespace peilin
                 dialog.Text = "參考參數數值";
                 dialog.Size = new Size(800, 500);
                 dialog.StartPosition = FormStartPosition.CenterParent;
-                // 由 GitHub Copilot 產生 - 設定對話框統一字體
+                // 設定對話框統一字體
                 dialog.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 讀取參考數據
@@ -1320,7 +1320,7 @@ namespace peilin
                 dialog.Text = $"{calibrationType} 校正參數預覽 - 所有站點";
                 dialog.Size = new Size(700, 500);
                 dialog.StartPosition = FormStartPosition.CenterParent;
-                // 由 GitHub Copilot 產生 - 設定對話框統一字體
+                // 設定對話框統一字體
                 dialog.Font = new Font("Microsoft JhengHei", 9F);
 
                 // 說明標籤
@@ -1338,7 +1338,7 @@ namespace peilin
                 dgvParameters.AllowUserToAddRows = false;
                 dgvParameters.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-                // 由 GitHub Copilot 產生 - 修正參數查詢邏輯，同時匹配名稱和站點
+                // 修正參數查詢邏輯，同時匹配名稱和站點
                 var parameterData = parameterNames.Select(paramName => {
                     var (baseName, stop) = GetParameterNameAndStop(paramName);
                     var existingParam = allParameters.FirstOrDefault(p =>
@@ -1390,7 +1390,7 @@ namespace peilin
             return fullParameterName;
         }
 
-        // 由 GitHub Copilot 產生 - 從完整參數名稱取得基本名稱和站點號碼
+        // 從完整參數名稱取得基本名稱和站點號碼
         private (string baseName, int? stop) GetParameterNameAndStop(string fullParameterName)
         {
             // 提取基本名稱和站點，例如 "objBias_x_1" -> ("objBias_x", 1)
@@ -1407,7 +1407,7 @@ namespace peilin
             return (fullParameterName, null);
         }
 
-        // 由 GitHub Copilot 產生 - 修正參數查詢邏輯
+        // 修正參數查詢邏輯
         private string GetCurrentParameterValues(List<string> parameterNames)
         {
             var values = new List<string>();
@@ -1462,7 +1462,7 @@ namespace peilin
         }
 
         // 【框架】：對比檢測校正
-        // 由 GitHub Copilot 產生 - 對比檢測校正
+        // 對比檢測校正
         private void StartContrastCalibration()
         {
             try
@@ -1543,14 +1543,14 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 校正介面關閉事件統一處理器
+        // 校正介面關閉事件統一處理器
         #region 關閉事件
         private void AttachCalibrationFormCloseEvent<T>(T form) where T : Form
         {
             form.FormClosed += OnCalibrationFormClosed;
         }
 
-        // 由 GitHub Copilot 產生 - 校正介面關閉後自動更新參數
+        // 校正介面關閉後自動更新參數
         private void OnCalibrationFormClosed(object sender, FormClosedEventArgs e)
         {
             try
@@ -1570,7 +1570,7 @@ namespace peilin
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
-        // 由 GitHub Copilot 產生 - 重新載入校正完成後的參數
+        // 重新載入校正完成後的參數
         private void RefreshParametersAfterCalibration()
         {
             try
@@ -1658,7 +1658,7 @@ namespace peilin
                 System.Diagnostics.Debug.WriteLine($"移除未修改區參數：{name}_{stop} (已移至已修改區)");
             }
         }
-        // 由 GitHub Copilot 產生 - 從資料庫重新載入所有參數
+        // 從資料庫重新載入所有參數
         private void LoadUpdatedParametersFromDatabase()
         {
             using (var db = new MydbDB())
@@ -1685,14 +1685,14 @@ namespace peilin
                 }
             }
         }
-        // 由 GitHub Copilot 產生 - 更新或新增參數到本地集合
+        // 更新或新增參數到本地集合
         private void UpdateOrAddParameter(string name, string value, int? stop, string chineseName, bool isCameraParam)
         {
-            // 由 GitHub Copilot 產生 - 委派至 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
+            // 委派至 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
             UpdateOrAddModifiedParameter(name, value, stop, chineseName);
         }
 
-        // 由 GitHub Copilot 產生 - 顯示參數更新通知
+        // 顯示參數更新通知
         private void ShowParameterUpdateNotification()
         {
             // 建立臨時通知標籤
@@ -1721,7 +1721,7 @@ namespace peilin
             timer.Start();
         }
 
-        // 由 GitHub Copilot 產生 - 更新狀態顯示
+        // 更新狀態顯示
         private void UpdateStatus(string message)
         {
             // 如果有狀態標籤，更新它
@@ -1733,10 +1733,10 @@ namespace peilin
         #endregion
         #endregion
         #region 部分自動導入功能
-        // 由 GitHub Copilot 產生 - 在建構函式中新增部分自動導入按鈕
+        // 在建構函式中新增部分自動導入按鈕
         private Button btnPartialAutoImport;
 
-        // 由 GitHub Copilot 產生 - 在 InitializeForm 方法中建立按鈕
+        // 在 InitializeForm 方法中建立按鈕
         private void CreatePartialAutoImportButton()
         {
             // 將「部分自動導入」按鈕加到每個 TabPage，避免被 TabControl 遮蔽
@@ -1751,11 +1751,11 @@ namespace peilin
 
             var btn = new Button();
             btn.Name = "btnPartialAutoImport_" + (tab.Name ?? Guid.NewGuid().ToString("N"));
-            // 由 GitHub Copilot 產生 - 移除 emoji 以確保文字完整顯示，並統一按鈕大小與「圓心校正工具」一致
+            // 移除 emoji 以確保文字完整顯示，並統一按鈕大小與「圓心校正工具」一致
             btn.Text = "部分自動導入";
             btn.Size = new Size(150, 35);
 
-            // 由 GitHub Copilot 產生 - 放在每個 TabPage 的右上角，Y 座標與「圓心校正工具」按鈕對齊
+            // 放在每個 TabPage 的右上角，Y 座標與「圓心校正工具」按鈕對齊
             var x = Math.Max(10, tab.ClientSize.Width - btn.Width - 15);
             btn.Location = new System.Drawing.Point(x, 10);
 
@@ -1774,7 +1774,7 @@ namespace peilin
             tab.Controls.Add(btn);
             btn.BringToFront(); // 確保在最上層
         }
-        // 由 GitHub Copilot 產生 - 部分自動導入主要邏輯
+        // 部分自動導入主要邏輯
         private void BtnPartialAutoImport_Click(object sender, EventArgs e)
         {
             try
@@ -1804,7 +1804,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 執行部分自動導入的主要邏輯
+        // 執行部分自動導入的主要邏輯
         private void ExecutePartialAutoImport()
         {
             try
@@ -1827,19 +1827,19 @@ namespace peilin
                 // 處理其他條件式參數
                 processedCount += ProcessOtherConditionalParameters(typeInfo, processedParameters);
 
-                // 由 GitHub Copilot 產生 - 處理 delay 參數（根據 OD 線性計算，寫入 Cameras 資料表）
+                // 處理 delay 參數（根據 OD 線性計算，寫入 Cameras 資料表）
                 processedCount += ProcessDelayParameters(typeInfo, processedParameters);
 
-                // 由 GitHub Copilot 產生 - 處理 fourTo 系列參數（從來源料號複製，寫入 params 資料表）
+                // 處理 fourTo 系列參數（從來源料號複製，寫入 params 資料表）
                 processedCount += ProcessFourToParameters(typeInfo, processedParameters);
 
-                // 由 GitHub Copilot 產生 - 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
+                // 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
                 processedCount += ProcessPositionParameters(typeInfo, processedParameters);
 
-                // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（全量複製來源料號的缺陷檢測項目）
+                // 處理 DefectChecks 資料表（全量複製來源料號的缺陷檢測項目）
                 processedCount += ProcessAllDefectChecksFromSource(processedParameters);
 
-                // 由 GitHub Copilot 產生 - 複製來源料號的 AI 模型檔案
+                // 複製來源料號的 AI 模型檔案
                 processedCount += CopyModelsFromSource(processedParameters);
 
                 // 更新顯示
@@ -1856,7 +1856,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 取得料號基本資訊
+        // 取得料號基本資訊
         private TypeInfo GetTypeInfo(string targetType)
         {
             try
@@ -1893,7 +1893,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 處理 find_NROI 參數
+        // 處理 find_NROI 參數
         private int ProcessFindNROIParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -1986,7 +1986,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 處理其他條件式參數
+        // 處理其他條件式參數
         private int ProcessOtherConditionalParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2021,7 +2021,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 處理 delay 參數（根據 OD 線性計算，寫入 Cameras 資料表）
+        // 處理 delay 參數（根據 OD 線性計算，寫入 Cameras 資料表）
         private int ProcessDelayParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2092,7 +2092,7 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 處理 fourTo 系列參數（從來源料號複製，寫入 params 資料表）
+        // 處理 fourTo 系列參數（從來源料號複製，寫入 params 資料表）
         private int ProcessFourToParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2187,7 +2187,7 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
+        // 處理位置參數（known 開頭的所有參數，從來源料號直接複製）
         private int ProcessPositionParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2256,7 +2256,7 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 處理 DefectChecks 資料表（條件式複製，僅複製特定項目，保留作為備用）
+        // 處理 DefectChecks 資料表（條件式複製，僅複製特定項目，保留作為備用）
         private int ProcessConditionalDefectChecks(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2373,7 +2373,7 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 從來源料號全量複製 DefectChecks 資料表到目標料號
+        // 從來源料號全量複製 DefectChecks 資料表到目標料號
         /// <summary>
         /// 從來源料號全量複製 DefectChecks 資料表的所有項目到目標料號
         /// 採用「不覆寫已存在項目」策略，與相機參數複製邏輯一致
@@ -2468,7 +2468,7 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 根據材質處理參數
+        // 根據材質處理參數
         private int ProcessMaterialBasedParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2535,7 +2535,7 @@ namespace peilin
             return count;
         }
 
-        // 由 GitHub Copilot 產生 - 根據尺寸處理參數
+        // 根據尺寸處理參數
         private int ProcessSizeBasedParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2566,7 +2566,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 根據厚度處理參數
+        // 根據厚度處理參數
         private int ProcessThicknessBasedParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2587,7 +2587,6 @@ namespace peilin
                 throw new Exception($"處理厚度相關參數時發生錯誤：{ex.Message}");
             }
         }
-        // 由 GitHub Copilot 產生
         private int ProcessYZPParameters(TypeInfo typeInfo, List<string> processedParameters)
         {
             int count = 0;
@@ -2767,7 +2766,7 @@ namespace peilin
 
             return count;
         }
-        // 由 GitHub Copilot 產生 - 更新或新增參數到已修改區
+        // 更新或新增參數到已修改區
         private void UpdateOrAddParameterToModified(string name, string value, int? stop,
             string chineseName, string processingReason = "")
         {
@@ -2802,7 +2801,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 顯示處理結果
+        // 顯示處理結果
         private void ShowPartialAutoImportResult(int processedCount, List<string> processedParameters)
         {
             if (processedCount > 0)
@@ -2821,7 +2820,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 複製來源料號的 AI 模型檔案到目標料號
+        // 複製來源料號的 AI 模型檔案到目標料號
         /// <summary>
         /// 從來源料號複製 AI 模型檔案，並重新命名為目標料號的檔名
         /// </summary>
@@ -3022,7 +3021,7 @@ namespace peilin
             return copiedCount;
         }
 
-        // 由 GitHub Copilot 產生 - 料號資訊資料類別
+        // 料號資訊資料類別
         public class TypeInfo
         {
             public string TypeColumn { get; set; }
@@ -3043,11 +3042,11 @@ namespace peilin
 
         private void InitializeForm()
         {
-            // 由 GitHub Copilot 產生 - 設定表單統一字體為 Microsoft JhengHei 9F（適配 1920x1080 螢幕）
+            // 設定表單統一字體為 Microsoft JhengHei 9F（適配 1920x1080 螢幕）
             this.Font = new System.Drawing.Font("Microsoft JhengHei", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             
             this.Text = $"新料號參數設定 - {TargetType}";
-            // 由 GitHub Copilot 產生 - 移除 this.Size 設定，改由 Designer 統一管理表單尺寸
+            // 移除 this.Size 設定，改由 Designer 統一管理表單尺寸
             this.StartPosition = FormStartPosition.CenterParent;
             
             // 建立部分自動導入按鈕
@@ -3056,7 +3055,7 @@ namespace peilin
             // 【修正1】：先更新進度顯示，但不要更新Tab狀態（避免TabControl還沒建立完成）
             UpdateProgressDisplayOnly();
 
-            // 由 GitHub Copilot 產生 - 移除「是否繼續上次設定」對話框，一律直接進入來源料號選擇介面
+            // 移除「是否繼續上次設定」對話框，一律直接進入來源料號選擇介面
             ShowSourceSelectionDialog();
 
             // 初始化Tab狀態
@@ -3064,7 +3063,7 @@ namespace peilin
             this.Load += (s, e) => UpdateTabStates();
         }
 
-        // 由 GitHub Copilot 產生 - 修正進度顯示（AddedUnmodified + AddedModified 都計入）
+        // 修正進度顯示（AddedUnmodified + AddedModified 都計入）
         private void UpdateProgressDisplayOnly()
         {
             if (allParameters == null)
@@ -3160,8 +3159,8 @@ namespace peilin
             SaveSession();
         }
 
-        // 由 GitHub Copilot 產生 - 從來源料號載入參數作為參考區
-        // 由 GitHub Copilot 產生 - 修正來源參數載入邏輯
+        // 從來源料號載入參數作為參考區
+        // 修正來源參數載入邏輯
 
         /// <summary>
         /// 從來源料號載入參數
@@ -3255,7 +3254,7 @@ namespace peilin
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // 由 GitHub Copilot 產生 - 檢查目標料號是否已存在於資料庫
+        // 檢查目標料號是否已存在於資料庫
 
         /// <summary>
         /// 檢查目標料號是否已存在於資料庫中
@@ -3293,12 +3292,12 @@ namespace peilin
                 return false;
             }
         }
-        // 由 GitHub Copilot 產生 - 修正已存在參數的數值載入
-        // 由 GitHub Copilot 產生 - 加強既有參數載入的除錯資訊
+        // 修正已存在參數的數值載入
+        // 加強既有參數載入的除錯資訊
 
         private void CheckAndLoadExistingTargetParameters()
         {
-            // 由 GitHub Copilot 產生 - 加入除錯輸出
+            // 加入除錯輸出
             System.Diagnostics.Debug.WriteLine($"[CheckAndLoadExistingTargetParameters] 開始檢查目標料號 {TargetType} 的既有參數");
 
             try
@@ -3310,7 +3309,7 @@ namespace peilin
                         .Where(c => c.Type == TargetType)
                         .ToList();
 
-                    // 由 GitHub Copilot 產生 - 輸出查詢結果
+                    // 輸出查詢結果
                     System.Diagnostics.Debug.WriteLine($"[查詢結果] 目標料號 Camera 參數: {targetCameraParams.Count} 個");
 
                     // 查詢目標料號的 Param 參數
@@ -3318,7 +3317,7 @@ namespace peilin
                         .Where(p => p.Type == TargetType)
                         .ToList();
 
-                    // 由 GitHub Copilot 產生 - 輸出查詢結果
+                    // 輸出查詢結果
                     System.Diagnostics.Debug.WriteLine($"[查詢結果] 目標料號 Param 參數: {targetParamParams.Count} 個");
 
                     int addedToModified = 0;
@@ -3439,7 +3438,7 @@ namespace peilin
                         }
                     }
 
-                    // 由 GitHub Copilot 產生 - 輸出處理統計
+                    // 輸出處理統計
                     System.Diagnostics.Debug.WriteLine($"[處理完成] 加入已修改區: {addedToModified} 個");
                     System.Diagnostics.Debug.WriteLine($"[處理完成] 加入已新增未修改區: {addedToUnmodified} 個");
                 }
@@ -3452,7 +3451,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正用戶新增參數載入方法
+        // 修正用戶新增參數載入方法
         private void LoadUserAddedParameters(List<Camera> existingCameras, List<Param> existingParams)
         {
             // 載入用戶新增的Camera參數
@@ -3504,7 +3503,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正載入既有工作階段的邏輯
+        // 修正載入既有工作階段的邏輯
         private void LoadExistingSession()
         {
             try
@@ -3527,7 +3526,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 同步工作階段參數與資料庫狀態
+        // 同步工作階段參數與資料庫狀態
         private void SyncSessionParametersWithDatabase()
         {
             try
@@ -3605,7 +3604,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 確保工作階段儲存來源料號
+        // 確保工作階段儲存來源料號
 
         private void SaveSession()
         {
@@ -3616,7 +3615,7 @@ namespace peilin
                     Directory.CreateDirectory(settingPath);
                 }
 
-                // 由 GitHub Copilot 產生 - 確保 SourceType 不為空
+                // 確保 SourceType 不為空
                 if (string.IsNullOrEmpty(currentSession.SourceType))
                 {
                     System.Diagnostics.Debug.WriteLine($"[警告] SourceType 為空，無法追蹤來源料號");
@@ -3639,7 +3638,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正參數類別進度統計邏輯（AddedUnmodified + AddedModified 都計入）
+        // 修正參數類別進度統計邏輯（AddedUnmodified + AddedModified 都計入）
         private void UpdateCategoryProgress()
         {
             foreach (ParameterCategory category in Enum.GetValues(typeof(ParameterCategory)))
@@ -3739,11 +3738,11 @@ namespace peilin
             UpdateTabStates();
         }
 
-        // 由 GitHub Copilot 產生 - 加強顯示刷新的除錯資訊
+        // 加強顯示刷新的除錯資訊
 
         private void RefreshCurrentTabDisplay()
         {
-            // 由 GitHub Copilot 產生 - 加入除錯輸出
+            // 加入除錯輸出
             System.Diagnostics.Debug.WriteLine($"========================================");
             System.Diagnostics.Debug.WriteLine($"[RefreshCurrentTabDisplay] 當前分類: {currentCategory}");
 
@@ -3771,12 +3770,12 @@ namespace peilin
             var unmodifiedParams = categoryParams.Where(p => p.Zone == ParameterZone.AddedUnmodified).ToList();
             var modifiedParams = categoryParams.Where(p => p.Zone == ParameterZone.AddedModified).ToList();
 
-            // 由 GitHub Copilot 產生 - 輸出各區參數數量
+            // 輸出各區參數數量
             System.Diagnostics.Debug.WriteLine($"[參考區] {referenceParams.Count} 個參數");
             System.Diagnostics.Debug.WriteLine($"[已新增未修改區] {unmodifiedParams.Count} 個參數");
             System.Diagnostics.Debug.WriteLine($"[已新增已修改區] {modifiedParams.Count} 個參數");
 
-            // 由 GitHub Copilot 產生 - 列出參考區的參數（前5個）
+            // 列出參考區的參數（前5個）
             if (referenceParams.Any())
             {
                 System.Diagnostics.Debug.WriteLine($"[參考區參數列表]（前5個）:");
@@ -4150,7 +4149,6 @@ namespace peilin
             {
                 using (var calibrationForm = new CircleCalibrationForm())
                 {
-                    // 由 GitHub Copilot 產生
                     // 移除：不再訂閱 FormClosed，避免未儲存也回載參數
                     // calibrationForm.FormClosed += OnPositionCalibrationClosed;
 
@@ -4191,7 +4189,7 @@ namespace peilin
                                 p.Name.Contains("chamfer") || p.Name.Contains("position")))
                         .ToList();
 
-                    // 由 GitHub Copilot 產生 - 使用 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
+                    // 使用 UpdateOrAddModifiedParameter 統一處理 Zone 邏輯
                     foreach (var param in positionParams)
                     {
                         UpdateOrAddModifiedParameter(param.Name, param.Value, param.Stop, param.ChineseName);
@@ -4251,7 +4249,7 @@ namespace peilin
             try
             {
                 var categoryParams = parameterManager.GetParametersByCategory(allParameters, currentCategory);
-                // 由 GitHub Copilot 產生 - 按 (Name, Stop, Type) 去重，優先取已修改區參數
+                // 按 (Name, Stop, Type) 去重，優先取已修改區參數
                 var paramsToSave = categoryParams
                     .Where(p => p.Zone == ParameterZone.AddedModified || p.Zone == ParameterZone.AddedUnmodified)
                     .GroupBy(p => new { p.Name, p.Stop, p.Type })
@@ -4292,7 +4290,7 @@ namespace peilin
         {
             try
             {
-                // 由 GitHub Copilot 產生 - 按 (Name, Stop, Type) 去重，優先取已修改區參數
+                // 按 (Name, Stop, Type) 去重，優先取已修改區參數
                 var allParamsToSave = allParameters
                     .Where(p => p.Zone == ParameterZone.AddedModified || p.Zone == ParameterZone.AddedUnmodified)
                     .GroupBy(p => new { p.Name, p.Stop, p.Type })
@@ -4336,7 +4334,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 使用 update-first, insert-if-none 模式
+        // 使用 update-first, insert-if-none 模式
         private void SaveParametersToDatabase(List<ParameterItem> parameters)
         {
             using (var db = new MydbDB())
@@ -4403,7 +4401,7 @@ namespace peilin
         }
         private void ApplyReferenceZoneColors()
         {
-            // 由 GitHub Copilot 產生 - 先建立快取，避免每列都執行 LINQ 查詢
+            // 先建立快取，避免每列都執行 LINQ 查詢
             BuildParameterZoneCache();
 
             foreach (var dgv in new[] { dgvCameraUnmodified, dgvPositionUnmodified, dgvDetectionUnmodified, dgvTimingUnmodified })

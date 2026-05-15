@@ -1,4 +1,4 @@
-// 由 GitHub Copilot 產生 - 修正 RadioButton 容器配置
+// 修正 RadioButton 容器配置
 
 namespace peilin
 {
@@ -36,7 +36,7 @@ namespace peilin
             // 
             this.groupBox1.Controls.Add(this.panelSuggested);
             this.groupBox1.Controls.Add(this.lblSuggestion);
-            // 由 GitHub Copilot 產生 - 移除 rbSuggested（將其改到 Form 層級）
+            // 移除 rbSuggested（將其改到 Form 層級）
             // this.groupBox1.Controls.Add(this.rbSuggested); // ← 移除這行
             this.groupBox1.Location = new System.Drawing.Point(12, 32);
             this.groupBox1.Name = "groupBox1";
@@ -76,7 +76,7 @@ namespace peilin
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.cmbAllTypes);
-            // 由 GitHub Copilot 產生 - 移除 rbManual（將其改到 Form 層級）
+            // 移除 rbManual（將其改到 Form 層級）
             // this.groupBox2.Controls.Add(this.rbManual); // ← 移除這行
             this.groupBox2.Location = new System.Drawing.Point(12, 238);
             this.groupBox2.Name = "groupBox2";
@@ -130,7 +130,7 @@ namespace peilin
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(484, 352);
-            // 由 GitHub Copilot 產生 - 將 RadioButton 加入 Form（關鍵修正）
+            // 將 RadioButton 加入 Form（關鍵修正）
             this.Controls.Add(this.rbSuggested);
             this.Controls.Add(this.rbManual);
             this.Controls.Add(this.btnCancel);

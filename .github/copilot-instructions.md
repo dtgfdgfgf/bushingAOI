@@ -172,7 +172,6 @@ Impact: Only affects YOLO processing path; no impact on anomaly detection or PLC
 
 ### Language & Comments
 - **All comments must be in Traditional Chinese (繁體中文)**
-- Add comment at start of AI-generated code sections: `// 由 GitHub Copilot 產生`
 
 ### Database Operations (LinqToDB)
 Always use "update-first, insert-if-none" pattern to avoid primary key conflicts:
@@ -566,8 +565,6 @@ Example workflow (handled by `YoloDetection.cs`):
 - [ ] **Traditional Chinese (繁體中文)**: All comments use correct character set
   - Reject simplified Chinese (简体中文) or English comments
   - Exception: Technical terms without standard translation may use English
-
-- [ ] **AI attribution**: AI-generated code sections marked with `// 由 GitHub Copilot 產生`
 
 ### 8. PLC Communication Patterns (Critical - Hardware Coordination)
 **Improper PLC interaction causes production line failures and count mismatches.**

@@ -16,7 +16,6 @@ namespace peilin
         #region 私有成員變數
         private List<string> selectedImagePaths = new List<string>();
         private List<WhitePixelResult> whitePixelResults = new List<WhitePixelResult>();
-        // 由 GitHub Copilot 產生
         // 誤觸樣品組相關變數
         private List<string> selectedFalseImagePaths = new List<string>();
         private List<WhitePixelResult> falsePixelResults = new List<WhitePixelResult>();
@@ -46,10 +45,9 @@ namespace peilin
         private Chart chartWhitePixelRatio;
         private ToolTip toolTip;
         
-        // 由 GitHub Copilot 產生 - 警告提示標籤
+        // 警告提示標籤
         private Label lblWarningControl;
         
-        // 由 GitHub Copilot 產生
         // 誤觸樣品組控件成員變數
         private PictureBox picFalsePreviewControl;
         private PictureBox picFalseBinaryPreviewControl;
@@ -58,7 +56,6 @@ namespace peilin
         private Button btnFalseNextControl;
         private Button btnSelectFalseImagesControl;
         
-        // 由 GitHub Copilot 產生
         // 正常樣品二值化預覽控件
         private PictureBox picBinaryPreviewControl;
         
@@ -69,7 +66,6 @@ namespace peilin
         #endregion
 
         #region 白色像素分析結果結構
-        // 由 GitHub Copilot 產生
         // 樣品類型列舉
         public enum SampleType
         {
@@ -77,7 +73,6 @@ namespace peilin
             False    // 誤觸樣品
         }
 
-        // 由 GitHub Copilot 產生
         // 離群值嚴重程度列舉
         public enum OutlierSeverity
         {
@@ -101,7 +96,7 @@ namespace peilin
             private byte[] _compressedBinaryImage; // 儲存壓縮後的二值化圖像資料
             public bool IsOutlier1Sigma { get; set; }
             public bool IsOutlier2Sigma { get; set; }
-            // 由 GitHub Copilot 產生 - 離群值嚴重程度（用於混合檢測）
+            // 離群值嚴重程度（用於混合檢測）
             public OutlierSeverity Severity { get; set; } = OutlierSeverity.Normal;
             // 設定壓縮後的原圖標註資料
             public void SetResultImageData(Mat resultImage)
@@ -142,7 +137,6 @@ namespace peilin
                 return new Mat();
             }
 
-            // 由 GitHub Copilot 產生
             // 設定壓縮後的二值化圖像資料
             public void SetBinaryImageData(Mat binaryImage)
             {
@@ -202,11 +196,11 @@ namespace peilin
         private void InitializeUI()
         {
             this.Text = $"白色像素占比校正 - {targetType}";
-            this.Size = new System.Drawing.Size(1450, 1200); // 由 GitHub Copilot 產生 - 調整視窗大小以適應 10F 字體
+            this.Size = new System.Drawing.Size(1450, 1200); // 調整視窗大小以適應 10F 字體
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-            this.Font = new Font("Microsoft JhengHei", 10F); // 由 GitHub Copilot 產生 - 設定表單預設字體
+            this.Font = new Font("Microsoft JhengHei", 10F); // 設定表單預設字體
             CreateControls();
         }
         #endregion
@@ -214,7 +208,7 @@ namespace peilin
         #region 控件建立和布局
         private void CreateControls()
         {
-            // 由 GitHub Copilot 產生 - 定義統一字體
+            // 定義統一字體
             var normalFont = new Font("Microsoft JhengHei", 10F);
             var boldFont = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
@@ -252,7 +246,6 @@ namespace peilin
             targetStation = 0;
             cmbStation.SelectedIndexChanged += CmbStation_SelectedIndexChanged;
 
-            // 由 GitHub Copilot 產生
             // 選擇正常樣品照片按鈕
             var btnSelectImages = new Button
             {
@@ -331,14 +324,14 @@ namespace peilin
             dgvResultsControl = new DataGridView
             {
                 Location = new System.Drawing.Point(10, 145),
-                Size = new System.Drawing.Size(600, 460), // 由 GitHub Copilot 產生 - 調整大小以適應 10F 字體
+                Size = new System.Drawing.Size(600, 460), // 調整大小以適應 10F 字體
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 Font = normalFont,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle { Font = boldFont },
-                RowTemplate = { Height = 26 } // 由 GitHub Copilot 產生 - 調整列高以適應 10F 字體
+                RowTemplate = { Height = 26 } // 調整列高以適應 10F 字體
             };
 
             // 統計資訊面板
@@ -346,12 +339,12 @@ namespace peilin
             {
                 Text = "統計分析結果",
                 Location = new System.Drawing.Point(620, 145),
-                Size = new System.Drawing.Size(800, 310), // 由 GitHub Copilot 產生 - 調整大小以適應 10F 字體
+                Size = new System.Drawing.Size(800, 310), // 調整大小以適應 10F 字體
                 Font = boldFont
             };
             CreateStatisticsLabels(grpStatisticsControl);
 
-            // 由 GitHub Copilot 產生 - 警告提示標籤（用於顯示疑似問題的照片）
+            // 警告提示標籤（用於顯示疑似問題的照片）
             lblWarningControl = new Label
             {
                 Text = "",
@@ -371,19 +364,18 @@ namespace peilin
             // 折線圖
             chartWhitePixelRatio = new Chart
             {
-                Location = new System.Drawing.Point(620, 503), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
-                Size = new System.Drawing.Size(800, 105), // 由 GitHub Copilot 產生 - 調整大小以適應整體布局
+                Location = new System.Drawing.Point(620, 503), // 調整位置以適應 10F 字體
+                Size = new System.Drawing.Size(800, 105), // 調整大小以適應整體布局
                 BackColor = Color.White,
                 Font = normalFont
             };
             InitializeChart();
 
-            // 由 GitHub Copilot 產生
             // 正常樣品預覽區域
             var grpNormalPreview = new GroupBox
             {
                 Text = "正常樣品預覽",
-                Location = new System.Drawing.Point(10, 618), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(10, 618), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(700, 320),
                 ForeColor = Color.Blue,
                 Font = boldFont
@@ -483,7 +475,7 @@ namespace peilin
             var grpFalsePreview = new GroupBox
             {
                 Text = "誤觸樣品預覽",
-                Location = new System.Drawing.Point(720, 618), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(720, 618), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(700, 320),
                 ForeColor = Color.Red,
                 Font = boldFont
@@ -572,7 +564,7 @@ namespace peilin
             lblRecommendationControl = new Label
             {
                 Text = "推薦的參數值將在分析完成後顯示",
-                Location = new System.Drawing.Point(10, 948), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(10, 948), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(720, 55),
                 Font = boldFont,
                 ForeColor = Color.DarkGreen
@@ -582,7 +574,7 @@ namespace peilin
             btnApplyControl = new Button
             {
                 Text = "套用推薦值",
-                Location = new System.Drawing.Point(740, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(740, 955), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(130, 42),
                 BackColor = Color.Orange,
                 Enabled = false,
@@ -594,7 +586,7 @@ namespace peilin
             var btnCancel = new Button
             {
                 Text = "取消",
-                Location = new System.Drawing.Point(880, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(880, 955), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(90, 42),
                 Font = boldFont
             };
@@ -604,7 +596,7 @@ namespace peilin
             var btnExport = new Button
             {
                 Text = "匯出數據",
-                Location = new System.Drawing.Point(980, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(980, 955), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(110, 42),
                 BackColor = Color.LightCyan,
                 Font = normalFont
@@ -615,7 +607,7 @@ namespace peilin
             var btnClearResults = new Button
             {
                 Text = "清除結果",
-                Location = new System.Drawing.Point(1100, 955), // 由 GitHub Copilot 產生 - 調整位置以適應 10F 字體
+                Location = new System.Drawing.Point(1100, 955), // 調整位置以適應 10F 字體
                 Size = new System.Drawing.Size(110, 42),
                 BackColor = System.Drawing.Color.LightPink,
                 Font = normalFont
@@ -631,7 +623,6 @@ namespace peilin
                 lblRecommendationControl, btnApplyControl, btnCancel, btnExport, btnClearResults
             });
         }
-        // 由 GitHub Copilot 產生
         // 新增清除分析結果的事件處理
         private void BtnClearResults_Click(object sender, EventArgs e)
         {
@@ -654,7 +645,7 @@ namespace peilin
                 lblRecommendationControl.Text = "推薦的 white 參數值將在分析完成後顯示";
                 lblRecommendationControl.ForeColor = Color.DarkGreen;
                 
-                // 由 GitHub Copilot 產生 - 隱藏警告標籤
+                // 隱藏警告標籤
                 lblWarningControl.Visible = false;
                 lblWarningControl.Text = "";
 
@@ -680,11 +671,11 @@ namespace peilin
         }
         private void CreateStatisticsLabels(GroupBox parent)
         {
-            // 由 GitHub Copilot 產生 - 定義統一字體
+            // 定義統一字體
             var normalFont = new Font("Microsoft JhengHei", 10F);
             var boldFont = new Font("Microsoft JhengHei", 10F, FontStyle.Bold);
 
-            // 由 GitHub Copilot 產生 - 分為正常樣品和誤觸樣品兩組統計標籤
+            // 分為正常樣品和誤觸樣品兩組統計標籤
             var normalLabels = new[] {
                 "正常樣品數：", "有效樣品：", "平均占比：", "中位數占比：",
                 "標準差：", "最小值：", "最大值：", "1σ異常：", "2σ異常：", "推薦值："
@@ -727,8 +718,8 @@ namespace peilin
                 parent.Controls.AddRange(new Control[] { lbl, lblValue });
             }
 
-            // 由 GitHub Copilot 產生 - 誤觸樣品統計（下半部，留間距）
-            int falseStartY = 170; // 由 GitHub Copilot 產生 - 調整起始 Y 以適應 10F 字體
+            // 誤觸樣品統計（下半部，留間距）
+            int falseStartY = 170; // 調整起始 Y 以適應 10F 字體
             for (int i = 0; i < falseLabels.Length; i++)
             {
                 var lbl = new Label
@@ -748,7 +739,7 @@ namespace peilin
                     Size = new System.Drawing.Size(140, 28),
                     Name = $"lblFalseStatValue{i}",
                     Font = boldFont,
-                    ForeColor = Color.Red // 由 GitHub Copilot 產生 - 誤觸樣品數據用紅色顯示
+                    ForeColor = Color.Red // 誤觸樣品數據用紅色顯示
                 };
 
                 // 第二列
@@ -769,7 +760,7 @@ namespace peilin
         {
             if (chartInitialized) return; // 避免重複初始化
 
-            // 由 GitHub Copilot 產生 - 定義圖表統一字體
+            // 定義圖表統一字體
             var chartFont = new Font("Microsoft JhengHei", 10F);
 
             chartWhitePixelRatio.Series.Clear();
@@ -825,7 +816,7 @@ namespace peilin
             };
             chartWhitePixelRatio.Series.Add(outlier2Series);
 
-            // 由 GitHub Copilot 產生 - 新增誤觸樣品系列
+            // 新增誤觸樣品系列
             var falseSeries = new Series("誤觸樣品")
             {
                 ChartType = SeriesChartType.Line,
@@ -889,7 +880,7 @@ namespace peilin
             {
                 Docking = Docking.Top,
                 Alignment = StringAlignment.Center,
-                Font = new Font("Microsoft JhengHei", 10F) // 由 GitHub Copilot 產生 - 設定圖例字體
+                Font = new Font("Microsoft JhengHei", 10F) // 設定圖例字體
             };
             chartWhitePixelRatio.Legends.Add(legend);
 
@@ -899,7 +890,6 @@ namespace peilin
         #endregion
 
         #region 事件處理器
-        // 由 GitHub Copilot 產生
         // 二值化閾值滑桿值變更事件（使用防抖動機制防止介面卡死）
         private void TrackBarThreshold_ValueChanged(object sender, EventArgs e)
         {
@@ -939,7 +929,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 修正站點選擇事件，重置套用按鈕狀態並載入閾值
         private void CmbStation_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -972,7 +961,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 取得站點預設閾值
         private int GetDefaultThreshold(int station)
         {
@@ -1009,14 +997,14 @@ namespace peilin
                             MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
 
-                    // 由 GitHub Copilot 產生 - 更新正常照片按鈕文字
+                    // 更新正常照片按鈕文字
                     var btnSelectImages = sender as Button;
                     if (btnSelectImages != null)
                     {
                         btnSelectImages.Text = $"正常照片 ({selectedImagePaths.Count})";
                     }
 
-                    // 由 GitHub Copilot 產生 - 更新正常樣品預覽區域提示文字
+                    // 更新正常樣品預覽區域提示文字
                     if (lblImageInfoControl != null)
                     {
                         lblImageInfoControl.Text = $"已選擇 {selectedImagePaths.Count} 張正常樣品照片，點擊「開始分析」進行分析";
@@ -1033,7 +1021,7 @@ namespace peilin
                     {
                         btnAnalyzeControl.Text = $" 開始分析 (需選擇誤觸照片)";
                     }
-                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    // 載入新圖片時恢復按鈕文字
                     btnApplyControl.Text = "套用推薦值";
                     btnApplyControl.BackColor = Color.Orange;
                 }
@@ -1053,7 +1041,7 @@ namespace peilin
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - 檢查雙組照片
+            // 檢查雙組照片
             if (selectedImagePaths.Count == 0)
             {
                 MessageBox.Show("請先選擇正常樣品照片", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1072,7 +1060,7 @@ namespace peilin
 
             try
             {
-                // 由 GitHub Copilot 產生 - 處理雙組圖片
+                // 處理雙組圖片
                 progressBarControl.Maximum = selectedImagePaths.Count + selectedFalseImagePaths.Count;
                 progressBarControl.Value = 0;
                 progressBarControl.Visible = true;
@@ -1088,10 +1076,10 @@ namespace peilin
                 
                 AnalyzeOutliers();
                 
-                // 由 GitHub Copilot 產生 - 執行混合檢測（組內離群 + 組間交叉污染）
+                // 執行混合檢測（組內離群 + 組間交叉污染）
                 DetectOutliersAndCrossSamples();
                 
-                // 由 GitHub Copilot 產生 - 先計算推薦參數，再顯示結果（避免顯示時 recommendedTolerance 尚未計算）
+                // 先計算推薦參數，再顯示結果（避免顯示時 recommendedTolerance 尚未計算）
                 CalculateRecommendedParameters();
 
                 DisplayAnalysisResults();
@@ -1243,7 +1231,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 修正套用推薦值按鈕事件，讓介面保持開啟狀態
         private void BtnApply_Click(object sender, EventArgs e)
         {
@@ -1253,7 +1240,7 @@ namespace peilin
                 return;
             }
             
-            // 由 GitHub Copilot 產生 - 檢查是否已計算推薦參數
+            // 檢查是否已計算推薦參數
             if (recommendedWhiteValue == 0 || recommendedWhiteNullValue == 0)
             {
                 MessageBox.Show("請先完成正常樣品和誤觸樣品的分析", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1264,7 +1251,7 @@ namespace peilin
             {
                 using (var db = new MydbDB())
                 {
-                    // 由 GitHub Copilot 產生 - 套用四個參數
+                    // 套用四個參數
                     UpdateParameter(db, "white", recommendedWhiteValue.ToString("F1"));
                     UpdateParameter(db, "whiteNULL", recommendedWhiteNullValue.ToString("F1"));
                     UpdateParameter(db, "whiteThresh", trackBarThreshold.Value.ToString());
@@ -1321,7 +1308,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 修正 DataGridView 選擇變更事件（支援正常樣品和誤觸樣品連動預覽）
         private void DgvResults_SelectionChanged(object sender, EventArgs e)
         {
@@ -1333,7 +1319,7 @@ namespace peilin
                 _isNavigating = true;
                 int selectedRowIndex = dgvResultsControl.SelectedRows[0].Index;
 
-                // 由 GitHub Copilot 產生 - 判斷選中的是正常樣品還是誤觸樣品
+                // 判斷選中的是正常樣品還是誤觸樣品
                 // DataGridView 顯示順序：先正常樣品，後誤觸樣品
                 if (selectedRowIndex < whitePixelResults.Count)
                 {
@@ -1409,7 +1395,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 誤觸樣品事件處理器
         private void BtnSelectFalseImages_Click(object sender, EventArgs e)
         {
@@ -1431,7 +1416,7 @@ namespace peilin
 
                     btnSelectFalseImagesControl.Text = $"誤觸照片 ({selectedFalseImagePaths.Count})";
                     
-                    // 由 GitHub Copilot 產生 - 更新誤觸樣品預覽區域提示文字
+                    // 更新誤觸樣品預覽區域提示文字
                     if (lblFalseImageInfoControl != null)
                     {
                         lblFalseImageInfoControl.Text = $"已選擇 {selectedFalseImagePaths.Count} 張誤觸樣品照片，點擊「開始分析」進行分析";
@@ -1448,7 +1433,7 @@ namespace peilin
                     {
                         btnAnalyzeControl.Text = $"開始分析 (需選擇正常照片)";
                     }
-                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    // 載入新圖片時恢復按鈕文字
                     btnApplyControl.Text = "套用推薦值";
                     btnApplyControl.BackColor = Color.Orange;
                 }
@@ -1543,7 +1528,7 @@ namespace peilin
         #endregion
 
         #region 圖像處理方法
-        // 由 GitHub Copilot 產生 - 支援雙組處理的方法
+        // 支援雙組處理的方法
         private async Task ProcessImages(List<string> imagePaths, List<WhitePixelResult> results, SampleType sampleType)
         {
             await Task.Run(() =>
@@ -1601,7 +1586,7 @@ namespace peilin
 
                 // 執行白色像素分析
                 using (var resultImage = new Mat())
-                using (var binaryImage = new Mat()) // 由 GitHub Copilot 產生 - 新增二值化圖像
+                using (var binaryImage = new Mat()) // 新增二值化圖像
                 {
                     var (whitePixelRatio, totalPixels, whitePixels) = AnalyzeWhitePixels(image, resultImage, binaryImage, currentThreshold);
 
@@ -1615,7 +1600,7 @@ namespace peilin
                         Type = SampleType.Normal // 預設為正常樣品
                     };
 
-                    // 由 GitHub Copilot 產生 - 設定壓縮後的圖像資料
+                    // 設定壓縮後的圖像資料
                     result.SetResultImageData(resultImage);
                     result.SetBinaryImageData(binaryImage);
 
@@ -1624,7 +1609,7 @@ namespace peilin
             }
         } //演算法
 
-        // 由 GitHub Copilot 產生 - 修改簽章以輸出二值化圖像
+        // 修改簽章以輸出二值化圖像
         private (float ratio, int totalPixels, int whitePixels) AnalyzeWhitePixels(Mat image, Mat resultImage, Mat binaryImage, int minthresh)
         {
             using (var gray = new Mat())
@@ -1636,7 +1621,7 @@ namespace peilin
                 // 二值化處理
                 Cv2.Threshold(gray, binary, minthresh, 255, ThresholdTypes.Binary);
 
-                // 由 GitHub Copilot 產生 - 複製二值化結果供外部使用
+                // 複製二值化結果供外部使用
                 binary.CopyTo(binaryImage);
 
                 // 計算白色像素
@@ -1672,7 +1657,7 @@ namespace peilin
         #region 統計分析方法
         private void AnalyzeOutliers()
         {
-            // 由 GitHub Copilot 產生 - 分析正常樣品的離群值
+            // 分析正常樣品的離群值
             var validResults = whitePixelResults.Where(r => r.IsValid).ToList();
             if (validResults.Count < 3) return;
 
@@ -1700,7 +1685,7 @@ namespace peilin
             var sortedRatios = ratios.OrderBy(x => x).ToList();
             recommendedWhiteValue = GetMedian(sortedRatios);
 
-            // 由 GitHub Copilot 產生 - 分析誤觸樣品的離群值
+            // 分析誤觸樣品的離群值
             var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
             if (validFalseResults.Count >= 3)
             {
@@ -1726,7 +1711,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 混合檢測：組內離群值檢測 + 組間交叉污染檢測（改良版：避免誤判分離良好的樣品組）
         private void DetectOutliersAndCrossSamples()
         {
@@ -1760,7 +1744,7 @@ namespace peilin
             float median_false = GetMedian(falseRatios);
             float boundary = (median_normal + median_false) / 2.0f;
 
-            // 由 GitHub Copilot 產生 - 判斷是否需要啟用組間交叉檢測
+            // 判斷是否需要啟用組間交叉檢測
             // 計算兩組中位數的距離
             float distance = Math.Abs(median_normal - median_false);
             
@@ -1775,7 +1759,7 @@ namespace peilin
             // 這樣可以避免誤判分離良好的樣品組（例如：正常10%、誤觸25%）
             bool enableCrossCheck = distance < (normal_range + false_range);
 
-            // 由 GitHub Copilot 產生 - 記錄診斷資訊
+            // 記錄診斷資訊
             System.Diagnostics.Debug.WriteLine($"=== 混合檢測診斷 ===");
             System.Diagnostics.Debug.WriteLine($"正常樣品中位數：{median_normal:F2}%，3σ範圍：{std_normal * 3.0:F2}%，IQR：{iqr_normal:F2}%");
             System.Diagnostics.Debug.WriteLine($"誤觸樣品中位數：{median_false:F2}%，3σ範圍：{std_false * 3.0:F2}%，IQR：{iqr_false:F2}%");
@@ -1832,7 +1816,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 計算百分位數（用於 IQR 計算）
         private float GetPercentile(List<float> sortedValues, int percentile)
         {
@@ -1851,7 +1834,6 @@ namespace peilin
             return sortedValues[lowerIndex] + (float)fraction * (sortedValues[upperIndex] - sortedValues[lowerIndex]);
         }
 
-        // 由 GitHub Copilot 產生
         // 生成警告訊息文字
         private string GenerateWarningMessage()
         {
@@ -1897,7 +1879,6 @@ namespace peilin
             return "";
         }
 
-        // 由 GitHub Copilot 產生
         // 計算推薦參數（white、whiteNULL、whiteTolerance）
         private void CalculateRecommendedParameters()
         {
@@ -1921,7 +1902,7 @@ namespace peilin
             float white_null = GetMedian(falseRatios);
             double std_null = CalculateStandardDeviation(falseRatios, falseRatios.Average());
 
-            // 由 GitHub Copilot 產生 - 處理誤觸樣品標準差為零的特殊情況
+            // 處理誤觸樣品標準差為零的特殊情況
             // 當誤觸樣品數值完全一致時，使用最小標準差 0.3% 作為基準
             const double MIN_STD_DEV = 0.3;
             if (std_null < 0.01) // 標準差接近零（數值完全一致）
@@ -1929,7 +1910,7 @@ namespace peilin
                 std_null = MIN_STD_DEV;
             }
 
-            // 由 GitHub Copilot 產生 - 混合策略計算 whiteTolerance
+            // 混合策略計算 whiteTolerance
             // 結合距離、統計、經驗值三種方法，確保容忍度既能容納偏離樣品又保持安全距離
 
             // 1. 計算距離
@@ -1955,7 +1936,7 @@ namespace peilin
             float max_tolerance = Math.Min(max_tolerance_by_distance, ABSOLUTE_MAX);
             float tolerance_normal = Math.Min(tolerance_base, max_tolerance);
 
-            // 由 GitHub Copilot 產生 - 記錄容忍度計算資訊供顯示
+            // 記錄容忍度計算資訊供顯示
             string toleranceCalculationInfo = $"容忍度計算：\n" +
                                              $"  距離：{distance:F2}%\n" +
                                              $"  動態容忍度 (50%距離)：{dynamic_tolerance:F2}%\n" +
@@ -1973,7 +1954,7 @@ namespace peilin
             float null_lower = white_null - (float)(std_null * 3.0);
             float null_upper = white_null + (float)(std_null * 3.0);
 
-            // 由 GitHub Copilot 產生 - 檢查兩個區間是否重疊（不假設誰大誰小）
+            // 檢查兩個區間是否重疊（不假設誰大誰小）
             bool hasOverlap = !(normal_upper < null_lower || normal_lower > null_upper);
 
             string warningMessage = "";
@@ -1998,7 +1979,7 @@ namespace peilin
             recommendedWhiteNullValue = white_null;
             recommendedTolerance = tolerance_normal;
 
-            // 由 GitHub Copilot 產生 - 顯示詳細的區分度資訊
+            // 顯示詳細的區分度資訊
             if (!string.IsNullOrEmpty(warningMessage))
             {
                 MessageBox.Show(warningMessage, "區分度檢查", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -2028,7 +2009,7 @@ namespace peilin
 
         private void DisplayAnalysisResults()
         {
-            // 由 GitHub Copilot 產生 - 合併正常樣品和誤觸樣品到列表中
+            // 合併正常樣品和誤觸樣品到列表中
             var allResults = new List<object>();
 
             // 加入正常樣品
@@ -2067,7 +2048,7 @@ namespace peilin
 
             dgvResultsControl.DataSource = allResults;
 
-            // 由 GitHub Copilot 產生 - 為疑似問題的列表行著色
+            // 為疑似問題的列表行著色
             foreach (DataGridViewRow row in dgvResultsControl.Rows)
             {
                 var status = row.Cells["異常狀態"].Value?.ToString();
@@ -2077,7 +2058,7 @@ namespace peilin
                     row.DefaultCellStyle.BackColor = Color.LightCoral; // 紅底：疑似誤放
                     row.DefaultCellStyle.ForeColor = Color.DarkRed;
 
-                    // 由 GitHub Copilot 產生 - 修復 Font 為 null 的問題
+                    // 修復 Font 為 null 的問題
                     // 先檢查當前 Font 是否為 null，如果是則使用 DataGridView 的預設字型
                     Font baseFont = row.DefaultCellStyle.Font ?? dgvResultsControl.DefaultCellStyle.Font ?? this.Font;
                     row.DefaultCellStyle.Font = new Font(baseFont, FontStyle.Bold);
@@ -2109,14 +2090,14 @@ namespace peilin
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            // 由 GitHub Copilot 產生 - 顯示誤觸樣品圖像
+            // 顯示誤觸樣品圖像
             if (falsePixelResults.Count > 0)
             {
                 currentFalseImageIndex = 0;
                 DisplayCurrentFalseImage();
             }
 
-            // 由 GitHub Copilot 產生 - 顯示警告訊息
+            // 顯示警告訊息
             string warningMessage = GenerateWarningMessage();
             if (!string.IsNullOrEmpty(warningMessage))
             {
@@ -2133,7 +2114,7 @@ namespace peilin
         {
             if (!result.IsValid) return "無效";
             
-            // 由 GitHub Copilot 產生 - 優先顯示混合檢測的嚴重程度
+            // 優先顯示混合檢測的嚴重程度
             if (result.Severity == OutlierSeverity.CrossSample) return "疑似誤放";
             if (result.Severity == OutlierSeverity.GroupOutlier) return "組內離群";
             
@@ -2144,7 +2125,6 @@ namespace peilin
             return " 正常";
         }
 
-        // 由 GitHub Copilot 產生
         // 修改為顯示雙組統計數據
         private void CalculateAndDisplayStatistics(List<WhitePixelResult> validResults)
         {
@@ -2160,7 +2140,7 @@ namespace peilin
             int outliers1Sigma = validResults.Count(r => r.IsOutlier1Sigma);
             int outliers2Sigma = validResults.Count(r => r.IsOutlier2Sigma);
 
-            // 由 GitHub Copilot 產生 - 更新正常樣品統計標籤
+            // 更新正常樣品統計標籤
             var statValues = new string[] {
                 totalCount.ToString(),
                 validCount.ToString(),
@@ -2183,7 +2163,7 @@ namespace peilin
                 }
             }
 
-            // 由 GitHub Copilot 產生 - 誤觸樣品統計（完整顯示所有10項統計資訊）
+            // 誤觸樣品統計（完整顯示所有10項統計資訊）
             var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
             if (validFalseResults.Count > 0)
             {
@@ -2196,7 +2176,7 @@ namespace peilin
                 int falseOutliers1Sigma = validFalseResults.Count(r => r.IsOutlier1Sigma);
                 int falseOutliers2Sigma = validFalseResults.Count(r => r.IsOutlier2Sigma);
 
-                // 由 GitHub Copilot 產生 - 更新誤觸樣品的所有統計標籤（包含平均、中位數、標準差）
+                // 更新誤觸樣品的所有統計標籤（包含平均、中位數、標準差）
                 var falseStatValues = new string[] {
                     falsePixelResults.Count.ToString(),
                     validFalseResults.Count.ToString(),
@@ -2221,7 +2201,7 @@ namespace peilin
             }
             else
             {
-                // 由 GitHub Copilot 產生 - 若無誤觸樣品資料，將所有標籤設為 "---"
+                // 若無誤觸樣品資料，將所有標籤設為 "---"
                 for (int i = 0; i < 10; i++)
                 {
                     var lblFalseValue = grpStatisticsControl.Controls.Find($"lblFalseStatValue{i}", false).FirstOrDefault() as Label;
@@ -2232,7 +2212,7 @@ namespace peilin
                 }
             }
 
-            // 由 GitHub Copilot 產生 - 計算並顯示區分度資訊（不假設誰大誰小）
+            // 計算並顯示區分度資訊（不假設誰大誰小）
             var validFalse = falsePixelResults.Where(r => r.IsValid).ToList();
             string safetyInfo = "";
             if (validFalse.Count > 0)
@@ -2240,7 +2220,7 @@ namespace peilin
                 var falseRatios = validFalse.Select(r => r.WhitePixelRatio).ToList();
                 double falseStdDev = CalculateStandardDeviation(falseRatios, falseRatios.Average());
                 
-                // 由 GitHub Copilot 產生 - 處理誤觸標準差為零的情況
+                // 處理誤觸標準差為零的情況
                 const double MIN_STD_DEV = 0.3;
                 if (falseStdDev < 0.01)
                 {
@@ -2315,7 +2295,7 @@ namespace peilin
             chartWhitePixelRatio.Series["白色像素占比"].Points.Clear();
             chartWhitePixelRatio.Series["1σ異常"].Points.Clear();
             chartWhitePixelRatio.Series["2σ異常"].Points.Clear();
-            chartWhitePixelRatio.Series["誤觸樣品"].Points.Clear(); // 由 GitHub Copilot 產生
+            chartWhitePixelRatio.Series["誤觸樣品"].Points.Clear();
             chartWhitePixelRatio.Series["平均值"].Points.Clear();
             chartWhitePixelRatio.Series["+1σ"].Points.Clear();
             chartWhitePixelRatio.Series["-1σ"].Points.Clear();
@@ -2369,7 +2349,7 @@ namespace peilin
                     sigma2LowerSeries.Points.AddXY(xValue, mean - 2 * stdDev);
                 }
 
-                // 由 GitHub Copilot 產生 - 新增誤觸樣品數據
+                // 新增誤觸樣品數據
                 var validFalseResults = falsePixelResults.Where(r => r.IsValid).ToList();
                 if (validFalseResults.Count > 0)
                 {
@@ -2409,7 +2389,6 @@ namespace peilin
         #endregion
 
         #region 顯示方法
-        // 由 GitHub Copilot 產生
         // 顯示當前正常樣品圖像（原圖標註 + 二值化圖）
         private void DisplayCurrentImage()
         {
@@ -2475,7 +2454,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 顯示當前誤觸樣品圖像
         private void DisplayCurrentFalseImage()
         {
@@ -2622,7 +2600,6 @@ namespace peilin
             return Math.Sqrt(sumSquaredDiffs / (values.Count - 1));
         }
 
-        // 由 GitHub Copilot 產生
         // 修改 UpdateParameter 方法，使用 Value 語法避免主鍵問題
         private void UpdateParameter(MydbDB db, string paramName, string value)
         {
@@ -2688,7 +2665,7 @@ namespace peilin
                     KeyPreview = true,
                     BackColor = System.Drawing.Color.Black,
                     FormBorderStyle = FormBorderStyle.None,
-                    Font = new Font("Microsoft JhengHei", 10F) // 由 GitHub Copilot 產生 - 設定全螢幕表單字體
+                    Font = new Font("Microsoft JhengHei", 10F) // 設定全螢幕表單字體
                 };
 
                 picFullScreen = new PictureBox
@@ -2784,7 +2761,6 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生
         // 在資源釋放時也要釋放工具提示
         protected override void OnFormClosed(FormClosedEventArgs e)
         {

@@ -23,7 +23,7 @@ namespace peilin
         private bool eventsInitialized = false;
         private bool isUpdatingImage = false; // 防止遞迴更新
         
-        // 由 GitHub Copilot 產生 - 統計分析結果
+        // 統計分析結果
         private double _overallStdX = 0;
         private double _overallStdY = 0;
         private int _medianX = 0;
@@ -97,7 +97,7 @@ namespace peilin
                 Font = new Font("Microsoft JhengHei", 10),
                 ForeColor = Color.Red
             };
-            // 由 GitHub Copilot 產生 - 顯示此介面只須設定站點2的提示
+            // 顯示此介面只須設定站點2的提示
             var lblStationNotice = new Label
             {
                 Text = "⚠️ 此介面只須設定站點2",
@@ -117,7 +117,7 @@ namespace peilin
                 Font = new Font("Microsoft JhengHei", 10, FontStyle.Bold)
             };
 
-            // 由 GitHub Copilot 產生 - 修正只保留站點2
+            // 修正只保留站點2
             var cmbStation = new ComboBox
             {
                 Location = new System.Drawing.Point(85, 70),
@@ -163,10 +163,10 @@ namespace peilin
             };
             btnAnalyzeControl.Click += BtnAnalyze_Click;
 
-            // 由 GitHub Copilot 產生 - 預設選擇站點2（必須在 btnAnalyzeControl 初始化之後）
+            // 預設選擇站點2（必須在 btnAnalyzeControl 初始化之後）
             cmbStation.SelectedIndex = 1;
 
-            // 進度條 - 由 GitHub Copilot 產生 - 修正位置移到按鈕右側
+            // 進度條 - 修正位置移到按鈕右側
             progressBarControl = new ProgressBar
             {
                 Location = new System.Drawing.Point(400, 68),
@@ -327,7 +327,7 @@ namespace peilin
                     Font = new Font("Microsoft JhengHei", 10)
                 };
 
-                // 由 GitHub Copilot 產生 - 整體穩定性欄位需要較大高度以顯示多行文字
+                // 整體穩定性欄位需要較大高度以顯示多行文字
                 bool isStabilityRow = (i == labels.Length - 1);
                 var lblValue = new Label
                 {
@@ -369,7 +369,7 @@ namespace peilin
 
                     btnAnalyzeControl.Text = $"🔍 分析 {selectedImagePaths.Count} 張照片";
                     btnAnalyzeControl.Enabled = selectedImagePaths.Count > 0;
-                    // 由 GitHub Copilot 產生 - 載入新圖片時恢復按鈕文字
+                    // 載入新圖片時恢復按鈕文字
                     btnApplyControl.Text = "✅ 套用推薦值";
                 }
             }
@@ -453,7 +453,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修正套用按鈕不關閉視窗
+        // 修正套用按鈕不關閉視窗
         private void BtnApply_Click(object sender, EventArgs e)
         {
             if (targetStation <= 0)
@@ -762,7 +762,7 @@ namespace peilin
         }
         
 
-        // 由 GitHub Copilot 產生 - 修正穩定性評估邏輯
+        // 修正穩定性評估邏輯
         // 穩定性應基於「整體標準差大小」，而非單一樣本離群程度
         // 標準差小 = 所有樣本位置一致 = 穩定；標準差大 = 樣本間位置變化大 = 不穩定
         private void UpdateImageInfo(ObjectCenterResult currentResult)
@@ -818,13 +818,13 @@ namespace peilin
             int medianX = GetMedian(xOffsets);
             int medianY = GetMedian(yOffsets);
 
-            // 由 GitHub Copilot 產生 - 儲存統計結果供 UpdateImageInfo 使用
+            // 儲存統計結果供 UpdateImageInfo 使用
             _overallStdX = stdX;
             _overallStdY = stdY;
             _medianX = medianX;
             _medianY = medianY;
 
-            // 由 GitHub Copilot 產生 - 計算整體穩定性等級（基於最大標準差）
+            // 計算整體穩定性等級（基於最大標準差）
             _maxStd = Math.Max(stdX, stdY);
             if (_maxStd < 1)
                 _stabilityLevel = $"位置非常穩定 (std={_maxStd:F1}) - \n結果可信，直接套用";

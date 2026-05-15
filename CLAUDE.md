@@ -111,7 +111,6 @@ Located at `.\setting\mydb.sqlite` with the following tables:
 
 ### Language & Comments
 - **All comments must be in Traditional Chinese (繁體中文)**
-- Add comment at start of AI-generated code sections: `// 由 GitHub Copilot 產生`
 
 ### Database Operations (LinqToDB)
 Always use "update-first, insert-if-none" pattern to avoid primary key conflicts:

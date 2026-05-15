@@ -329,14 +329,14 @@ namespace peilin
             this.StartPosition = FormStartPosition.CenterParent;
             this.ResumeLayout(false);
         }
-        // 由 GitHub Copilot 產生 - 移除關閉確認對話框，直接允許關閉
+        // 移除關閉確認對話框，直接允許關閉
         private void CircleCalibrationForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // 直接允許關閉，不顯示確認對話框
         }
         private void SetupUI()
         {
-            // 由 GitHub Copilot 產生 - 設定表單預設字體
+            // 設定表單預設字體
             this.Font = new Font("Microsoft JhengHei", 10F);
             this.KeyPreview = true;
             // 圖像顯示區域
@@ -847,7 +847,7 @@ namespace peilin
                         hasValidParameters = false;
                         EnableCalibrationControls(false);
 
-                        // 由 GitHub Copilot 產生 - 站點3/4的倒角圓不需要設定
+                        // 站點3/4的倒角圓不需要設定
                         bool isChamferOnStation3Or4 = (station == 3 || station == 4) && cmbCircleType.SelectedIndex == 2;
 
                         if (isChamferOnStation3Or4)
@@ -923,14 +923,14 @@ namespace peilin
         private void CmbStation_SelectedIndexChanged(object sender, EventArgs e)
         {
             ResetParameterStatus();
-            // 由 GitHub Copilot 產生 - 切換站點時恢復按鈕文字
+            // 切換站點時恢復按鈕文字
             btnSaveSettings.Text = "套用推薦值";
         }
 
         private void CmbCircleType_SelectedIndexChanged(object sender, EventArgs e)
         {
             ResetParameterStatusKeepImages();
-            // 由 GitHub Copilot 產生 - 切換圓類型時恢復按鈕文字
+            // 切換圓類型時恢復按鈕文字
             btnSaveSettings.Text = "套用推薦值";
         }
         private void ResetParameterStatusKeepImages()
@@ -999,7 +999,7 @@ namespace peilin
 
 
         // 事件處理器
-        // 由 GitHub Copilot 產生 - 修改載入圖片方法，使用多選檔案對話框
+        // 修改載入圖片方法，使用多選檔案對話框
         private void BtnLoadImages_Click(object sender, EventArgs e)
         {
             if (!hasValidParameters)
@@ -1008,7 +1008,7 @@ namespace peilin
                 return;
             }
 
-            // 由 GitHub Copilot 產生 - 使用多選檔案對話框讓使用者選擇圖片
+            // 使用多選檔案對話框讓使用者選擇圖片
             string defaultPath = Path.GetFullPath(@".\image");
             using (var openFileDialog = new OpenFileDialog())
             {
@@ -1027,7 +1027,7 @@ namespace peilin
             }
         }
 
-        // 由 GitHub Copilot 產生 - 修改為接受檔案路徑陣列
+        // 修改為接受檔案路徑陣列
         private void LoadCalibrationImages(string[] imageFiles)
         {
             try
@@ -1035,7 +1035,7 @@ namespace peilin
                 calibrationImages.Clear();
                 imageListBox.Items.Clear();
 
-                // 由 GitHub Copilot 產生 - 直接載入使用者選擇的檔案（最多 30 張）
+                // 直接載入使用者選擇的檔案（最多 30 張）
                 foreach (string file in imageFiles.Take(30))
                 {
                     try
@@ -1125,12 +1125,11 @@ namespace peilin
 
                     if (updateCount == 3)
                     {
-                        // 由 GitHub Copilot 產生
                         // 標記：本次有成功更新到資料庫
                         hasSavedToDb = true;
 
                         UpdateCurrentSettingsDisplay();
-                        // 由 GitHub Copilot 產生 - 套用成功後更新按鈕文字
+                        // 套用成功後更新按鈕文字
                         btnSaveSettings.Text = "✅ 已套用";
 
                         MessageBox.Show($"圓心校正參數已成功更新！\n" +
@@ -1658,7 +1657,7 @@ namespace peilin
 
         private void InitializeEnlargedForm()
         {
-            // 由 GitHub Copilot 產生 - 設定放大視窗預設字體
+            // 設定放大視窗預設字體
             this.Font = new Font("Microsoft JhengHei", 10F);
             this.Text = "放大圖片 - 使用方向鍵移動圓心";
             this.Size = new System.Drawing.Size(1200, 900);
