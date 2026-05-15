@@ -369,6 +369,9 @@ bin/x64/Release/opencv_world455.dll
 # 排除 PVS 工作檔 / 自動備份 (檔名可能含客戶識別)
 *.PVS
 *.PVS.BAK
+# 例外: archive/pvs/ 下匿名化後的歷史檔保留追蹤
+!archive/pvs/customer*.PVS
+!archive/pvs/customer*.PVS.BAK
 
 # 排除 Claude Code 本機個人設定 (含絕對路徑)
 .claude/settings.local.json
@@ -387,3 +390,16 @@ bin/x64/Release/Statistics/
 secret.txt
 SHA256.txt
 SerialNum.txt
+
+# IDE / 編輯器個人設定 (不入版控)
+.idea/
+.vs/
+*.swp
+*.swo
+
+# Windows 系統檔
+desktop.ini
+Thumbs.db
+[Dd]esktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
